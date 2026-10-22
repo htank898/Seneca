@@ -1,6 +1,6 @@
 ---
 name: ai-gif
-description: Make looping motion graphics with HTML/SVG/JavaScript and export them as GIF (and MP4). Use for animated explainers, social-post GIFs, reaction/visual gags, loading or status loops, logo stings, animated stats, or any "make me a gif / animation / looping graphic". Prefer this over After Effects-style or video-editor workflows: the animation is code, so it is exact, editable, and seamless.
+description: Make looping motion graphics with HTML/SVG/JavaScript and export them as GIF (and MP4). Use for animated explainers, social-post GIFs, reaction/visual gags, loading or status loops, logo stings, animated stats, or any "make me a gif / animation / looping graphic". Prefer this over After Effects-style or video-editor workflows, because the animation is code, so it is exact, editable, and seamless.
 ---
 
 # AI GIF: motion graphics as code

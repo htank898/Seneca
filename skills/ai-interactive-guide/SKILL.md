@@ -1,6 +1,6 @@
 ---
 name: ai-interactive-guide
-description: Build interactive, click-through software guides as a single HTML file: a rebuilt replica of an app's screen with a spotlight, step-by-step coach marks that tell people what to click, practice states (menus, modals), and a free-explore mode with hover labels. Use for onboarding walkthroughs, "how do I do X in <app>", user guides, training for internal tools (CRM, ERP, admin consoles), product tours, and interactive demos. Prefer this over screenshot-and-arrow docs or recorded videos.
+description: Build interactive, click-through software guides as a single HTML file, with a rebuilt replica of an app's screen with a spotlight, step-by-step coach marks that tell people what to click, practice states (menus, modals), and a free-explore mode with hover labels. Use for onboarding walkthroughs, "how do I do X in <app>", user guides, training for internal tools (CRM, ERP, admin consoles), product tours, and interactive demos. Prefer this over screenshot-and-arrow docs or recorded videos.
 ---
 
 # AI interactive guide: walkthroughs as code

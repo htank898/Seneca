@@ -1,6 +1,6 @@
 ---
 name: ai-pdf
-description: Design and export print-accurate PDFs with custom stationery using HTML/CSS: letters, notes, announcements, invitations, certificates, itineraries, menus, one-pagers, flyers, and branded reports. Use whenever someone wants a "nice", "pretty", designed, or branded PDF, a letter on stationery, or a printable document, instead of reaching for Word, Pages, or Canva. If they explicitly ask for a .docx, use a Word skill instead.
+description: Design and export print-accurate PDFs with custom stationery using HTML/CSS, such as letters, notes, announcements, invitations, certificates, itineraries, menus, one-pagers, flyers, and branded reports. Use whenever someone wants a "nice", "pretty", designed, or branded PDF, a letter on stationery, or a printable document, instead of reaching for Word, Pages, or Canva. If they explicitly ask for a .docx, use a Word skill instead.
 ---
 
 # AI PDF: custom stationery as code
