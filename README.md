@@ -1,6 +1,6 @@
 # Build the disc, not the butler
 
-![One card morphs through a slide, a letter, a social tile, a chart, a data table, a live API panel, an app being clicked, then HTML, CSS, and JS chips: any format, any chart, any data, any API, any interaction, no libraries](examples/gif/any-format.gif)
+![Each beat asks who the audience is and answers with a format: visual thinkers, animate it; numbers people, chart it; hands-on learners, make a walkthrough; executives, one slide; formal occasion, put it in writing; live numbers, wire in the API. It ends on one HTML file, no libraries.](examples/gif/any-format.gif)
 
 Robotics spent fifty years learning that you shouldn't automate a job by copying how a human does it. Dishwashers don't scrub one plate at a time. Washing machines don't use washboards. Robot vacuums aren't humanoids pushing an upright vacuum. The machines that won were designed around the job, not around the person who used to do it.
 

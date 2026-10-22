@@ -14,8 +14,8 @@
   html, body { width: 100%; height: 100%; background: #2a2e33; overflow: hidden; }
   #stage { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); background: var(--paper); overflow: hidden; transform-origin: 0 0; }
   svg { display: block; font-family: "Archivo", sans-serif; }
-  .head { font-weight: 850; font-stretch: 118%; font-size: 92px; fill: var(--ink); letter-spacing: -1.5px; }
-  .kicker { font-weight: 650; font-size: 30px; fill: var(--steel); }
+  .head { font-weight: 850; font-stretch: 112%; font-size: 80px; fill: var(--ink); letter-spacing: -1.5px; }
+  .kicker { font-weight: 650; font-size: 36px; fill: var(--steel); }
   .foot1 { font-weight: 800; font-stretch: 112%; font-size: 30px; fill: var(--ink); }
   .foot2 { font-weight: 500; font-size: 24px; fill: var(--steel); }
   .t { font-weight: 650; fill: var(--ink); }
@@ -27,13 +27,14 @@
 <div id="stage">
 <svg viewBox="0 0 1080 1080" width="1080" height="1080">
   <defs>
-    <clipPath id="headclip"><rect x="0" y="104" width="1080" height="116"/></clipPath>
+    <clipPath id="headclip"><rect x="0" y="104" width="1080" height="110"/></clipPath>
   </defs>
 
-  <text class="kicker" x="64" y="84">One HTML file.</text>
+  <text id="kPrev" class="kicker" x="64" y="84"></text>
+  <text id="kCur" class="kicker" x="64" y="84"></text>
   <g clip-path="url(#headclip)">
-    <text id="wordPrev" class="head" x="60" y="190"></text>
-    <text id="wordCur" class="head" x="60" y="190"></text>
+    <text id="wordPrev" class="head" x="60" y="182"></text>
+    <text id="wordCur" class="head" x="60" y="182"></text>
   </g>
 
   <!-- API sources live outside the card -->
@@ -78,10 +79,13 @@
     <path d="M 64 470 q 20 -40 40 -6 q 14 24 30 -10 q 12 -26 30 4 q 10 16 24 -2" stroke="var(--ink)" stroke-width="4" fill="none" stroke-linecap="round"/>
   </g>
 
-  <g id="c-tile">
-    <circle cx="260" cy="210" r="120" fill="var(--signal)" stroke="var(--ink)" stroke-width="5"/>
-    <path d="M 205 215 l 38 38 l 74 -84" stroke="var(--ink)" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="260" y="438" text-anchor="middle" font-size="68" font-weight="850" style="font-stretch:118%" fill="var(--ink)">Shipped.</text>
+  <g id="c-anim">
+    <circle cx="260" cy="260" r="175" fill="none" stroke="var(--mute)" stroke-width="4" stroke-dasharray="3 12" stroke-linecap="round"/>
+    <circle cx="260" cy="260" r="105" fill="none" stroke="var(--mute)" stroke-width="4" stroke-dasharray="3 12" stroke-linecap="round"/>
+    <circle id="core" cx="260" cy="260" r="56" fill="var(--signal)" stroke="var(--ink)" stroke-width="5"/>
+    <circle id="o0" r="22" fill="var(--ink)"/>
+    <circle id="o1" r="16" fill="var(--card)" stroke="var(--ink)" stroke-width="4"/>
+    <rect id="o2" x="-18" y="-18" width="36" height="36" rx="6" fill="var(--steel)" stroke="var(--ink)" stroke-width="4"/>
   </g>
 
   <g id="c-chart">
@@ -90,7 +94,7 @@
     <path id="trend" d="" stroke="var(--steel)" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
-  <g id="c-data">
+  <g id="c-data" opacity="0">
     <rect x="30" y="28" width="700" height="50" rx="8" fill="var(--ink)"/>
     <text x="60" y="62" font-size="24" font-weight="700" fill="var(--card)">Region</text>
     <text x="440" y="62" font-size="24" font-weight="700" fill="var(--card)" text-anchor="end">Deals</text>
@@ -112,6 +116,13 @@
       <rect x="214" y="92" width="250" height="66" rx="33" fill="var(--signal)" stroke="var(--ink)" stroke-width="4"/>
       <text x="339" y="135" text-anchor="middle" font-size="27" font-weight="800" fill="var(--ink)">Run report</text>
     </g>
+    <rect id="spot" x="202" y="80" width="274" height="90" rx="45" fill="none" stroke="var(--signal)" stroke-width="7"/>
+    <g id="coach">
+      <rect x="500" y="84" width="236" height="82" rx="12" fill="var(--ink)"/>
+      <path d="M 500 116 l -14 9 l 14 9 z" fill="var(--ink)"/>
+      <text x="520" y="116" font-size="20" font-weight="600" fill="var(--mute)">Step 2 of 4</text>
+      <text x="520" y="148" font-size="25" font-weight="800" fill="var(--card)">Click Run report</text>
+    </g>
     <circle id="ripple" cx="339" cy="125" r="0" fill="none" stroke="var(--ink)" stroke-width="4"/>
     <g id="panel">
       <rect x="214" y="190" width="510" height="230" rx="14" fill="var(--card)" stroke="var(--ink)" stroke-width="4"/>
@@ -124,7 +135,7 @@
     <g id="chip0"><rect x="40" y="56" width="210" height="150" rx="18" fill="var(--signal)" stroke="var(--ink)" stroke-width="5"/><text x="145" y="149" text-anchor="middle" font-size="50" font-weight="900" style="font-stretch:104%" fill="var(--ink)">HTML</text></g>
     <g id="chip1"><rect x="275" y="56" width="210" height="150" rx="18" fill="var(--card)" stroke="var(--ink)" stroke-width="5"/><text x="380" y="149" text-anchor="middle" font-size="50" font-weight="900" style="font-stretch:104%" fill="var(--ink)">CSS</text></g>
     <g id="chip2"><rect x="510" y="56" width="210" height="150" rx="18" fill="var(--ink)" stroke="var(--ink)" stroke-width="5"/><text x="615" y="149" text-anchor="middle" font-size="50" font-weight="900" style="font-stretch:104%" fill="var(--card)">JS</text></g>
-    <text id="stackline" x="380" y="282" text-anchor="middle" font-size="34" font-weight="650" fill="var(--steel)">That's the whole stack.</text>
+    <text id="stackline" x="380" y="282" text-anchor="middle" font-size="34" font-weight="650" fill="var(--steel)">No libraries. That's the whole stack.</text>
   </g>
 
   <text class="foot1" x="64" y="1000">Build the disc, not the butler.</text>
@@ -134,7 +145,7 @@
 <div id="hud">space pause · ←/→ scrub · <span id="tc">0.000</span></div>
 
 <script>
-window.MOTION = { width: 1080, height: 1080, fps: 24, seconds: 12 };
+window.MOTION = { width: 1080, height: 1080, fps: 24, seconds: 14 };
 
 const TAU = Math.PI * 2;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -153,14 +164,13 @@ const set = (e, attrs) => { for (const k in attrs) e.setAttribute(k, attrs[k]); 
 /* ---- the sequence: each state is a word, a card size/position, and a content group ---- */
 const CY = 600;
 const STATES = [
-  { word: "Any format.", w: 760, h: 428, cx: 540, c: "c-slide", dur: 1.15 },
-  { word: "Any format.", w: 420, h: 560, cx: 540, c: "c-page", dur: 1.15 },
-  { word: "Any format.", w: 520, h: 520, cx: 540, c: "c-tile", dur: 1.15 },
-  { word: "Any chart.", w: 760, h: 460, cx: 540, c: "c-chart", dur: 2.2 },
-  { word: "Any data.", w: 760, h: 460, cx: 540, c: "c-data", dur: 2.2 },
-  { word: "Any API.", w: 600, h: 430, cx: 670, c: "c-api", dur: 2.4 },
-  { word: "Any interaction.", w: 760, h: 460, cx: 540, c: "c-ui", dur: 2.5 },
-  { word: "No libraries.", w: 760, h: 340, cx: 540, c: "c-stack", dur: 2.3 },
+  { k: "Visual thinkers?", word: "Animate it.", w: 520, h: 520, cx: 540, c: "c-anim", dur: 1.9 },
+  { k: "Numbers people?", word: "Chart it.", w: 760, h: 460, cx: 540, c: "c-chart", dur: 1.9 },
+  { k: "Hands-on learners?", word: "Make a walkthrough.", w: 760, h: 460, cx: 540, c: "c-ui", dur: 2.4 },
+  { k: "Executives?", word: "One slide.", w: 760, h: 428, cx: 540, c: "c-slide", dur: 1.6 },
+  { k: "Formal occasion?", word: "Put it in writing.", w: 420, h: 560, cx: 540, c: "c-page", dur: 1.6 },
+  { k: "Live numbers?", word: "Wire in the API.", w: 600, h: 430, cx: 670, c: "c-api", dur: 2.1 },
+  { k: "Meet every audience where they are.", word: "One HTML file.", w: 760, h: 340, cx: 540, c: "c-stack", dur: 2.5 },
 ];
 const TOTAL = STATES.reduce((a, s) => a + s.dur, 0);
 const MORPH = 0.26, FADE_IN = [0.2, 0.34], FADE_OUT = 0.1;
@@ -219,13 +229,23 @@ window.renderFrame = function (t) {
   }
 
   // headline swap
-  const changed = S.word !== P.word;
-  const wk = changed ? ease.inOutCubic(seg(u, 0.02, 0.32)) : 1;
+  const wk = ease.inOutCubic(seg(u, 0.02, 0.32));
   $("wordCur").textContent = S.word;
   $("wordPrev").textContent = P.word;
-  set($("wordCur"), { y: lerp(300, 190, wk) });
-  set($("wordPrev"), { y: lerp(190, 70, wk), opacity: changed ? (1 - wk).toFixed(3) : 0 });
+  set($("wordCur"), { y: lerp(290, 182, wk) });
+  set($("wordPrev"), { y: lerp(182, 70, wk), opacity: (1 - wk).toFixed(3) });
+  $("kCur").textContent = S.k; $("kPrev").textContent = P.k;
+  set($("kCur"), { opacity: seg(u, 0.12, 0.26).toFixed(3) });
+  set($("kPrev"), { opacity: (1 - seg(u, 0.0, 0.12)).toFixed(3) });
 
+  // animation
+  if (S.c === "c-anim") {
+    const a = TAU * u / 1.9;
+    set($("o0"), { cx: 260 + 175 * Math.cos(a), cy: 260 + 175 * Math.sin(a) });
+    set($("o1"), { cx: 260 + 105 * Math.cos(-2 * a + 1), cy: 260 + 105 * Math.sin(-2 * a + 1) });
+    $("o2").setAttribute("transform", `translate(${260 + 175 * Math.cos(a + Math.PI)} ${260 + 175 * Math.sin(a + Math.PI)}) rotate(${(a * 180 / Math.PI) * 2})`);
+    $("core").setAttribute("r", (56 + 10 * Math.sin(TAU * u * 1.6)).toFixed(2));
+  }
   // chart
   if (S.c === "c-chart") {
     bars.forEach((b, i) => { const g = ease.outCubic(seg(u, 0.28 + i * 0.07, 0.72 + i * 0.07)); const bh = BAR_V[i] * 300 * g; set(b, { y: 400 - bh, height: Math.max(0.01, bh) }); });
@@ -262,7 +282,10 @@ window.renderFrame = function (t) {
   }
   // interaction
   if (S.c === "c-ui") {
-    const m = ease.inOutCubic(seg(u, 0.28, 0.85));
+    const sp = ease.outCubic(seg(u, 0.25, 0.45)) * (1 - seg(u, 0.95, 1.1));
+    set($("spot"), { opacity: sp.toFixed(3) });
+    set($("coach"), { opacity: sp.toFixed(3), transform: `translate(${(1 - sp) * 14} 0)` });
+    const m = ease.inOutCubic(seg(u, 0.4, 0.88));
     const cxp = lerp(640, 350, m), cyp = lerp(420, 128, m);
     const press = seg(u, 0.87, 0.95) * (1 - seg(u, 0.99, 1.1));
     $("cursor").setAttribute("transform", `translate(${cxp} ${cyp}) scale(${1 - press * 0.12})`);
