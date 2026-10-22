@@ -131,11 +131,10 @@
     <path id="cursor" d="M 0 0 L 0 44 L 12 33 L 21 52 L 30 48 L 21 30 L 36 30 Z" fill="var(--card)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
   </g>
 
-  <g id="c-stack">
-    <g id="chip0"><rect x="40" y="56" width="210" height="150" rx="18" fill="var(--signal)" stroke="var(--ink)" stroke-width="5"/><text x="145" y="149" text-anchor="middle" font-size="50" font-weight="900" style="font-stretch:104%" fill="var(--ink)">HTML</text></g>
-    <g id="chip1"><rect x="275" y="56" width="210" height="150" rx="18" fill="var(--card)" stroke="var(--ink)" stroke-width="5"/><text x="380" y="149" text-anchor="middle" font-size="50" font-weight="900" style="font-stretch:104%" fill="var(--ink)">CSS</text></g>
-    <g id="chip2"><rect x="510" y="56" width="210" height="150" rx="18" fill="var(--ink)" stroke="var(--ink)" stroke-width="5"/><text x="615" y="149" text-anchor="middle" font-size="50" font-weight="900" style="font-stretch:104%" fill="var(--card)">JS</text></g>
-    <text id="stackline" x="380" y="282" text-anchor="middle" font-size="34" font-weight="650" fill="var(--steel)">No libraries. That's the whole stack.</text>
+  <g id="c-close">
+    <g id="val0"><circle cx="76" cy="79" r="16" fill="var(--signal)" stroke="var(--ink)" stroke-width="4"/><text x="114" y="92" font-size="44" font-weight="850" style="font-stretch:110%" fill="var(--ink)">Ready in minutes</text></g>
+    <g id="val1"><circle cx="76" cy="171" r="16" fill="var(--signal)" stroke="var(--ink)" stroke-width="4"/><text x="114" y="184" font-size="44" font-weight="850" style="font-stretch:110%" fill="var(--ink)">Clear to every audience</text></g>
+    <g id="val2"><circle cx="76" cy="263" r="16" fill="var(--signal)" stroke="var(--ink)" stroke-width="4"/><text x="114" y="276" font-size="44" font-weight="850" style="font-stretch:110%" fill="var(--ink)">Wired into your tools</text></g>
   </g>
 
   <text class="foot1" x="64" y="1000">Build the disc, not the butler.</text>
@@ -145,7 +144,7 @@
 <div id="hud">space pause · ←/→ scrub · <span id="tc">0.000</span></div>
 
 <script>
-window.MOTION = { width: 1080, height: 1080, fps: 24, seconds: 14 };
+window.MOTION = { width: 1080, height: 1080, fps: 24, seconds: 15 };
 
 const TAU = Math.PI * 2;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -170,7 +169,7 @@ const STATES = [
   { k: "Executives?", word: "One slide.", w: 760, h: 428, cx: 540, c: "c-slide", dur: 1.6 },
   { k: "Formal occasion?", word: "Put it in writing.", w: 420, h: 560, cx: 540, c: "c-page", dur: 1.6 },
   { k: "Live numbers?", word: "Wire in the API.", w: 600, h: 430, cx: 670, c: "c-api", dur: 2.1 },
-  { k: "Meet every audience where they are.", word: "One HTML file.", w: 760, h: 340, cx: 540, c: "c-stack", dur: 2.5 },
+  { k: "Meet every audience where they are.", word: "Built for agents.", w: 760, h: 330, cx: 540, c: "c-close", dur: 3.0 },
 ];
 const TOTAL = STATES.reduce((a, s) => a + s.dur, 0);
 const MORPH = 0.26, FADE_IN = [0.2, 0.34], FADE_OUT = 0.1;
@@ -297,13 +296,12 @@ window.renderFrame = function (t) {
     $("panel").setAttribute("transform", `translate(0 ${(1 - open) * 18})`);
     minibars.forEach((b, i) => { const g = ease.outBack(seg(u, 1.15 + i * 0.07, 1.55 + i * 0.07)); const bh = Math.max(0.01, MINI[i] * 160 * g); set(b, { y: 395 - bh, height: bh }); });
   }
-  // no libraries
-  if (S.c === "c-stack") {
+  // payoff: the value, one line at a time
+  if (S.c === "c-close") {
     [0, 1, 2].forEach((i) => {
-      const p = ease.outBack(seg(u, 0.24 + i * 0.12, 0.6 + i * 0.12));
-      $("chip" + i).setAttribute("transform", `translate(${145 + i * 235} 131) scale(${Math.max(0.001, p)}) translate(${-(145 + i * 235)} -131)`);
+      const n = ease.outCubic(seg(u, 0.3 + i * 0.35, 0.6 + i * 0.35));
+      set($("val" + i), { opacity: n.toFixed(3), transform: `translate(${(1 - n) * 28} 0)` });
     });
-    $("stackline").setAttribute("opacity", ease.outCubic(seg(u, 0.75, 1.05)).toFixed(3));
   }
   $("tc").textContent = t.toFixed(3);
 };
