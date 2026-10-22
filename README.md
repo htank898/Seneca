@@ -37,15 +37,15 @@ The GIF at the top is [`examples/gif/disc-not-butler.html`](examples/gif/disc-no
 **As a Claude Code plugin** (recommended):
 
 ```
-/plugin marketplace add htank898/ai-first-comms
+/plugin marketplace add https://github.com/htank898/AI_Comms.git
 /plugin install ai-first-comms@ai-first-comms
 ```
 
 **Or copy the skills** into your personal skills folder:
 
 ```bash
-git clone https://github.com/htank898/ai-first-comms
-cp -r ai-first-comms/skills/* ~/.claude/skills/
+git clone https://github.com/htank898/AI_Comms.git
+cp -r AI_Comms/skills/* ~/.claude/skills/
 ```
 
 **Requirements:** Node 18+ and `ffmpeg` (for GIFs; on macOS run `brew install ffmpeg`). Each skill installs its own copy of Playwright the first time it renders. If a Chromium download is needed, that happens once too.
