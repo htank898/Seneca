@@ -1,6 +1,6 @@
 # Build the disc, not the butler
 
-![A humanoid robot pushing a vacuum bonks into a couch, while a robot vacuum disc glides underneath it](examples/gif/disc-not-butler.gif)
+![One card morphs through a slide, a letter, a social tile, a chart, a data table, a live API panel, and an app being clicked: any format, any chart, any data, any API, any interaction](examples/gif/any-format.gif)
 
 Robotics spent fifty years learning that you shouldn't automate a job by copying how a human does it. Dishwashers don't scrub one plate at a time. Washing machines don't use washboards. Robot vacuums aren't humanoids pushing an upright vacuum. The machines that won were designed around the job, not around the person who used to do it.
 
@@ -26,7 +26,7 @@ Every file in [`examples/`](examples) was made with these skills, from a single 
 | [![Deck cover](examples/deck/preview.png)](examples/deck/build-the-disc.html) | [![Letter on Mérida-themed stationery](examples/pdf/preview.png)](examples/pdf/merida-letter.pdf) |
 | [HTML deck](examples/deck/build-the-disc.html) · [PDF](examples/deck/build-the-disc.pdf) | [PDF](examples/pdf/merida-letter.pdf) · [source](examples/pdf/merida-letter.html) |
 
-The GIF at the top is [`examples/gif/disc-not-butler.html`](examples/gif/disc-not-butler.html), rendered by `ai-gif`.
+The GIF at the top is [`examples/gif/any-format.html`](examples/gif/any-format.html), rendered by `ai-gif`. There's also [`disc-not-butler.gif`](examples/gif/disc-not-butler.gif): a humanoid robot pushing a vacuum keeps bonking into a couch while a robot-vacuum disc glides underneath it.
 
 **Interactive guide:** [a tour of the LinkedIn home screen](examples/guide/linkedin-home-tour.html). Open it in a browser and it tells you what each part does and what to click, and reacts when you click it. It's a practice replica rebuilt from scratch and isn't affiliated with LinkedIn.
 
