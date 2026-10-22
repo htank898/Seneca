@@ -1,6 +1,6 @@
 # Build the disc, not the butler
 
-![Each beat asks who the audience is and answers with a format: visual thinkers, animate it; numbers people, chart it; hands-on learners, make a walkthrough; executives, one slide; formal occasion, put it in writing; live numbers, wire in the API. It ends on built for agents: ready in minutes, clear to every audience, wired into your tools.](examples/gif/any-format.gif)
+![Each beat asks who the audience is and answers with a format: visual thinkers, animate it; numbers people, chart it; hands-on learners, make a walkthrough; executives, build a slide deck; formal occasion, put it in writing; live numbers, wire in the API. It ends on built for agents: ready in minutes, clear to every audience, wired into your tools.](examples/gif/any-format.gif)
 
 Robotics spent fifty years learning that you shouldn't automate a job by copying how a human does it. Dishwashers don't scrub one plate at a time. Washing machines don't use washboards. Robot vacuums aren't humanoids pushing an upright vacuum. The machines that won were designed around the job, not around the person who used to do it.
 
