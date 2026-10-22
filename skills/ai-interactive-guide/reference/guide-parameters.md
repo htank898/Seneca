@@ -14,6 +14,7 @@
 - **Title = the thing's name as labeled in the UI** ("Notifications", "Start a post"), so learners can find it again on their own.
 - **Body:** what it is, then why you'd use it, in 1–3 sentences (max about 45 words). Bold the names of other controls you mention.
 - **Click steps:** the `do` line starts with a verb and the exact label: "Click **Me** to open the menu."
+- **Be honest about what works.** The replica isn't the real app. If a step points at something that does nothing in the replica (a text box, a search bar, a button with no state behind it), say so: "This is where you'd type your post", "In the real app, clicking this opens…". Use a plain imperative ("Click **Me**") only on `action: "click"` steps, where the replica actually responds.
 - Describe **behavior**, not pixels ("the red number is unseen updates", not "the red circle at top right").
 - Open with a welcome step (no target) that sets expectations ("about two minutes"), and close with a step that hands off to free explore or the real app.
 - **Dates and numbers** in the replica should be plausible and placeholder.
