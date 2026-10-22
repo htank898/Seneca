@@ -1,0 +1,16 @@
+{
+  "name": "ai-first-comms",
+  "owner": {
+    "name": "Harrison Tankersley"
+  },
+  "metadata": {
+    "description": "Claude Code skills for AI-first business communication: HTML slide decks, custom-stationery PDFs, and looping GIFs."
+  },
+  "plugins": [
+    {
+      "name": "ai-first-comms",
+      "source": "./",
+      "description": "AI-first business communication: HTML slide decks, custom-stationery PDFs, and looping motion-graphic GIFs."
+    }
+  ]
+}

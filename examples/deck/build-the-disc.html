@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build the Disc</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&display=swap" rel="stylesheet">
+<style>
+/* =====================================================================
+   THEME: patent-drawing / appliance-manual identity
+   ===================================================================== */
+:root {
+  --bg: #e6eae8;
+  --ink: #16191d;
+  --muted: #5e7a94;
+  --accent: #f5c518;
+  --surface: #f3f5f4;
+  --rule: #c3cbc7;
+
+  --font-display: "Archivo", sans-serif;
+  --font-body: "Archivo", sans-serif;
+
+  --pad: 6%;
+  --t-display: 150px;
+  --t-h1: 76px;
+  --t-h2: 44px;
+  --t-body: 36px;
+  --t-small: 26px;
+  --dur: 600ms;
+  --ease: cubic-bezier(.22,.61,.36,1);
+}
+
+.slide { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: var(--t-body); line-height: 1.3; padding: var(--pad); display: flex; flex-direction: column; font-stretch: 100%; }
+.slide h1, .slide h2 { font-family: var(--font-display); font-weight: 850; font-stretch: 118%; line-height: 1; letter-spacing: -0.015em; }
+.slide h1 { font-size: var(--t-h1); margin-bottom: 0.45em; max-width: 22ch; }
+.slide h2 { font-size: var(--t-h2); font-weight: 750; margin-bottom: 0.35em; }
+.fig { font-size: var(--t-small); font-weight: 700; color: var(--muted); margin-bottom: 0.8em; }
+.muted { color: var(--muted); }
+.ink { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: var(--bg); }
+.ink-line { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; fill: none; }
+.signal { fill: var(--accent); }
+
+/* title */
+.layout-title { justify-content: space-between; }
+.layout-title h1 { font-size: var(--t-display); max-width: 10ch; margin: 0; }
+.layout-title .sub { font-size: 40px; max-width: 34ch; color: var(--ink); }
+.layout-title svg { position: absolute; right: 5%; bottom: 10%; width: 56%; }
+
+/* statement */
+.layout-statement { justify-content: center; }
+.layout-statement h1 { font-size: 104px; max-width: 16ch; }
+.layout-statement p { font-size: 40px; color: var(--muted); max-width: 40ch; }
+
+/* three appliances */
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 56px; margin-top: auto; }
+.trio .card { border-top: 4px solid var(--ink); padding-top: 28px; }
+.trio h2 { margin-bottom: 0.6em; }
+.trio .human { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 3px; font-size: 32px; }
+.trio .machine { margin-top: 0.9em; font-weight: 650; font-size: 34px; }
+.trio .machine::before { content: ""; display: inline-block; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); border: 4px solid var(--ink); margin-right: 14px; vertical-align: -2px; }
+
+/* split */
+.layout-split { display: grid; grid-template-columns: 7fr 5fr; grid-template-rows: auto 1fr; column-gap: 6%; }
+.layout-split > header { grid-column: 1 / -1; }
+.layout-split ul { list-style: none; }
+.layout-split li { padding: 22px 0; border-bottom: 2px solid var(--rule); }
+.layout-split li strong { font-weight: 750; }
+
+/* diagram */
+.layout-diagram svg { flex: 1; width: 100%; }
+.layout-diagram text { font-family: "Archivo", sans-serif; }
+
+/* number */
+.layout-number { justify-content: center; }
+.layout-number .big { font-family: var(--font-display); font-weight: 900; font-stretch: 125%; font-size: 340px; line-height: .85; letter-spacing: -0.03em; }
+.layout-number .big span { display: inline-block; background: var(--accent); padding: .06em .12em .12em; }
+.layout-number h2 { line-height: 1.4; margin-top: 1em; max-width: 30ch; font-weight: 600; font-stretch: 100%; }
+.layout-number kbd { font: inherit; font-weight: 800; border: 3px solid var(--ink); border-radius: 8px; padding: 0 10px; }
+
+/* question swap */
+.layout-question { justify-content: center; gap: 48px; }
+.layout-question .old { font-size: 64px; color: var(--muted); text-decoration: line-through; text-decoration-thickness: 5px; font-weight: 600; }
+.layout-question .new { font-size: 96px; font-weight: 850; font-stretch: 118%; line-height: 1.02; max-width: 18ch; }
+
+/* closing */
+.layout-closing { background: var(--ink); color: var(--bg); justify-content: space-between; }
+.layout-closing h1 { font-size: 130px; max-width: 12ch; }
+.layout-closing .skills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; font-size: 30px; }
+.layout-closing .skills b { display: block; font-size: 36px; color: var(--accent); margin-bottom: 8px; }
+.layout-closing .repo { font-size: 34px; font-weight: 650; }
+/* =====================================================================
+   ENGINE STYLES: generally leave alone.
+   ===================================================================== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #0d0d0d; overflow: hidden; }
+#deck { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); transform-origin: 0 0; }
+.slide { position: absolute; inset: 0; overflow: hidden; transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), visibility 0s linear var(--dur); visibility: hidden; opacity: 0; }
+.slide.active { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; z-index: 2; }
+.slide .notes { display: none; }
+
+/* transitions: data-transition on a slide (or on #deck as the default) */
+.slide[data-transition="slide"].past   { transform: translateX(-100%); opacity: 1; }
+.slide[data-transition="slide"].future { transform: translateX(100%);  opacity: 1; }
+.slide[data-transition="zoom"].past    { transform: scale(1.08); }
+.slide[data-transition="zoom"].future  { transform: scale(.92); }
+.slide[data-transition="rise"].future  { transform: translateY(6%); }
+.slide[data-transition="none"]         { transition: none; }
+
+/* builds: [data-build] elements reveal one per "next" press */
+[data-build] { transition: opacity calc(var(--dur) * .7) var(--ease), transform calc(var(--dur) * .7) var(--ease); }
+[data-build].hidden { opacity: 0; transform: translateY(16px); }
+[data-build="dim"].hidden { opacity: .25; transform: none; }
+
+/* chrome */
+#progress { position: fixed; left: 0; bottom: 0; height: 4px; background: var(--accent); width: 0; transition: width .3s; z-index: 20; }
+#counter { position: fixed; right: 16px; bottom: 12px; font: 12px/1 ui-monospace, monospace; color: #888; z-index: 20; }
+#notes-panel { position: fixed; left: 0; right: 0; bottom: 0; max-height: 38vh; overflow: auto; background: rgba(15,15,15,.94); color: #eee; font: 18px/1.5 system-ui, sans-serif; padding: 18px 24px 28px; z-index: 30; display: none; }
+#notes-panel .next { margin-top: 10px; font-size: 14px; color: #999; }
+body.show-notes #notes-panel { display: block; }
+body.overview { overflow: auto; }
+body.overview #deck { position: relative; transform: none !important; width: 100%; height: auto; }
+body.overview .slide { visibility: visible; opacity: 1; transition: none; cursor: pointer; outline: 2px solid transparent; }
+body.overview .slide.active { outline-color: var(--accent); }
+body.overview [data-build].hidden { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) { :root { --dur: 1ms; } }
+
+@media print {
+  html, body { background: none; overflow: visible; height: auto; }
+  #deck { position: static; transform: none !important; width: auto; height: auto; }
+  .slide { position: relative; width: var(--w); height: var(--h); visibility: visible; opacity: 1; transform: none !important; transition: none; break-after: page; }
+  .slide:last-child { break-after: auto; }
+  [data-build].hidden { opacity: 1; transform: none; }
+  #progress, #counter, #notes-panel { display: none !important; }
+}
+
+</style>
+</head>
+<body>
+
+<main id="deck" data-width="1920" data-height="1080" data-transition="fade">
+
+  <section class="slide layout-title">
+    <h1>Build the disc, not the butler.</h1>
+    <p class="sub">What robotics learned about automation, and what it means for how we use AI at work.</p>
+    <svg viewBox="0 0 900 420" aria-hidden="true">
+      <g transform="translate(470 400)">
+        <rect class="ink" x="10" y="-170" width="250" height="80" rx="14"/>
+        <rect class="ink" x="10" y="-100" width="250" height="62" rx="10"/>
+        <rect class="ink" x="-6" y="-125" width="44" height="90" rx="12"/>
+        <rect class="ink" x="232" y="-125" width="44" height="90" rx="12"/>
+        <line class="ink-line" x1="30" y1="-35" x2="30" y2="0"/>
+        <line class="ink-line" x1="240" y1="-35" x2="240" y2="0"/>
+      </g>
+      <g transform="translate(640 400)">
+        <rect class="ink" x="-62" y="-30" width="124" height="28" rx="14"/>
+        <rect class="signal" x="-50" y="-30" width="100" height="10" rx="5" stroke="#16191d" stroke-width="4"/>
+      </g>
+      <line class="ink-line" x1="0" y1="400" x2="900" y2="400"/>
+    </svg>
+    <aside class="notes">Open with the image: everyone has seen a robot vacuum slide under a couch. Nobody has seen a humanoid robot push an upright vacuum, and there's a reason for that.</aside>
+  </section>
+
+  <section class="slide layout-statement" data-transition="rise">
+    <h1>For fifty years we pictured robots doing chores the way we do them.</h1>
+    <p>A butler with arms, pushing the same vacuum you own.</p>
+    <aside class="notes">Every sci-fi kitchen had a humanoid robot holding a sponge. That isn't what shipped.</aside>
+  </section>
+
+  <section class="slide">
+    <p class="fig">What actually shipped</p>
+    <h1>The winners automated the job, not the person doing it.</h1>
+    <div class="trio">
+      <div class="card" data-build>
+        <h2>Dishes</h2>
+        <p class="human">A robot arm scrubbing one plate at a time</p>
+        <p class="machine">Spray jets that wash a full rack at once</p>
+      </div>
+      <div class="card" data-build>
+        <h2>Laundry</h2>
+        <p class="human">A machine working a washboard</p>
+        <p class="machine">A spinning drum</p>
+      </div>
+      <div class="card" data-build>
+        <h2>Floors</h2>
+        <p class="human">A humanoid pushing an upright vacuum</p>
+        <p class="machine">A disc that fits under the couch</p>
+      </div>
+    </div>
+    <aside class="notes">Walk through each one. In every case the human tool had a shape that only made sense because a human was holding it. Remove the human and the shape goes too.</aside>
+  </section>
+
+  <section class="slide layout-statement" data-transition="rise">
+    <h1>A vacuum has a handle because a person had to hold it.</h1>
+    <p>Take the person away and the handle is just in the way.</p>
+  </section>
+
+  <section class="slide layout-split">
+    <header><p class="fig">Fig. 1, the butler</p><h1>PowerPoint is a handle.</h1></header>
+    <ul>
+      <li data-build><strong>Built for a mouse.</strong> Drag a box, nudge a font, click through menus.</li>
+      <li data-build><strong>Familiar to viewers</strong>, so it became the default for every kind of message.</li>
+      <li data-build><strong>Awkward for AI.</strong> A complex file format that needs a special library, an MCP server, or Copilot.</li>
+    </ul>
+    <svg viewBox="0 0 420 520" aria-hidden="true" style="align-self:end">
+      <g transform="translate(150 500) scale(1.15)">
+        <rect class="ink" x="-30" y="-150" width="22" height="150" rx="8"/>
+        <rect class="ink" x="8" y="-150" width="22" height="150" rx="8"/>
+        <rect class="ink" x="-46" y="-292" width="92" height="146" rx="12"/>
+        <line class="ink-line" x1="0" y1="-372" x2="0" y2="-398"/>
+        <circle cx="0" cy="-404" r="7" fill="#5e7a94" stroke="#16191d" stroke-width="4"/>
+        <rect class="ink" x="-38" y="-372" width="76" height="70" rx="10"/>
+        <rect x="-27" y="-362" width="54" height="50" rx="6" fill="#16191d"/>
+        <path d="M 0 -350 A 13 13 0 1 1 -13 -337" stroke="#f5c518" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path class="ink-line" d="M 34 -262 Q 70 -250 96 -222"/>
+        <line class="ink-line" x1="100" y1="-226" x2="158" y2="-120"/>
+        <rect class="ink" x="140" y="-140" width="44" height="118" rx="16"/>
+        <rect class="ink" x="128" y="-26" width="104" height="26" rx="6"/>
+      </g>
+      <line class="ink-line" x1="0" y1="500" x2="420" y2="500"/>
+    </svg>
+    <aside class="notes">Be fair to PowerPoint: it's familiar and anyone can make one. That's exactly why it's a human tool. Making AI drive it is building the butler.</aside>
+  </section>
+
+  <section class="slide layout-diagram">
+    <p class="fig">Fig. 2, the disc</p>
+    <h1>AI already speaks the language of the web.</h1>
+    <svg viewBox="0 0 1560 560" aria-label="One HTML source produces a slide deck, a PDF, a GIF, and an interactive guide">
+      <g>
+        <rect x="10" y="200" width="490" height="160" rx="80" fill="#f5c518" stroke="#16191d" stroke-width="5"/>
+        <text x="255" y="295" text-anchor="middle" font-size="44" font-weight="850" style="font-stretch:118%">HTML, CSS, JS</text>
+      </g>
+      <g data-build>
+        <path class="ink-line" d="M 500 280 C 640 280 620 60 800 60"/>
+        <rect class="ink" x="800" y="10" width="720" height="100" rx="12"/>
+        <text x="840" y="74" font-size="40" font-weight="700">A slide deck, like this one</text>
+      </g>
+      <g data-build>
+        <path class="ink-line" d="M 500 280 C 640 280 620 205 800 205"/>
+        <rect class="ink" x="800" y="155" width="720" height="100" rx="12"/>
+        <text x="840" y="219" font-size="40" font-weight="700">A PDF on custom stationery</text>
+      </g>
+      <g data-build>
+        <path class="ink-line" d="M 500 280 C 640 280 620 355 800 355"/>
+        <rect class="ink" x="800" y="305" width="720" height="100" rx="12"/>
+        <text x="840" y="369" font-size="40" font-weight="700">A looping GIF</text>
+      </g>
+      <g data-build>
+        <path class="ink-line" d="M 500 280 C 640 280 620 500 800 500"/>
+        <rect class="ink" x="800" y="450" width="720" height="100" rx="12"/>
+        <text x="840" y="514" font-size="40" font-weight="700">An interactive guide or demo</text>
+      </g>
+    </svg>
+    <aside class="notes">Building a custom interactive demo used to take a developer days, so nobody did it for a single audience. Now it takes minutes. The constraint that made us settle for static decks is gone.</aside>
+  </section>
+
+  <section class="slide layout-number" data-transition="zoom">
+    <div class="big"><span>1 file</span></div>
+    <h2>This deck is a single HTML file. Press <kbd>O</kbd> for the overview or <kbd>N</kbd> for speaker notes.</h2>
+    <aside class="notes">No PowerPoint was harmed in the making of this deck. It also exported itself to PDF with one command.</aside>
+  </section>
+
+  <section class="slide layout-question">
+    <p class="old">How can AI help me make this faster?</p>
+    <p class="new" data-build>Now that making things is cheap, what should this actually be?</p>
+    <aside class="notes">This is the question to leave people with. The format we default to is often just the format that used to be affordable.</aside>
+  </section>
+
+  <section class="slide layout-closing">
+    <h1>Build the disc, not the butler.</h1>
+    <div class="skills">
+      <div><b>ai-slide-deck</b>Decks like this one, exported to PDF</div>
+      <div><b>ai-pdf</b>Documents on custom stationery</div>
+      <div><b>ai-gif</b>Looping motion graphics</div>
+    </div>
+    <p class="repo">Claude Code skills: github.com/htank898/ai-first-comms</p>
+  </section>
+
+</main>
+
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="notes-panel"></div>
+<script>
+/* Deck engine. Keys: ←/→ space PgUp/PgDn  Home/End  F fullscreen  N notes  O overview  Esc
+   API (used by render-deck-pdf.mjs): window.deck.go(index, step = 0 | Infinity), .count */
+(() => {
+  const deck = document.getElementById("deck");
+  const W = +deck.dataset.width || 1920, H = +deck.dataset.height || 1080;
+  const root = document.documentElement;
+  root.style.setProperty("--w", W + "px"); root.style.setProperty("--h", H + "px");
+  const sheet = document.createElement("style");
+  sheet.textContent = `@page { size: ${W}px ${H}px; margin: 0; }`;
+  document.head.appendChild(sheet);
+
+  const slides = [...deck.querySelectorAll(":scope > .slide")];
+  slides.forEach((s) => { if (!s.dataset.transition) s.dataset.transition = deck.dataset.transition || "fade"; });
+  const builds = slides.map((s) => [...s.querySelectorAll("[data-build]")]);
+  const progress = document.getElementById("progress");
+  const counter = document.getElementById("counter");
+  const notesPanel = document.getElementById("notes-panel");
+  let cur = 0, step = 0;
+
+  function fit() {
+    if (document.body.classList.contains("overview")) return layoutOverview();
+    const k = Math.min(innerWidth / W, innerHeight / H);
+    deck.style.transform = `translate(${(innerWidth - W * k) / 2}px, ${(innerHeight - H * k) / 2}px) scale(${k})`;
+  }
+
+  function render() {
+    slides.forEach((s, i) => {
+      s.classList.toggle("active", i === cur);
+      s.classList.toggle("past", i < cur);
+      s.classList.toggle("future", i > cur);
+    });
+    builds[cur].forEach((b, i) => b.classList.toggle("hidden", i >= step));
+    progress.style.width = (slides.length > 1 ? (cur / (slides.length - 1)) * 100 : 100) + "%";
+    counter.textContent = `${cur + 1} / ${slides.length}`;
+    const n = slides[cur].querySelector(".notes");
+    const next = slides[cur + 1]?.querySelector("h1,h2,blockquote");
+    notesPanel.innerHTML = (n ? n.innerHTML : "<em>No notes for this slide.</em>") +
+      (next ? `<div class="next">Next: ${next.textContent.trim()}</div>` : "");
+    if (location.hash !== "#/" + (cur + 1)) history.replaceState(null, "", "#/" + (cur + 1));
+  }
+
+  function go(i, s = 0) {
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    step = s === Infinity ? builds[cur].length : Math.max(0, Math.min(builds[cur].length, s));
+    render();
+  }
+  const next = () => (step < builds[cur].length ? go(cur, step + 1) : cur < slides.length - 1 && go(cur + 1, 0));
+  const prev = () => (step > 0 ? go(cur, step - 1) : cur > 0 && go(cur - 1, Infinity));
+
+  function layoutOverview() {
+    const cols = Math.max(2, Math.floor(innerWidth / 360)), gap = 24;
+    const tw = (innerWidth - gap * (cols + 1)) / cols, k = tw / W, th = H * k;
+    slides.forEach((s, i) => {
+      const x = gap + (i % cols) * (tw + gap), y = gap + Math.floor(i / cols) * (th + gap);
+      s.style.transformOrigin = "0 0";
+      s.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
+    });
+    deck.style.height = gap + Math.ceil(slides.length / cols) * (th + gap) + "px";
+  }
+  function toggleOverview(force) {
+    const on = document.body.classList.toggle("overview", force);
+    if (!on) { slides.forEach((s) => { s.style.transform = ""; s.style.transformOrigin = ""; }); deck.style.height = ""; }
+    fit();
+  }
+
+  addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); next(); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); prev(); }
+    else if (k === "Home") go(0);
+    else if (k === "End") go(slides.length - 1, Infinity);
+    else if (k === "f" || k === "F") document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen?.();
+    else if (k === "n" || k === "N") document.body.classList.toggle("show-notes");
+    else if (k === "o" || k === "O") toggleOverview();
+    else if (k === "Escape") toggleOverview(false);
+  });
+  deck.addEventListener("click", (e) => {
+    if (e.target.closest("a, button, input, video, [data-no-advance]")) return;
+    if (document.body.classList.contains("overview")) {
+      const s = e.target.closest(".slide"); if (s) { toggleOverview(false); go(slides.indexOf(s), 0); }
+      return;
+    }
+    e.clientX > innerWidth / 3 ? next() : prev();
+  });
+  let tx = null;
+  addEventListener("touchstart", (e) => { tx = e.touches[0].clientX; }, { passive: true });
+  addEventListener("touchend", (e) => {
+    if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (Math.abs(dx) > 40) dx < 0 ? next() : prev();
+  });
+  addEventListener("resize", fit);
+  addEventListener("hashchange", () => { const n = parseInt(location.hash.slice(2)); if (n && n - 1 !== cur) go(n - 1); });
+
+  window.deck = { go, next, prev, get count() { return slides.length; }, width: W, height: H };
+  const start = parseInt(location.hash.slice(2));
+  go(start ? start - 1 : 0);
+  fit();
+})();
+</script>
+</body>
+</html>

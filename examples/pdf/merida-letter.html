@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mérida Letter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Yeseva+One&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  /* A trip announcement on stationery borrowed from Mérida's painted facades:
+     blush-pink plaster paper, indigo ink, cenote turquoise, ochre, papel picado. */
+  @page { size: 8.5in 11in; margin: 0; }
+  :root {
+    --paper-w: 8.5in;
+    --paper-h: 11in;
+    --margin: 0.9in;
+
+    --paper: #f8e8e2;
+    --ink: #23264a;
+    --muted: #6b5e74;
+    --pink: #e0688a;
+    --cenote: #1d9aa0;
+    --ochre: #dea02f;
+    --rule: #e7c9c1;
+
+    --font-display: "Yeseva One", Georgia, serif;
+    --font-body: "Spectral", Georgia, serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { background: #cfc8c4; font-family: var(--font-body); color: var(--ink); }
+  .page { position: relative; width: var(--paper-w); height: var(--paper-h); margin: 0.4in auto; overflow: hidden; background: var(--paper); box-shadow: 0 2px 18px rgba(0,0,0,.18); }
+  @media print { body { background: none; } .page { margin: 0; box-shadow: none; } }
+
+  /* plaster texture: two faint radial washes, static */
+  .stationery { position: absolute; inset: 0; pointer-events: none; }
+  .stationery .wash { position: absolute; inset: 0;
+    background:
+      radial-gradient(60% 40% at 15% 85%, rgba(29,154,160,.07), transparent 70%),
+      radial-gradient(50% 35% at 90% 20%, rgba(222,160,47,.08), transparent 70%); }
+  .stationery .picado { position: absolute; left: 0; top: 0; width: 100%; height: 1.45in; }
+  .stationery .stamp { position: absolute; right: 0.7in; bottom: 0.7in; width: 1.55in; transform: rotate(4deg); }
+  .stationery .postmark { position: absolute; right: 1.6in; bottom: 0.75in; width: 2.1in; opacity: .8; }
+  .stationery .edge { position: absolute; left: 0; right: 0; bottom: 0; height: 0.18in; background: repeating-linear-gradient(90deg, var(--cenote) 0 0.6in, var(--ochre) 0.6in 1.2in, var(--pink) 1.2in 1.8in); }
+
+  .content { position: absolute; left: var(--margin); right: var(--margin); top: 1.9in; bottom: 1.1in; display: flex; flex-direction: column; }
+  h1 { font-family: var(--font-display); font-weight: 400; font-size: 36pt; line-height: 1.05; color: var(--ink); }
+  .dateline { margin-top: 8pt; font-style: italic; font-size: 12pt; color: var(--muted); }
+  .body { margin-top: 0.36in; font-size: 12.5pt; line-height: 1.62; max-width: 5.6in; }
+  .body p + p { margin-top: 0.75em; }
+  .plan { margin-top: 0.3in; width: 4.4in; border-left: 3pt solid var(--cenote); padding: 2pt 0 2pt 14pt; }
+  .plan h2 { font-family: var(--font-display); font-weight: 400; font-size: 15pt; color: var(--cenote); margin-bottom: 4pt; }
+  .plan dl { display: grid; grid-template-columns: 0.95in 1fr; row-gap: 3pt; font-size: 11pt; line-height: 1.4; }
+  .plan dt { font-weight: 600; }
+  .signoff { margin-top: auto; font-size: 13pt; }
+  .signoff .name { font-family: var(--font-display); font-size: 24pt; color: var(--pink); display: block; margin-top: 2pt; }
+</style>
+</head>
+<body>
+
+<section class="page">
+  <div class="stationery">
+    <div class="wash"></div>
+
+    <!-- Papel picado: a string of cut-paper flags across the top edge -->
+    <svg class="picado" viewBox="0 0 850 145" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <g id="flag-cuts" fill="#f8e8e2">
+          <circle cx="0" cy="38" r="9"/>
+          <path d="M -20 62 l 10 -10 l 10 10 l 10 -10 l 10 10"  stroke="#f8e8e2" stroke-width="4" fill="none"/>
+          <circle cx="-22" cy="22" r="3.5"/><circle cx="22" cy="22" r="3.5"/>
+          <rect x="-4" y="74" width="8" height="8" transform="rotate(45 0 78)"/>
+        </g>
+      </defs>
+      <path d="M 0 14 Q 425 34 850 14" stroke="#23264a" stroke-width="1.6" fill="none"/>
+      <g id="flags"></g>
+    </svg>
+
+    <!-- Postage stamp -->
+    <svg class="stamp" viewBox="0 0 150 180" aria-hidden="true">
+      <defs>
+        <mask id="perf">
+          <rect width="150" height="180" fill="#fff"/>
+          <g id="holes" fill="#000"></g>
+        </mask>
+      </defs>
+      <g mask="url(#perf)">
+        <rect width="150" height="180" fill="#fffaf6"/>
+        <rect x="12" y="12" width="126" height="132" fill="#1d9aa0"/>
+        <!-- cenote: sunlight shaft into round water -->
+        <path d="M 12 12 H 138 V 70 Q 75 40 12 70 Z" fill="#23264a"/>
+        <path d="M 62 12 L 88 12 L 104 112 L 46 112 Z" fill="#dea02f" opacity=".55"/>
+        <ellipse cx="75" cy="118" rx="54" ry="16" fill="#7fd0cf"/>
+        <path d="M 22 60 q 8 -14 18 -4 q 6 -12 16 -2" stroke="#1d9aa0" stroke-width="3" fill="none"/>
+        <path d="M 96 54 q 8 -12 18 -4 q 8 -10 16 2" stroke="#1d9aa0" stroke-width="3" fill="none"/>
+        <text x="75" y="166" text-anchor="middle" font-family="Yeseva One, serif" font-size="17" fill="#23264a">Yucatán</text>
+        <text x="132" y="34" text-anchor="end" font-family="Yeseva One, serif" font-size="16" fill="#f8e8e2">15</text>
+      </g>
+    </svg>
+
+    <!-- Postmark with wavy cancellation -->
+    <svg class="postmark" viewBox="0 0 240 120" aria-hidden="true" fill="none" stroke="#23264a" stroke-width="2">
+      <circle cx="60" cy="60" r="44"/>
+      <circle cx="60" cy="60" r="34"/>
+      <path id="pm-arc" d="M 26 60 A 34 34 0 0 1 94 60" stroke="none"/>
+      <text font-family="Spectral, serif" font-size="11" fill="#23264a" stroke="none" letter-spacing="1.5"><textPath href="#pm-arc" startOffset="50%" text-anchor="middle">MÉRIDA, YUC.</textPath></text>
+      <text x="60" y="70" text-anchor="middle" font-family="Spectral, serif" font-size="13" fill="#23264a" stroke="none">2027</text>
+      <path d="M 110 40 q 16 -10 32 0 t 32 0 t 32 0 t 32 0"/>
+      <path d="M 110 60 q 16 -10 32 0 t 32 0 t 32 0 t 32 0"/>
+      <path d="M 110 80 q 16 -10 32 0 t 32 0 t 32 0 t 32 0"/>
+    </svg>
+
+    <div class="edge"></div>
+  </div>
+
+  <div class="content">
+    <h1>Pack something linen.<br>We're going to Mérida.</h1>
+    <p class="dateline">A note for Sam, from Alex</p>
+
+    <div class="body">
+      <p>Dear Sam,</p>
+      <p>I've been sitting on this for a week and I can't anymore: the trip is booked. Seven days in the white city, with pastel streets, plazas that fill up after sundown, and a cenote nearly every afternoon.</p>
+      <p>I know you've wanted to see the Yucatán since we watched that documentary about the ruins, so I planned the whole thing around the places you kept pausing on. All you have to do is clear your calendar and remember sunscreen.</p>
+    </div>
+
+    <div class="plan">
+      <h2>The plan</h2>
+      <dl>
+        <dt>When</dt><dd>March 12 to 19</dd>
+        <dt>Where</dt><dd>A courtyard house near Paseo de Montejo</dd>
+        <dt>Day trips</dt><dd>Uxmal, Chichén Itzá, and the Cuzamá cenotes</dd>
+        <dt>Required</dt><dd>At least one marquesita a day</dd>
+      </dl>
+    </div>
+
+    <p class="signoff">Counting down already,<span class="name">Alex</span></p>
+  </div>
+</section>
+
+<script>
+  // Flags and stamp perforations are generated so the spacing is exact.
+  const NS = "http://www.w3.org/2000/svg";
+  const colors = ["#e0688a", "#1d9aa0", "#dea02f", "#23264a"];
+  const flags = document.getElementById("flags");
+  const n = 13, w = 850 / n;
+  for (let i = 0; i < n; i++) {
+    const cx = w * (i + 0.5), y = 14 + 20 * (1 - Math.pow((cx - 425) / 425, 2)) * 1 - 2;
+    const g = document.createElementNS(NS, "g");
+    g.setAttribute("transform", `translate(${cx.toFixed(1)} ${y.toFixed(1)}) rotate(${((i % 3) - 1) * 2})`);
+    const f = document.createElementNS(NS, "path");
+    const hw = w / 2 - 5;
+    f.setAttribute("d", `M ${-hw} 0 H ${hw} V 92 l ${-hw / 3} 14 l ${-hw / 3} -14 l ${-hw / 3} 14 l ${-hw / 3} -14 l ${-hw / 3} 14 l ${-hw / 3} -14 Z`);
+    f.setAttribute("fill", colors[i % colors.length]);
+    g.appendChild(f);
+    const cuts = document.createElementNS(NS, "use");
+    cuts.setAttribute("href", "#flag-cuts");
+    g.appendChild(cuts);
+    flags.appendChild(g);
+  }
+  const holes = document.getElementById("holes");
+  const hole = (x, y) => { const c = document.createElementNS(NS, "circle"); c.setAttribute("cx", x); c.setAttribute("cy", y); c.setAttribute("r", 4.2); holes.appendChild(c); };
+  for (let x = 5; x <= 150; x += 12.5) { hole(x, 0); hole(x, 180); }
+  for (let y = 5; y <= 180; y += 12.5) { hole(0, y); hole(150, y); }
+</script>
+</body>
+</html>

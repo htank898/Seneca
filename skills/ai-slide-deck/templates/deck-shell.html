@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deck Title</title>
+<!-- <link href="https://fonts.googleapis.com/css2?family=...&display=swap" rel="stylesheet"> -->
+<style>
+/* =====================================================================
+   THEME: edit freely. Sizes are in design pixels at the deck's native
+   resolution (data-width x data-height on #deck); the engine scales the
+   whole deck to fit any screen.
+   ===================================================================== */
+:root {
+  /* Neutral placeholders: replace with the deck's own direction. */
+  --bg: #ffffff;
+  --ink: #1f2328;
+  --muted: #5b6470;
+  --accent: #2f5bea;
+  --accent-2: #12a37f;
+  --surface: #f2f4f7;
+  --rule: #d8dde3;
+
+  --font-display: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --pad: 6%;                 /* safe-area inset: keep content inside it */
+  --t-display: 120px;        /* title slides */
+  --t-h1: 72px;              /* slide headlines */
+  --t-h2: 44px;
+  --t-body: 34px;            /* never below 28px at 1920 wide */
+  --t-small: 24px;
+  --dur: 600ms;              /* transition duration */
+  --ease: cubic-bezier(.22,.61,.36,1);
+}
+
+/* ---------------- slide layouts (archetypes) ---------------- */
+.slide { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: var(--t-body); line-height: 1.35; padding: var(--pad); display: flex; flex-direction: column; }
+.slide h1, .slide h2 { font-family: var(--font-display); font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; }
+.slide h1 { font-size: var(--t-h1); margin-bottom: 0.5em; }
+.slide h2 { font-size: var(--t-h2); margin-bottom: 0.4em; }
+.slide p + p { margin-top: 0.6em; }
+.slide ul { padding-left: 1.1em; }
+.slide li + li { margin-top: 0.45em; }
+.eyebrow { font-size: var(--t-small); font-weight: 600; color: var(--accent); margin-bottom: 1em; }
+
+.layout-title { justify-content: center; }
+.layout-title h1 { font-size: var(--t-display); max-width: 14ch; }
+.layout-title .sub { font-size: var(--t-h2); color: var(--muted); }
+
+.layout-section { justify-content: flex-end; background: var(--ink); color: var(--bg); }
+.layout-section h1 { font-size: var(--t-display); }
+
+.layout-statement { justify-content: center; }
+.layout-statement h1 { font-size: 96px; max-width: 18ch; }
+
+.layout-split { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; column-gap: 6%; align-items: center; }
+.layout-split > header { grid-column: 1 / -1; align-self: end; }
+
+.layout-number { justify-content: center; }
+.layout-number .big { font-family: var(--font-display); font-size: 300px; line-height: .9; color: var(--accent); }
+
+.layout-quote { justify-content: center; }
+.layout-quote blockquote { font-family: var(--font-display); font-size: 72px; line-height: 1.15; max-width: 22ch; }
+.layout-quote cite { display: block; margin-top: 1em; font-size: var(--t-small); font-style: normal; color: var(--muted); }
+
+/* =====================================================================
+   ENGINE STYLES: generally leave alone.
+   ===================================================================== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #0d0d0d; overflow: hidden; }
+#deck { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); transform-origin: 0 0; }
+.slide { position: absolute; inset: 0; overflow: hidden; transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), visibility 0s linear var(--dur); visibility: hidden; opacity: 0; }
+.slide.active { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; z-index: 2; }
+.slide .notes { display: none; }
+
+/* transitions: data-transition on a slide (or on #deck as the default) */
+.slide[data-transition="slide"].past   { transform: translateX(-100%); opacity: 1; }
+.slide[data-transition="slide"].future { transform: translateX(100%);  opacity: 1; }
+.slide[data-transition="zoom"].past    { transform: scale(1.08); }
+.slide[data-transition="zoom"].future  { transform: scale(.92); }
+.slide[data-transition="rise"].future  { transform: translateY(6%); }
+.slide[data-transition="none"]         { transition: none; }
+
+/* builds: [data-build] elements reveal one per "next" press */
+[data-build] { transition: opacity calc(var(--dur) * .7) var(--ease), transform calc(var(--dur) * .7) var(--ease); }
+[data-build].hidden { opacity: 0; transform: translateY(16px); }
+[data-build="dim"].hidden { opacity: .25; transform: none; }
+
+/* chrome */
+#progress { position: fixed; left: 0; bottom: 0; height: 4px; background: var(--accent); width: 0; transition: width .3s; z-index: 20; }
+#counter { position: fixed; right: 16px; bottom: 12px; font: 12px/1 ui-monospace, monospace; color: #888; z-index: 20; }
+#notes-panel { position: fixed; left: 0; right: 0; bottom: 0; max-height: 38vh; overflow: auto; background: rgba(15,15,15,.94); color: #eee; font: 18px/1.5 system-ui, sans-serif; padding: 18px 24px 28px; z-index: 30; display: none; }
+#notes-panel .next { margin-top: 10px; font-size: 14px; color: #999; }
+body.show-notes #notes-panel { display: block; }
+body.overview { overflow: auto; }
+body.overview #deck { position: relative; transform: none !important; width: 100%; height: auto; }
+body.overview .slide { visibility: visible; opacity: 1; transition: none; cursor: pointer; outline: 2px solid transparent; }
+body.overview .slide.active { outline-color: var(--accent); }
+body.overview [data-build].hidden { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) { :root { --dur: 1ms; } }
+
+@media print {
+  html, body { background: none; overflow: visible; height: auto; }
+  #deck { position: static; transform: none !important; width: auto; height: auto; }
+  .slide { position: relative; width: var(--w); height: var(--h); visibility: visible; opacity: 1; transform: none !important; transition: none; break-after: page; }
+  .slide:last-child { break-after: auto; }
+  [data-build].hidden { opacity: 1; transform: none; }
+  #progress, #counter, #notes-panel { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- data-width/height: design resolution. 16:9 = 1920x1080, 4:3 = 1600x1200, 9:16 = 1080x1920, 1:1 = 1080x1080 -->
+<main id="deck" data-width="1920" data-height="1080" data-transition="fade">
+
+  <section class="slide layout-title">
+    <p class="eyebrow">Context line</p>
+    <h1>The deck's one-line promise</h1>
+    <p class="sub">Presenter, date</p>
+    <aside class="notes">Speaker notes go in an aside.notes on each slide. Press N to show them.</aside>
+  </section>
+
+  <section class="slide layout-statement" data-transition="rise">
+    <h1>One idea per slide. Say it as a sentence.</h1>
+  </section>
+
+  <section class="slide layout-split">
+    <header><h1>Two columns compare or explain</h1></header>
+    <div><ul>
+      <li data-build>Builds reveal one at a time</li>
+      <li data-build>Each press of → shows the next</li>
+      <li data-build>Print/PDF shows everything</li>
+    </ul></div>
+    <div style="background:var(--surface);border:2px solid var(--rule);border-radius:16px;aspect-ratio:4/3;display:grid;place-items:center;color:var(--muted)">visual</div>
+  </section>
+
+  <section class="slide layout-number" data-transition="zoom">
+    <div class="big">87%</div>
+    <h2>One number, one sentence of meaning</h2>
+  </section>
+
+  <section class="slide layout-quote">
+    <blockquote>A quotation slide gives the room a breath.</blockquote>
+    <cite>Attribution</cite>
+  </section>
+
+  <section class="slide layout-section">
+    <p class="eyebrow">Next</p>
+    <h1>Closing / call to action</h1>
+  </section>
+
+</main>
+
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="notes-panel"></div>
+
+<script>
+/* Deck engine. Keys: ←/→ space PgUp/PgDn  Home/End  F fullscreen  N notes  O overview  Esc
+   API (used by render-deck-pdf.mjs): window.deck.go(index, step = 0 | Infinity), .count */
+(() => {
+  const deck = document.getElementById("deck");
+  const W = +deck.dataset.width || 1920, H = +deck.dataset.height || 1080;
+  const root = document.documentElement;
+  root.style.setProperty("--w", W + "px"); root.style.setProperty("--h", H + "px");
+  const sheet = document.createElement("style");
+  sheet.textContent = `@page { size: ${W}px ${H}px; margin: 0; }`;
+  document.head.appendChild(sheet);
+
+  const slides = [...deck.querySelectorAll(":scope > .slide")];
+  slides.forEach((s) => { if (!s.dataset.transition) s.dataset.transition = deck.dataset.transition || "fade"; });
+  const builds = slides.map((s) => [...s.querySelectorAll("[data-build]")]);
+  const progress = document.getElementById("progress");
+  const counter = document.getElementById("counter");
+  const notesPanel = document.getElementById("notes-panel");
+  let cur = 0, step = 0;
+
+  function fit() {
+    if (document.body.classList.contains("overview")) return layoutOverview();
+    const k = Math.min(innerWidth / W, innerHeight / H);
+    deck.style.transform = `translate(${(innerWidth - W * k) / 2}px, ${(innerHeight - H * k) / 2}px) scale(${k})`;
+  }
+
+  function render() {
+    slides.forEach((s, i) => {
+      s.classList.toggle("active", i === cur);
+      s.classList.toggle("past", i < cur);
+      s.classList.toggle("future", i > cur);
+    });
+    builds[cur].forEach((b, i) => b.classList.toggle("hidden", i >= step));
+    progress.style.width = (slides.length > 1 ? (cur / (slides.length - 1)) * 100 : 100) + "%";
+    counter.textContent = `${cur + 1} / ${slides.length}`;
+    const n = slides[cur].querySelector(".notes");
+    const next = slides[cur + 1]?.querySelector("h1,h2,blockquote");
+    notesPanel.innerHTML = (n ? n.innerHTML : "<em>No notes for this slide.</em>") +
+      (next ? `<div class="next">Next: ${next.textContent.trim()}</div>` : "");
+    if (location.hash !== "#/" + (cur + 1)) history.replaceState(null, "", "#/" + (cur + 1));
+  }
+
+  function go(i, s = 0) {
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    step = s === Infinity ? builds[cur].length : Math.max(0, Math.min(builds[cur].length, s));
+    render();
+  }
+  const next = () => (step < builds[cur].length ? go(cur, step + 1) : cur < slides.length - 1 && go(cur + 1, 0));
+  const prev = () => (step > 0 ? go(cur, step - 1) : cur > 0 && go(cur - 1, Infinity));
+
+  function layoutOverview() {
+    const cols = Math.max(2, Math.floor(innerWidth / 360)), gap = 24;
+    const tw = (innerWidth - gap * (cols + 1)) / cols, k = tw / W, th = H * k;
+    slides.forEach((s, i) => {
+      const x = gap + (i % cols) * (tw + gap), y = gap + Math.floor(i / cols) * (th + gap);
+      s.style.transformOrigin = "0 0";
+      s.style.transform = `translate(${x}px, ${y}px) scale(${k})`;
+    });
+    deck.style.height = gap + Math.ceil(slides.length / cols) * (th + gap) + "px";
+  }
+  function toggleOverview(force) {
+    const on = document.body.classList.toggle("overview", force);
+    if (!on) { slides.forEach((s) => { s.style.transform = ""; s.style.transformOrigin = ""; }); deck.style.height = ""; }
+    fit();
+  }
+
+  addEventListener("keydown", (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key;
+    if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(k)) { e.preventDefault(); next(); }
+    else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(k)) { e.preventDefault(); prev(); }
+    else if (k === "Home") go(0);
+    else if (k === "End") go(slides.length - 1, Infinity);
+    else if (k === "f" || k === "F") document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen?.();
+    else if (k === "n" || k === "N") document.body.classList.toggle("show-notes");
+    else if (k === "o" || k === "O") toggleOverview();
+    else if (k === "Escape") toggleOverview(false);
+  });
+  deck.addEventListener("click", (e) => {
+    if (e.target.closest("a, button, input, video, [data-no-advance]")) return;
+    if (document.body.classList.contains("overview")) {
+      const s = e.target.closest(".slide"); if (s) { toggleOverview(false); go(slides.indexOf(s), 0); }
+      return;
+    }
+    e.clientX > innerWidth / 3 ? next() : prev();
+  });
+  let tx = null;
+  addEventListener("touchstart", (e) => { tx = e.touches[0].clientX; }, { passive: true });
+  addEventListener("touchend", (e) => {
+    if (tx === null) return; const dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (Math.abs(dx) > 40) dx < 0 ? next() : prev();
+  });
+  addEventListener("resize", fit);
+  addEventListener("hashchange", () => { const n = parseInt(location.hash.slice(2)); if (n && n - 1 !== cur) go(n - 1); });
+
+  window.deck = { go, next, prev, get count() { return slides.length; }, width: W, height: H };
+  const start = parseInt(location.hash.slice(2));
+  go(start ? start - 1 : 0);
+  fit();
+})();
+</script>
+</body>
+</html>

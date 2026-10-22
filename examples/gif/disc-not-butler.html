@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Disc, not butler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>
+  /* Patent-drawing / appliance-manual identity shared by the examples. */
+  :root {
+    --paper: #e6eae8;
+    --ink: #16191d;
+    --steel: #5e7a94;
+    --signal: #f5c518;
+    --dust: #9aa39f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #2a2e33; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); background: var(--paper); overflow: hidden; transform-origin: 0 0; }
+  svg { display: block; font-family: "Archivo", sans-serif; }
+  .ink { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: var(--paper); }
+  .ink-line { stroke: var(--ink); stroke-width: 4; stroke-linecap: round; fill: none; }
+  .head { font-weight: 850; font-stretch: 118%; font-size: 76px; fill: var(--ink); letter-spacing: -1px; }
+  .fig { font-weight: 700; font-stretch: 100%; font-size: 26px; fill: var(--steel); }
+  .cap { font-weight: 600; font-stretch: 100%; font-size: 30px; fill: var(--ink); }
+  .foot { font-weight: 500; font-stretch: 100%; font-size: 24px; fill: var(--steel); }
+  #hud { position: fixed; right: 12px; bottom: 12px; font: 12px/1.4 ui-monospace, monospace; color: #ccc; background: rgba(0,0,0,.6); padding: 6px 10px; border-radius: 6px; }
+  .capture #hud { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+<svg viewBox="0 0 1080 1080" width="1080" height="1080">
+  <defs>
+    <!-- Couch, drawn with its floor at y=0 and left edge at x=0. -->
+    <g id="couch">
+      <rect class="ink" x="10" y="-170" width="250" height="80" rx="14"/>
+      <rect class="ink" x="10" y="-100" width="250" height="62" rx="10"/>
+      <rect class="ink" x="-6" y="-125" width="44" height="90" rx="12"/>
+      <rect class="ink" x="232" y="-125" width="44" height="90" rx="12"/>
+      <line class="ink-line" x1="30" y1="-35" x2="30" y2="0"/>
+      <line class="ink-line" x1="240" y1="-35" x2="240" y2="0"/>
+    </g>
+  </defs>
+
+  <!-- Headline -->
+  <text class="head" x="64" y="112">Build the disc,</text>
+  <text class="head" x="64" y="190">not the butler.</text>
+
+  <!-- FIG. 1: the butler -->
+  <text class="fig" x="64" y="262">Fig. 1</text>
+  <text class="cap" x="150" y="262">AI driving PowerPoint</text>
+  <g id="dust1"></g>
+  <use href="#couch" x="760" y="560"/>
+  <g id="butler">
+    <g id="legL"><rect class="ink" x="-30" y="-150" width="22" height="150" rx="8"/></g>
+    <g id="legR"><rect class="ink" x="8" y="-150" width="22" height="150" rx="8"/></g>
+    <rect class="ink" x="-46" y="-292" width="92" height="146" rx="12"/>
+    <line class="ink-line" x1="0" y1="-372" x2="0" y2="-398"/>
+    <circle cx="0" cy="-404" r="7" fill="var(--steel)" stroke="var(--ink)" stroke-width="4"/>
+    <rect class="ink" x="-38" y="-372" width="76" height="70" rx="10"/>
+    <rect x="-27" y="-362" width="54" height="50" rx="6" fill="var(--ink)"/>
+    <path id="spinner" d="M 0 -350 A 13 13 0 1 1 -13 -337" stroke="var(--signal)" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <!-- arm to the vacuum handle -->
+    <path id="arm" class="ink-line" d="M 34 -262 Q 70 -250 96 -222"/>
+    <!-- upright vacuum -->
+    <g id="vacuum">
+      <line class="ink-line" x1="100" y1="-226" x2="158" y2="-120"/>
+      <rect class="ink" x="88" y="-238" width="26" height="14" rx="5" transform="rotate(-28 101 -231)"/>
+      <rect class="ink" x="140" y="-140" width="44" height="118" rx="16"/>
+      <rect class="ink" x="128" y="-26" width="104" height="26" rx="6"/>
+    </g>
+  </g>
+  <g id="bonk" stroke="var(--ink)" stroke-width="4" stroke-linecap="round">
+    <line x1="742" y1="516" x2="728" y2="494"/>
+    <line x1="756" y1="508" x2="758" y2="482"/>
+    <line x1="770" y1="514" x2="786" y2="494"/>
+  </g>
+  <line class="ink-line" x1="56" y1="560" x2="1024" y2="560"/>
+
+  <!-- FIG. 2: the disc -->
+  <text class="fig" x="64" y="662">Fig. 2</text>
+  <text class="cap" x="150" y="662">AI writing HTML, CSS, and JavaScript</text>
+  <g id="dust2"></g>
+  <g id="disc">
+    <rect class="ink" x="-62" y="-30" width="124" height="28" rx="14"/>
+    <rect x="-50" y="-30" width="100" height="10" rx="5" fill="var(--signal)" stroke="var(--ink)" stroke-width="4"/>
+    <circle cx="34" cy="-15" r="3.5" fill="var(--steel)"/>
+  </g>
+  <use href="#couch" x="760" y="960"/>
+  <line class="ink-line" x1="56" y1="960" x2="1024" y2="960"/>
+
+  <text class="foot" x="64" y="1036">One HTML file, rendered to this GIF. github.com/htank898/ai-first-comms</text>
+</svg>
+</div>
+<div id="hud">space pause · ←/→ scrub · <span id="tc">0.000</span></div>
+
+<script>
+window.MOTION = { width: 1080, height: 1080, fps: 24, seconds: 6 };
+
+const TAU = Math.PI * 2;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const ease = {
+  inOutCubic: (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  outBack: (x) => { const c = 1.70158, d = c + 1; return 1 + d * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); },
+  outCubic: (x) => 1 - Math.pow(1 - x, 3),
+};
+const $ = (s) => document.getElementById(s);
+const NS = "http://www.w3.org/2000/svg";
+
+// Seeded dust positions (deterministic).
+let seed = 7;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+function makeDust(groupId, floorY, n) {
+  const g = $(groupId), dots = [];
+  for (let i = 0; i < n; i++) {
+    const x = 90 + (i + rnd() * 0.8) * (920 / n), r = 3 + rnd() * 3;
+    const c = document.createElementNS(NS, "circle");
+    c.setAttribute("cx", x.toFixed(1)); c.setAttribute("cy", (floorY - r - 1).toFixed(1));
+    c.setAttribute("r", r.toFixed(1)); c.setAttribute("fill", "var(--dust)");
+    g.appendChild(c); dots.push({ c, x });
+  }
+  return dots;
+}
+const dust1 = makeDust("dust1", 560, 26);
+const dust2 = makeDust("dust2", 960, 26);
+
+// Disc: two passes per loop, entering from off-screen left.
+const DISC_FROM = -160, DISC_SPAN = 1400;
+
+window.renderFrame = function (t) {
+  /* ---- Butler: three approach-bonk-recoil cycles per loop ---- */
+  const p = (t * 3) % 1;
+  let push;
+  if (p < 0.62) push = ease.inOutCubic(p / 0.62);
+  else push = 1 - ease.outBack(seg(p, 0.62, 1));
+  const jitter = Math.sin(TAU * t * 41) * 1.6;
+  const bx = 488 + 72 * push + jitter;
+  const bob = Math.abs(Math.sin(TAU * t * 12)) * -5;
+  const tilt = p >= 0.62 && p < 0.8 ? -5 * Math.sin(Math.PI * seg(p, 0.62, 0.8)) : 1.5 * Math.sin(TAU * t * 6);
+  $("butler").setAttribute("transform", `translate(${bx.toFixed(2)} ${560 + bob}) scale(.82) rotate(${tilt.toFixed(2)} 0 -150)`);
+  const swing = 12 * Math.sin(TAU * t * 12);
+  $("legL").setAttribute("transform", `rotate(${swing.toFixed(2)} -19 -150)`);
+  $("legR").setAttribute("transform", `rotate(${(-swing).toFixed(2)} 19 -150)`);
+  $("spinner").setAttribute("transform", `rotate(${(360 * t * 6) % 360} 0 -337)`);
+  const bonk = p >= 0.6 && p < 0.78 ? ease.outCubic(1 - seg(p, 0.62, 0.78)) : 0;
+  $("bonk").setAttribute("opacity", bonk.toFixed(2));
+  $("bonk").setAttribute("transform", `translate(0 ${(6 * (1 - bonk)).toFixed(1)})`);
+
+  /* ---- Disc: glides under the couch, leaves clean floor behind ---- */
+  const u = (t * 2) % 1;
+  const dx = DISC_FROM + u * DISC_SPAN;
+  $("disc").setAttribute("transform", `translate(${dx.toFixed(2)} 960)`);
+  for (const d of dust2) {
+    const f = (d.x - DISC_FROM) / DISC_SPAN;
+    const since = (u - f + 1) % 1;               // fraction of a pass since the disc went by
+    const o = since < 0.5 ? 0 : seg(since, 0.5, 0.85);
+    d.c.setAttribute("opacity", o.toFixed(2));
+  }
+  $("tc").textContent = t.toFixed(3);
+};
+
+(function () {
+  const { width, height, fps, seconds } = window.MOTION;
+  const stage = document.getElementById("stage");
+  document.documentElement.style.setProperty("--w", width + "px");
+  document.documentElement.style.setProperty("--h", height + "px");
+  if (window.__CAPTURE__) { document.documentElement.classList.add("capture"); window.renderFrame(0); return; }
+  const fit = () => {
+    const k = Math.min(innerWidth / width, innerHeight / height);
+    stage.style.transform = `translate(${(innerWidth - width * k) / 2}px, ${(innerHeight - height * k) / 2}px) scale(${k})`;
+  };
+  addEventListener("resize", fit); fit();
+  let playing = true, t = 0, last = performance.now();
+  const step = 1 / (fps * seconds);
+  addEventListener("keydown", (e) => {
+    if (e.code === "Space") { playing = !playing; e.preventDefault(); }
+    if (e.key === "ArrowRight") { t = (t + step) % 1; window.renderFrame(t); }
+    if (e.key === "ArrowLeft") { t = (t - step + 1) % 1; window.renderFrame(t); }
+  });
+  (function tick(now) {
+    if (playing) { t = (t + (now - last) / 1000 / seconds) % 1; window.renderFrame(t); }
+    last = now; requestAnimationFrame(tick);
+  })(last);
+})();
+</script>
+</body>
+</html>
