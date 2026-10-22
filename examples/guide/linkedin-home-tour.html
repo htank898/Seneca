@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LinkedIn Home Tour</title>
+<style>
+/* =====================================================================
+   GUIDE LAYER: the coach marks, spotlight, and frame. Keep it visually
+   distinct from the replica so nobody mistakes the guide for the app.
+   ===================================================================== */
+:root {
+  --g-ink: #16191d;
+  --g-paper: #ffffff;
+  --g-signal: #f5c518;
+  --g-muted: #5e6a75;
+  --g-dim: rgba(12, 14, 18, .55);
+  --g-font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --g-bar: 44px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #2b2f35; font-family: var(--g-font); }
+
+#guide-bar { position: fixed; inset: 0 0 auto 0; height: var(--g-bar); display: flex; align-items: center; gap: 16px; padding: 0 16px; background: var(--g-ink); color: #fff; font-size: 14px; z-index: 50; }
+#guide-bar .title { font-weight: 700; }
+#guide-bar .note { color: #aab3bc; font-size: 12px; }
+#guide-bar .spacer { flex: 1; }
+#guide-bar button { font: inherit; font-size: 13px; color: #fff; background: transparent; border: 1px solid #4a525b; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+#guide-bar button:focus-visible, .coach button:focus-visible { outline: 3px solid var(--g-signal); outline-offset: 2px; }
+
+#viewport { position: fixed; inset: var(--g-bar) 0 0 0; overflow: hidden; }
+#stage { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); transform-origin: 0 0; overflow: hidden; }
+
+#spot { position: absolute; z-index: 40; pointer-events: none; border: 3px solid var(--g-signal); border-radius: 10px; box-shadow: 0 0 0 9999px var(--g-dim); transition: all .35s cubic-bezier(.22,.61,.36,1); }
+#spot.none { left: 50% !important; top: 50% !important; width: 0 !important; height: 0 !important; border-width: 0; }
+#spot.pulse::after { content: ""; position: absolute; inset: -9px; border-radius: 14px; border: 3px solid var(--g-signal); animation: ring 1.4s ease-out infinite; }
+@keyframes ring { from { opacity: .9; transform: scale(.96); } to { opacity: 0; transform: scale(1.06); } }
+
+.coach { position: fixed; z-index: 60; width: min(360px, calc(100vw - 32px)); background: var(--g-paper); color: var(--g-ink); border-radius: 12px; border: 2px solid var(--g-ink); box-shadow: 0 12px 40px rgba(0,0,0,.35); padding: 18px 18px 14px; transition: left .3s, top .3s; }
+.coach .step { font-size: 12px; font-weight: 700; color: var(--g-muted); }
+.coach h2 { margin: 6px 0 6px; font-size: 19px; line-height: 1.25; }
+.coach p { margin: 0; font-size: 15px; line-height: 1.5; }
+.coach .do { margin-top: 10px; font-size: 14px; font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
+.coach .do[hidden] { display: none; }
+.coach .do::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--g-signal); border: 2px solid var(--g-ink); transform: translateY(1px); }
+.coach .nav { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+.coach .bar { flex: 1; height: 4px; border-radius: 2px; background: #e5e8eb; overflow: hidden; }
+.coach .bar i { display: block; height: 100%; background: var(--g-ink); transition: width .3s; }
+.coach button { font: inherit; font-size: 14px; font-weight: 600; border-radius: 8px; padding: 7px 14px; cursor: pointer; border: 2px solid var(--g-ink); background: #fff; color: var(--g-ink); }
+.coach button.primary { background: var(--g-ink); color: #fff; }
+.coach button[hidden] { display: none; }
+.coach.nudge { animation: nudge .4s; }
+@keyframes nudge { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.coach .arrow { position: absolute; width: 14px; height: 14px; background: var(--g-paper); border: 2px solid var(--g-ink); transform: rotate(45deg); }
+
+#tip { position: fixed; z-index: 70; pointer-events: none; background: var(--g-ink); color: #fff; font-size: 13px; padding: 6px 9px; border-radius: 6px; max-width: 260px; opacity: 0; transition: opacity .12s; }
+#tip.on { opacity: 1; }
+
+@media (max-width: 760px) {
+  .coach { left: 16px !important; right: 16px; bottom: 16px; top: auto !important; width: auto; }
+  .coach .arrow { display: none; }
+  #guide-bar .note { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #spot, .coach { transition: none; }
+  #spot.pulse::after, .coach.nudge { animation: none; }
+}
+/* =====================================================================
+   REPLICA: LinkedIn desktop home screen, rebuilt from scratch.
+   Layout, spacing, and colors follow the real product; icons are drawn
+   here, there is no logo, and no LinkedIn code or assets are used.
+   ===================================================================== */
+.li { --blue: #0a66c2; --blue-dk: #004182; --text: rgba(0,0,0,.9); --sub: rgba(0,0,0,.6); --line: #e8e8e8; --bg: #f4f2ee;
+  position: absolute; inset: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.42 -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
+.li button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.li svg.i { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.li .av { border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 600; flex: none; }
+.av.a1 { background: #6d8f7a; } .av.a2 { background: #8b6fa8; } .av.a3 { background: #c98a4b; } .av.me { background: #3d6f99; }
+
+/* top nav */
+.li .top { position: absolute; inset: 0 0 auto 0; height: 52px; background: #fff; border-bottom: 1px solid var(--line); z-index: 5; }
+.li .top .in { width: 1128px; margin: 0 auto; height: 100%; display: flex; align-items: center; }
+.li .logo { width: 34px; height: 34px; border-radius: 4px; background: var(--blue); flex: none; }
+.li .search { margin-left: 8px; width: 280px; height: 34px; border-radius: 4px; background: #edf3f8; display: flex; align-items: center; gap: 8px; padding: 0 10px; color: var(--sub); }
+.li .search svg.i { width: 16px; height: 16px; }
+.li .navs { margin-left: auto; display: flex; height: 100%; }
+.li .nav { width: 80px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--sub); font-size: 12px; position: relative; }
+.li .nav span { margin-top: 1px; white-space: nowrap; }
+.li .nav.on { color: var(--text); }
+.li .nav.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--text); }
+.li .badge { position: absolute; top: 4px; left: 44px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: #cb112d; color: #fff; font-size: 12px; line-height: 18px; text-align: center; font-weight: 600; }
+.li .nav .av { width: 24px; height: 24px; font-size: 11px; }
+.li .divider { width: 1px; background: var(--line); margin: 0 4px; }
+.li .premium { width: 94px; font-size: 12px; color: #915907; text-decoration: underline; text-align: center; line-height: 1.3; align-self: center; }
+
+/* grid */
+.li .grid { position: absolute; top: 76px; left: 50%; transform: translateX(-50%); width: 1128px; display: grid; grid-template-columns: 225px 555px 300px; gap: 24px; align-items: start; }
+.li .card { background: #fff; border-radius: 8px; box-shadow: 0 0 0 1px rgba(140,140,140,.2); overflow: hidden; }
+
+/* left rail */
+.li .prof .banner { height: 58px; background: linear-gradient(120deg, #a8bccb, #c9d3c5); }
+.li .prof .av { width: 72px; height: 72px; font-size: 26px; margin: -38px 0 0 16px; border: 2px solid #fff; }
+.li .prof .who { padding: 8px 16px 14px; }
+.li .prof .name { font-size: 18px; font-weight: 600; }
+.li .prof .head { font-size: 12px; color: var(--text); margin-top: 2px; }
+.li .prof .loc { font-size: 12px; color: var(--sub); margin-top: 4px; }
+.li .stats { border-top: 1px solid var(--line); padding: 10px 0; }
+.li .stats div { display: flex; justify-content: space-between; padding: 3px 16px; font-size: 12px; font-weight: 600; color: var(--sub); }
+.li .stats b { color: var(--blue); }
+.li .links { margin-top: 8px; padding: 10px 0; }
+.li .links div { display: flex; align-items: center; gap: 10px; padding: 6px 16px; font-size: 12px; font-weight: 600; }
+.li .links svg.i { width: 16px; height: 16px; }
+
+/* start a post */
+.li .share { padding: 12px 16px 6px; }
+.li .share .row { display: flex; gap: 8px; align-items: center; }
+.li .share .av { width: 48px; height: 48px; font-size: 18px; }
+.li .share .pill { flex: 1; height: 48px; border: 1px solid #8c8c8c; border-radius: 35px; display: flex; align-items: center; padding: 0 16px; font-weight: 600; color: var(--sub); text-align: left; }
+.li .share .tools { display: flex; justify-content: space-around; margin-top: 4px; }
+.li .share .tools button { display: flex; align-items: center; gap: 8px; padding: 12px 8px; font-weight: 600; color: var(--sub); }
+.li .sort { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 12px; color: var(--sub); }
+.li .sort hr { flex: 1; border: 0; border-top: 1px solid #c7c7c7; margin: 0; }
+.li .sort b { color: var(--text); }
+
+/* feed post */
+.li .post { margin-bottom: 8px; }
+.li .post .hd { display: flex; gap: 8px; padding: 12px 16px 0; }
+.li .post .hd .av { width: 48px; height: 48px; font-size: 18px; }
+.li .post .meta { flex: 1; font-size: 12px; color: var(--sub); line-height: 1.35; }
+.li .post .meta b { display: block; font-size: 14px; color: var(--text); }
+.li .post .follow { color: var(--blue); font-weight: 600; align-self: start; padding: 4px 8px; }
+.li .post .txt { padding: 10px 16px 8px; }
+.li .post .media { height: 300px; background: #e6eae8; display: grid; place-items: center; }
+.li .post .social { display: flex; justify-content: space-between; padding: 8px 16px; font-size: 12px; color: var(--sub); }
+.li .post .reacts { display: flex; align-items: center; gap: 4px; }
+.li .post .reacts i { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #fff; margin-right: -6px; }
+.li .post .reacts span { margin-left: 8px; }
+.li .post .acts { display: flex; justify-content: space-between; border-top: 1px solid var(--line); margin: 0 12px; padding: 4px 0; }
+.li .post .acts button { display: flex; align-items: center; gap: 6px; padding: 10px 12px; font-weight: 600; color: var(--sub); border-radius: 4px; }
+
+/* right rail */
+.li .news { padding: 12px 0 6px; }
+.li .news h3 { margin: 0; padding: 0 16px; font-size: 16px; font-weight: 600; }
+.li .news .kick { padding: 4px 16px 6px; font-size: 14px; color: var(--sub); font-weight: 600; }
+.li .news ul { list-style: none; margin: 0; padding: 0; }
+.li .news li { padding: 6px 16px 6px 30px; position: relative; }
+.li .news li::before { content: ""; position: absolute; left: 15px; top: 13px; width: 6px; height: 6px; border-radius: 50%; background: #666; }
+.li .news li b { display: block; font-size: 14px; font-weight: 600; line-height: 1.3; }
+.li .news li span { font-size: 12px; color: var(--sub); }
+.li .news .more { padding: 6px 16px; font-weight: 600; color: var(--sub); }
+.li .foot { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 18px; font-size: 12px; color: var(--sub); line-height: 2; padding: 0 12px; }
+.li .foot span { margin: 0 6px; white-space: nowrap; }
+
+/* messaging overlay */
+.li .msg { position: absolute; right: 28px; bottom: 0; width: 288px; height: 48px; background: #fff; border-radius: 10px 10px 0 0; box-shadow: 0 0 0 1px rgba(140,140,140,.2), 0 4px 12px rgba(0,0,0,.15); display: flex; align-items: center; gap: 8px; padding: 0 12px; font-weight: 600; z-index: 6; }
+.li .msg .av { width: 32px; height: 32px; font-size: 13px; position: relative; }
+.li .msg .av::after { content: ""; position: absolute; right: -1px; bottom: -1px; width: 10px; height: 10px; border-radius: 50%; background: #01754f; border: 2px solid #fff; }
+.li .msg .sp { flex: 1; }
+.li .msg svg.i { width: 18px; height: 18px; color: var(--sub); }
+
+/* Me dropdown (state: me) */
+.li .medrop { display: none; position: absolute; top: 50px; left: calc(50% + 300px); width: 264px; background: #fff; border-radius: 8px 0 8px 8px; box-shadow: 0 0 0 1px rgba(140,140,140,.2), 0 4px 16px rgba(0,0,0,.2); z-index: 8; padding-bottom: 6px; }
+#stage.s-me .medrop { display: block; }
+.li .medrop .who { display: flex; gap: 8px; padding: 12px; }
+.li .medrop .who .av { width: 56px; height: 56px; font-size: 20px; }
+.li .medrop .who b { display: block; font-size: 16px; }
+.li .medrop .who span { font-size: 14px; }
+.li .medrop .vp { display: block; margin: 0 12px 10px; width: calc(100% - 24px); height: 26px; border: 1px solid var(--blue); border-radius: 16px; color: var(--blue); font-weight: 600; }
+.li .medrop h4 { margin: 0; padding: 10px 12px 4px; border-top: 1px solid var(--line); font-size: 16px; }
+.li .medrop a { display: block; padding: 4px 12px; color: var(--sub); font-size: 14px; }
+
+/* Composer modal (state: compose) */
+.li .scrim { display: none; position: absolute; inset: 0; background: rgba(0,0,0,.75); z-index: 9; }
+#stage.s-compose .scrim { display: block; }
+.li .composer { position: absolute; left: 50%; top: 64px; transform: translateX(-50%); width: 744px; height: 560px; background: #fff; border-radius: 8px; display: flex; flex-direction: column; }
+.li .composer .ch { display: flex; align-items: center; gap: 10px; padding: 20px 24px; }
+.li .composer .ch .av { width: 56px; height: 56px; font-size: 20px; }
+.li .composer .ch b { display: block; font-size: 20px; }
+.li .composer .ch span { font-size: 14px; color: var(--sub); }
+.li .composer .x { margin-left: auto; align-self: start; color: var(--sub); }
+.li .composer .area { flex: 1; padding: 4px 24px; font-size: 20px; color: var(--sub); }
+.li .composer .tb { display: flex; align-items: center; gap: 4px; padding: 0 16px 8px; color: var(--sub); }
+.li .composer .tb button { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; }
+.li .composer .ft { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 12px 24px; border-top: 1px solid var(--line); }
+.li .composer .postbtn { height: 32px; padding: 0 16px; border-radius: 16px; background: #e8e8e8; color: rgba(0,0,0,.35); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div id="guide-bar">
+  <span class="title">Guide: The LinkedIn home screen</span>
+  <span class="note">A practice replica for learning. Not affiliated with or endorsed by LinkedIn.</span>
+  <span class="spacer"></span>
+  <button type="button" id="g-restart">Restart</button>
+  <button type="button" id="g-explore">Explore freely</button>
+</div>
+
+<!-- shared icon shapes -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></symbol>
+  <symbol id="i-net" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.6 2.7-6 6-6s6 2.4 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14c3 0 5 2 5 5"/></symbol>
+  <symbol id="i-jobs" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M3 12h18"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4z"/><path d="M10 21h4"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><path d="M5 5h3v3H5zM10.5 5h3v3h-3zM16 5h3v3h-3zM5 10.5h3v3H5zM10.5 10.5h3v3h-3zM16 10.5h3v3h-3zM5 16h3v3H5zM10.5 16h3v3h-3zM16 16h3v3h-3z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 5 5"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></symbol>
+  <symbol id="i-photo" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m3 17 5-4 4 3 3-2 6 4"/></symbol>
+  <symbol id="i-article" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5z"/><path d="M8 10h8M8 14h8M8 18h5"/></symbol>
+  <symbol id="i-like" viewBox="0 0 24 24"><path d="M7 11v9H4v-9zM7 11l4-7c1.5 0 2.5 1 2.2 2.6L12.6 10H19a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 17.8 20H7"/></symbol>
+  <symbol id="i-comment" viewBox="0 0 24 24"><path d="M4 5h16v11h-8l-5 4v-4H4z"/></symbol>
+  <symbol id="i-repost" viewBox="0 0 24 24"><path d="M17 3l3 3-3 3"/><path d="M4 11V9a3 3 0 0 1 3-3h13M7 21l-3-3 3-3"/><path d="M20 13v2a3 3 0 0 1-3 3H4"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m21 3-9 18-2-8-8-2z"/><path d="m10 13 11-10"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M2 19c0-3 2.7-5 6-5s6 2 6 5M14 14.2c.6-.1 1.3-.2 2-.2 3.3 0 6 2 6 5"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0"/><circle cx="9" cy="10" r=".8"/><circle cx="15" cy="10" r=".8"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+</svg>
+
+<div id="viewport">
+  <div id="stage" data-width="1440" data-height="900">
+    <div class="li">
+
+      <header class="top">
+        <div class="in">
+          <div class="logo" data-guide="logo" data-tip="Logo: returns you to the home feed"></div>
+          <div class="search" data-guide="search" data-tip="Search people, jobs, companies, and posts">
+            <svg class="i"><use href="#i-search"/></svg>Search
+          </div>
+          <nav class="navs">
+            <button class="nav on" data-guide="home" data-tip="Home: your feed"><svg class="i"><use href="#i-home"/></svg><span>Home</span></button>
+            <button class="nav" data-guide="network" data-tip="My Network: invitations and people you may know"><svg class="i"><use href="#i-net"/></svg><span>My Network</span></button>
+            <button class="nav" data-guide="jobs" data-tip="Jobs: search, saved jobs, and alerts"><svg class="i"><use href="#i-jobs"/></svg><span>Jobs</span></button>
+            <button class="nav" data-guide="messaging" data-tip="Messaging: your inbox"><svg class="i"><use href="#i-msg"/></svg><span>Messaging</span></button>
+            <button class="nav" data-guide="notifications" data-tip="Notifications"><svg class="i"><use href="#i-bell"/></svg><span>Notifications</span><i class="badge">3</i></button>
+            <button class="nav" data-guide="me" data-tip="Me: your profile, settings, and sign-out"><span class="av me">JR</span><span>Me ▾</span></button>
+            <div class="divider"></div>
+            <button class="nav" data-guide="business" data-tip="For Business: hiring, ads, and learning tools"><svg class="i"><use href="#i-grid"/></svg><span>For Business ▾</span></button>
+            <button class="premium" data-guide="premium" data-tip="Premium subscription offer">Try Premium for free</button>
+          </nav>
+        </div>
+      </header>
+
+      <div class="grid">
+        <!-- left rail -->
+        <aside>
+          <div class="card prof" data-guide="profile-card" data-tip="Your profile summary">
+            <div class="banner"></div>
+            <div class="av me">JR</div>
+            <div class="who">
+              <div class="name">Jordan Rivera</div>
+              <div class="head">Operations lead at Northwind. Making onboarding less painful.</div>
+              <div class="loc">Austin, Texas</div>
+            </div>
+            <div class="stats" data-guide="profile-stats" data-tip="Who's looking at you and how far your posts travel">
+              <div>Profile viewers <b>48</b></div>
+              <div>Post impressions <b>312</b></div>
+            </div>
+          </div>
+          <div class="card links" data-guide="shortcuts" data-tip="Shortcuts: saved items, groups, events">
+            <div><svg class="i"><use href="#i-bookmark"/></svg>Saved items</div>
+            <div><svg class="i"><use href="#i-group"/></svg>Groups</div>
+            <div><svg class="i"><use href="#i-cal"/></svg>Events</div>
+          </div>
+        </aside>
+
+        <!-- feed -->
+        <main>
+          <div class="card share">
+            <div class="row">
+              <span class="av me">JR</span>
+              <button class="pill" data-guide="start-post" data-tip="Start a post">Start a post</button>
+            </div>
+            <div class="tools">
+              <button data-tip="Post a video"><svg class="i" style="color:#5f9b41"><use href="#i-video"/></svg>Video</button>
+              <button data-tip="Post a photo or GIF"><svg class="i" style="color:#378fe9"><use href="#i-photo"/></svg>Photo</button>
+              <button data-tip="Write a long-form article"><svg class="i" style="color:#e06847"><use href="#i-article"/></svg>Write article</button>
+            </div>
+          </div>
+          <div class="sort"><hr><span>Sort by: <b>Top ▾</b></span></div>
+
+          <article class="card post" data-guide="post">
+            <div class="hd">
+              <span class="av a1">MO</span>
+              <div class="meta"><b>Maya Okafor</b>Product designer. Robots, kitchens, and the space between.<br>2h · Edited</div>
+              <button class="follow" data-tip="Follow to see their posts in your feed">+ Follow</button>
+            </div>
+            <div class="txt">Nobody built a robot to push the vacuum. The best automation starts from the job, not from the person who used to do it.</div>
+            <div class="media">
+              <svg viewBox="0 0 555 300" width="555" height="300" aria-hidden="true">
+                <g transform="translate(250 250)" stroke="#16191d" stroke-width="3" fill="#e6eae8" stroke-linecap="round">
+                  <rect x="10" y="-130" width="190" height="60" rx="10"/><rect x="10" y="-78" width="190" height="48" rx="8"/>
+                  <rect x="-4" y="-96" width="34" height="68" rx="9"/><rect x="180" y="-96" width="34" height="68" rx="9"/>
+                  <line x1="26" y1="-28" x2="26" y2="0"/><line x1="184" y1="-28" x2="184" y2="0"/>
+                </g>
+                <g transform="translate(380 250)" stroke="#16191d" stroke-width="3"><rect x="-48" y="-22" width="96" height="21" rx="10" fill="#e6eae8"/><rect x="-38" y="-22" width="76" height="8" rx="4" fill="#f5c518"/></g>
+                <line x1="20" y1="250" x2="535" y2="250" stroke="#16191d" stroke-width="3"/>
+              </svg>
+            </div>
+            <div class="social"><span class="reacts"><i style="background:#378fe9"></i><i style="background:#df704d"></i><i style="background:#6dae4f"></i><span>Devin Shah and 127 others</span></span><span>14 comments · 6 reposts</span></div>
+            <div class="acts" data-guide="post-actions">
+              <button data-tip="React to the post"><svg class="i"><use href="#i-like"/></svg>Like</button>
+              <button data-tip="Add a comment"><svg class="i"><use href="#i-comment"/></svg>Comment</button>
+              <button data-tip="Share to your own feed"><svg class="i"><use href="#i-repost"/></svg>Repost</button>
+              <button data-tip="Send in a private message"><svg class="i"><use href="#i-send"/></svg>Send</button>
+            </div>
+          </article>
+
+          <article class="card post">
+            <div class="hd">
+              <span class="av a2">DS</span>
+              <div class="meta"><b>Devin Shah</b>Recruiter, data and AI roles<br>5h</div>
+              <button class="follow">+ Follow</button>
+            </div>
+            <div class="txt">We're hiring two analytics engineers. Remote friendly, US time zones. Comment or message me and I'll send details.</div>
+          </article>
+        </main>
+
+        <!-- right rail -->
+        <aside>
+          <div class="card news" data-guide="news" data-tip="Top stories picked by the news team">
+            <h3>Top stories</h3>
+            <div class="kick">Curated by the news team</div>
+            <ul>
+              <li><b>Hiring picks up in clean energy</b><span>3h ago · 12,408 readers</span></li>
+              <li><b>Four-day weeks get another trial</b><span>5h ago · 8,177 readers</span></li>
+              <li><b>What recruiters look for in AI skills</b><span>1d ago · 31,902 readers</span></li>
+              <li><b>Return-to-office deadlines slip again</b><span>1d ago · 6,540 readers</span></li>
+            </ul>
+            <div class="more">Show more ▾</div>
+          </div>
+          <div class="foot"><span>About</span><span>Accessibility</span><span>Help Center</span><span>Privacy &amp; Terms</span><span>Ad Choices</span><span>Advertising</span><span>Get the app</span><span>More</span></div>
+        </aside>
+      </div>
+
+      <div class="msg" data-guide="msg-overlay" data-tip="Messaging pop-up: chat without leaving the feed">
+        <span class="av me">JR</span>Messaging<span class="sp"></span>
+        <svg class="i"><use href="#i-dots"/></svg><svg class="i"><use href="#i-edit"/></svg><svg class="i"><use href="#i-up"/></svg>
+      </div>
+
+      <!-- Me dropdown -->
+      <div class="medrop" data-guide="me-menu">
+        <div class="who"><span class="av me">JR</span><div><b>Jordan Rivera</b><span>Operations lead at Northwind.</span></div></div>
+        <button class="vp" data-guide="view-profile">View Profile</button>
+        <h4>Account</h4>
+        <a data-guide="settings">Settings &amp; Privacy</a><a>Help</a><a>Language</a>
+        <h4>Manage</h4>
+        <a>Posts &amp; Activity</a><a>Job Posting Account</a>
+        <h4 style="font-size:14px;font-weight:400;color:rgba(0,0,0,.6)">Sign Out</h4>
+      </div>
+
+      <!-- Composer -->
+      <div class="scrim">
+        <div class="composer" data-guide="composer">
+          <div class="ch"><span class="av me">JR</span><div><b>Jordan Rivera ▾</b><span>Post to Anyone</span></div><button class="x"><svg class="i"><use href="#i-x"/></svg></button></div>
+          <div class="area" data-guide="compose-text">What do you want to talk about?</div>
+          <div class="tb">
+            <button><svg class="i"><use href="#i-smile"/></svg></button>
+          </div>
+          <div class="tb" style="padding-bottom:12px">
+            <button data-guide="compose-media"><svg class="i"><use href="#i-photo"/></svg></button>
+            <button><svg class="i"><use href="#i-cal"/></svg></button>
+            <button><svg class="i"><use href="#i-plus"/></svg></button>
+          </div>
+          <div class="ft"><svg class="i" style="color:rgba(0,0,0,.6)"><use href="#i-clock"/></svg><button class="postbtn" data-guide="compose-post">Post</button></div>
+        </div>
+      </div>
+
+    </div>
+    <div id="spot" class="none"></div>
+  </div>
+</div>
+
+<div class="coach" role="dialog" aria-live="polite" aria-labelledby="g-title">
+  <div class="arrow"></div>
+  <div class="step" id="g-step"></div>
+  <h2 id="g-title"></h2>
+  <p id="g-body"></p>
+  <div class="do" id="g-do" hidden></div>
+  <div class="nav">
+    <button type="button" id="g-back">Back</button>
+    <div class="bar"><i id="g-bar"></i></div>
+    <button type="button" class="primary" id="g-next">Next</button>
+  </div>
+</div>
+<div id="tip"></div>
+
+<script>
+window.GUIDE_STEPS = [
+  { target: null, title: "Welcome to your home screen",
+    body: "This is what you see every time you open LinkedIn on a computer. In about two minutes you'll know what every part of it does. Use Next, or press →." },
+  { target: "search", title: "Search",
+    body: "Find people, companies, jobs, posts, and groups. Type a name or a job title, then use the filters at the top of the results to narrow down." },
+  { target: "home", title: "Home",
+    body: "Brings you back to this feed from anywhere. The dark underline shows which section you're in." },
+  { target: "network", title: "My Network",
+    body: "Connection invitations wait here, along with people you may know. Accepting an invitation adds them to your network." },
+  { target: "jobs", title: "Jobs",
+    body: "Search for openings, see jobs recommended for you, and manage saved jobs and alerts." },
+  { target: "messaging", title: "Messaging",
+    body: "Your full inbox: conversations with connections, recruiters, and InMail." },
+  { target: "notifications", title: "Notifications",
+    body: "The red number is how many updates you haven't seen: reactions to your posts, comments, mentions, and who viewed your profile." },
+  { target: "me", title: "The Me menu", action: "click", do: "Click Me to open the menu",
+    body: "Your profile and account settings live under your photo." },
+  { target: "view-profile", title: "View Profile", states: ["me"], place: "left",
+    body: "Opens your profile, where you edit your headline, About section, and experience. <b>Settings &amp; Privacy</b> below it controls who can see what." },
+  { target: "profile-stats", title: "Your numbers",
+    body: "<b>Profile viewers</b> is how many people looked at your profile in the last 90 days. <b>Post impressions</b> is how many times your posts were seen in the last week." },
+  { target: "start-post", title: "Start a post", action: "click", do: "Click Start a post",
+    body: "This is where you share something with your network." },
+  { target: "compose-text", title: "Write your post", states: ["compose"], place: "below",
+    body: "Type here. The first two lines show before \"…see more\", so lead with the point." },
+  { target: "compose-media", title: "Add a photo, video, or GIF", states: ["compose"], place: "right",
+    body: "This button attaches media. GIFs play automatically in the feed, which makes them good at stopping the scroll." },
+  { target: "compose-post", title: "Post", states: ["compose"], place: "above",
+    body: "Stays grey until you've written something. Click it and your post goes to the audience shown under your name: <b>Anyone</b> means public." },
+  { target: "post-actions", title: "Reacting to posts", place: "right",
+    body: "<b>Like</b> (hold for more reactions), <b>Comment</b>, <b>Repost</b> to your own feed, or <b>Send</b> it privately. Comments help a post travel further than likes do." },
+  { target: "news", title: "Top stories", place: "left",
+    body: "Headlines picked by the news team. Click one to read the summary and the discussion around it." },
+  { target: "msg-overlay", title: "Messaging pop-up", place: "left",
+    body: "Chat without leaving the feed. Click the bar to expand it." },
+  { target: null, title: "That's the whole screen",
+    body: "Choose <b>Explore freely</b> to look around on your own. Hover anything and a label tells you what it does." },
+];
+</script>
+
+<script id="guide-engine">
+/* Guide engine (generally leave alone).
+   Keys: → / Enter next, ← back, Esc explore mode.
+   API: window.guide.go(i), .count, .explore() */
+(() => {
+  const steps = window.GUIDE_STEPS;
+  const stage = document.getElementById("stage");
+  const viewport = document.getElementById("viewport");
+  const spot = document.getElementById("spot");
+  const coach = document.querySelector(".coach");
+  const arrow = coach.querySelector(".arrow");
+  const $ = (id) => document.getElementById(id);
+  const W = +stage.dataset.width, H = +stage.dataset.height;
+  stage.style.setProperty("--w", W + "px"); stage.style.setProperty("--h", H + "px");
+  let i = 0, k = 1, exploring = false;
+
+  function fit() {
+    const vw = viewport.clientWidth, vh = viewport.clientHeight;
+    k = Math.min(vw / W, vh / H);
+    stage.style.transform = `translate(${(vw - W * k) / 2}px, ${(vh - H * k) / 2}px) scale(${k})`;
+    if (!exploring) place();
+  }
+
+  const target = () => steps[i].target && stage.querySelector(`[data-guide="${steps[i].target}"]`);
+
+  function place() {
+    const el = target();
+    coach.style.visibility = "visible";
+    if (!el) {
+      spot.className = "none";
+      arrow.style.display = "none";
+      const r = viewport.getBoundingClientRect();
+      coach.style.left = r.left + (r.width - coach.offsetWidth) / 2 + "px";
+      coach.style.top = r.top + (r.height - coach.offsetHeight) / 2 + "px";
+      return;
+    }
+    // spotlight in stage coordinates
+    const sr = stage.getBoundingClientRect(), er = el.getBoundingClientRect(), pad = 6;
+    spot.className = steps[i].action === "click" ? "pulse" : "";
+    spot.style.left = (er.left - sr.left) / k - pad + "px";
+    spot.style.top = (er.top - sr.top) / k - pad + "px";
+    spot.style.width = er.width / k + pad * 2 + "px";
+    spot.style.height = er.height / k + pad * 2 + "px";
+    // coach card in viewport coordinates, beside the target
+    if (innerWidth <= 760) return;
+    const cw = coach.offsetWidth, ch = coach.offsetHeight, gap = 18;
+    const room = { right: innerWidth - er.right, left: er.left, below: innerHeight - er.bottom, above: er.top };
+    let side = steps[i].place && steps[i].place !== "auto" ? steps[i].place
+      : room.right > cw + gap * 2 ? "right" : room.below > ch + gap * 2 ? "below" : room.left > cw + gap * 2 ? "left" : "above";
+    let x, y;
+    if (side === "right") { x = er.right + gap; y = er.top + er.height / 2 - ch / 2; }
+    if (side === "left") { x = er.left - gap - cw; y = er.top + er.height / 2 - ch / 2; }
+    if (side === "below") { x = er.left + er.width / 2 - cw / 2; y = er.bottom + gap; }
+    if (side === "above") { x = er.left + er.width / 2 - cw / 2; y = er.top - gap - ch; }
+    const cx = Math.max(12, Math.min(innerWidth - cw - 12, x));
+    const cy = Math.max(56, Math.min(innerHeight - ch - 12, y));
+    coach.style.left = cx + "px"; coach.style.top = cy + "px";
+    arrow.style.display = "block";
+    const ax = Math.max(16, Math.min(cw - 30, er.left + er.width / 2 - cx - 7));
+    const ay = Math.max(16, Math.min(ch - 30, er.top + er.height / 2 - cy - 7));
+    Object.assign(arrow.style, { left: "", right: "", top: "", bottom: "" });
+    if (side === "right") Object.assign(arrow.style, { left: "-9px", top: ay + "px", borderWidth: "0 0 2px 2px" });
+    if (side === "left") Object.assign(arrow.style, { right: "-9px", top: ay + "px", borderWidth: "2px 2px 0 0" });
+    if (side === "below") Object.assign(arrow.style, { top: "-9px", left: ax + "px", borderWidth: "2px 0 0 2px" });
+    if (side === "above") Object.assign(arrow.style, { bottom: "-9px", left: ax + "px", borderWidth: "0 2px 2px 0" });
+    arrow.style.borderStyle = "solid";
+  }
+
+  function go(n) {
+    exploring = false; document.body.classList.remove("exploring");
+    i = Math.max(0, Math.min(steps.length - 1, n));
+    const s = steps[i];
+    [...stage.classList].filter((c) => c.startsWith("s-")).forEach((c) => stage.classList.remove(c));
+    (s.states || []).forEach((st) => stage.classList.add("s-" + st));
+    $("g-step").textContent = `Step ${i + 1} of ${steps.length}`;
+    $("g-title").textContent = s.title;
+    $("g-body").innerHTML = s.body;
+    $("g-do").hidden = s.action !== "click";
+    $("g-do").textContent = s.do || "Click the highlighted item";
+    $("g-back").hidden = i === 0;
+    const last = i === steps.length - 1;
+    $("g-next").hidden = s.action === "click";
+    $("g-next").textContent = last ? "Explore freely" : "Next";
+    $("g-bar").style.width = ((i + 1) / steps.length) * 100 + "%";
+    spot.style.display = "";
+    requestAnimationFrame(() => { place(); (s.action === "click" ? coach : $("g-next")).focus?.({ preventScroll: true }); });
+  }
+  const next = () => (i === steps.length - 1 ? explore() : go(i + 1));
+
+  function explore() {
+    exploring = true; document.body.classList.add("exploring");
+    [...stage.classList].filter((c) => c.startsWith("s-")).forEach((c) => stage.classList.remove(c));
+    spot.style.display = "none"; coach.style.visibility = "hidden";
+  }
+
+  // During the tour only the target responds; elsewhere the card nudges.
+  stage.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (exploring) return;
+    const s = steps[i], el = target();
+    if (s.action === "click" && el && el.contains(e.target)) return next();
+    coach.classList.remove("nudge"); void coach.offsetWidth; coach.classList.add("nudge");
+  }, true);
+
+  $("g-next").addEventListener("click", next);
+  $("g-back").addEventListener("click", () => go(i - 1));
+  $("g-restart").addEventListener("click", () => go(0));
+  $("g-explore").addEventListener("click", explore);
+  addEventListener("keydown", (e) => {
+    if (e.key === "Escape") return explore();
+    if (exploring) return;
+    if (e.key === "Enter" && e.target.closest("button")) return;
+    if (e.key === "ArrowRight" || e.key === "Enter") { e.preventDefault(); next(); }  // Enter also "clicks" the target, for keyboard users
+    if (e.key === "ArrowLeft") go(i - 1);
+  });
+  addEventListener("resize", fit);
+
+  // Explore-mode labels
+  const tip = $("tip");
+  stage.addEventListener("mousemove", (e) => {
+    const t = exploring && e.target.closest("[data-tip]");
+    if (!t) return tip.classList.remove("on");
+    tip.textContent = t.dataset.tip; tip.classList.add("on");
+    tip.style.left = Math.min(innerWidth - tip.offsetWidth - 8, e.clientX + 14) + "px";
+    tip.style.top = e.clientY + 18 + "px";
+  });
+  stage.addEventListener("mouseleave", () => tip.classList.remove("on"));
+
+  window.guide = { go, next, explore, get count() { return steps.length; } };
+  fit(); go(0);
+})();
+</script>
+</body>
+</html>

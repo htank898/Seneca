@@ -1,8 +1,21 @@
 {
   "name": "ai-first-comms",
   "version": "0.1.0",
-  "description": "Build the disc, not the butler. Skills that let Claude make slide decks, custom-stationery PDFs, and looping GIFs the way AI works best: with HTML, CSS, and JavaScript.",
-  "author": { "name": "Harrison Tankersley" },
+  "description": "Build the disc, not the butler. Skills that let Claude make slide decks, custom-stationery PDFs, looping GIFs, and interactive software guides the way AI works best: with HTML, CSS, and JavaScript.",
+  "author": {
+    "name": "Harrison Tankersley"
+  },
   "license": "MIT",
-  "keywords": ["slides", "presentation", "pdf", "stationery", "gif", "motion-graphics", "frontend-design"]
+  "keywords": [
+    "slides",
+    "presentation",
+    "pdf",
+    "stationery",
+    "gif",
+    "motion-graphics",
+    "frontend-design",
+    "interactive-guide",
+    "walkthrough",
+    "onboarding"
+  ]
 }

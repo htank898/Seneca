@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interactive Guide</title>
+<style>
+/* =====================================================================
+   GUIDE LAYER: the coach marks, spotlight, and frame. Keep it visually
+   distinct from the replica so nobody mistakes the guide for the app.
+   ===================================================================== */
+:root {
+  --g-ink: #16191d;
+  --g-paper: #ffffff;
+  --g-signal: #f5c518;
+  --g-muted: #5e6a75;
+  --g-dim: rgba(12, 14, 18, .55);
+  --g-font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --g-bar: 44px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #2b2f35; font-family: var(--g-font); }
+
+#guide-bar { position: fixed; inset: 0 0 auto 0; height: var(--g-bar); display: flex; align-items: center; gap: 16px; padding: 0 16px; background: var(--g-ink); color: #fff; font-size: 14px; z-index: 50; }
+#guide-bar .title { font-weight: 700; }
+#guide-bar .note { color: #aab3bc; font-size: 12px; }
+#guide-bar .spacer { flex: 1; }
+#guide-bar button { font: inherit; font-size: 13px; color: #fff; background: transparent; border: 1px solid #4a525b; border-radius: 6px; padding: 5px 10px; cursor: pointer; }
+#guide-bar button:focus-visible, .coach button:focus-visible { outline: 3px solid var(--g-signal); outline-offset: 2px; }
+
+#viewport { position: fixed; inset: var(--g-bar) 0 0 0; overflow: hidden; }
+#stage { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); transform-origin: 0 0; overflow: hidden; }
+
+#spot { position: absolute; z-index: 40; pointer-events: none; border: 3px solid var(--g-signal); border-radius: 10px; box-shadow: 0 0 0 9999px var(--g-dim); transition: all .35s cubic-bezier(.22,.61,.36,1); }
+#spot.none { left: 50% !important; top: 50% !important; width: 0 !important; height: 0 !important; border-width: 0; }
+#spot.pulse::after { content: ""; position: absolute; inset: -9px; border-radius: 14px; border: 3px solid var(--g-signal); animation: ring 1.4s ease-out infinite; }
+@keyframes ring { from { opacity: .9; transform: scale(.96); } to { opacity: 0; transform: scale(1.06); } }
+
+.coach { position: fixed; z-index: 60; width: min(360px, calc(100vw - 32px)); background: var(--g-paper); color: var(--g-ink); border-radius: 12px; border: 2px solid var(--g-ink); box-shadow: 0 12px 40px rgba(0,0,0,.35); padding: 18px 18px 14px; transition: left .3s, top .3s; }
+.coach .step { font-size: 12px; font-weight: 700; color: var(--g-muted); }
+.coach h2 { margin: 6px 0 6px; font-size: 19px; line-height: 1.25; }
+.coach p { margin: 0; font-size: 15px; line-height: 1.5; }
+.coach .do { margin-top: 10px; font-size: 14px; font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
+.coach .do[hidden] { display: none; }
+.coach .do::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--g-signal); border: 2px solid var(--g-ink); transform: translateY(1px); }
+.coach .nav { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+.coach .bar { flex: 1; height: 4px; border-radius: 2px; background: #e5e8eb; overflow: hidden; }
+.coach .bar i { display: block; height: 100%; background: var(--g-ink); transition: width .3s; }
+.coach button { font: inherit; font-size: 14px; font-weight: 600; border-radius: 8px; padding: 7px 14px; cursor: pointer; border: 2px solid var(--g-ink); background: #fff; color: var(--g-ink); }
+.coach button.primary { background: var(--g-ink); color: #fff; }
+.coach button[hidden] { display: none; }
+.coach.nudge { animation: nudge .4s; }
+@keyframes nudge { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.coach .arrow { position: absolute; width: 14px; height: 14px; background: var(--g-paper); border: 2px solid var(--g-ink); transform: rotate(45deg); }
+
+#tip { position: fixed; z-index: 70; pointer-events: none; background: var(--g-ink); color: #fff; font-size: 13px; padding: 6px 9px; border-radius: 6px; max-width: 260px; opacity: 0; transition: opacity .12s; }
+#tip.on { opacity: 1; }
+
+@media (max-width: 760px) {
+  .coach { left: 16px !important; right: 16px; bottom: 16px; top: auto !important; width: auto; }
+  .coach .arrow { display: none; }
+  #guide-bar .note { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #spot, .coach { transition: none; }
+  #spot.pulse::after, .coach.nudge { animation: none; }
+}
+
+/* =====================================================================
+   REPLICA: the app being taught. Rebuild it with your own markup and
+   styles; reference the real layout, never paste the real code.
+   Every element a step points at gets data-guide="id".
+   Elements with data-tip show a label in explore mode.
+   States: stage gets class "s-<name>" for each active state, so
+   menus and modals can be shown with  #stage.s-menu .menu { ... }
+   ===================================================================== */
+.app { position: absolute; inset: 0; background: #f3f4f6; color: #1f2328; font-size: 15px; }
+.app header { height: 56px; background: #fff; border-bottom: 1px solid #d8dde3; display: flex; align-items: center; gap: 24px; padding: 0 24px; }
+.app header button { font: inherit; border: 0; background: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+.app main { padding: 32px; display: grid; grid-template-columns: 240px 1fr; gap: 24px; }
+.app .panel { background: #fff; border: 1px solid #d8dde3; border-radius: 8px; padding: 20px; min-height: 160px; }
+.app .menu { display: none; position: absolute; top: 52px; right: 24px; width: 200px; background: #fff; border: 1px solid #d8dde3; border-radius: 8px; padding: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+#stage.s-menu .menu { display: block; }
+</style>
+</head>
+<body>
+
+<div id="guide-bar">
+  <span class="title">Guide: Example app tour</span>
+  <span class="note">A practice replica. Nothing here is the real app.</span>
+  <span class="spacer"></span>
+  <button type="button" id="g-restart">Restart</button>
+  <button type="button" id="g-explore">Explore freely</button>
+</div>
+
+<div id="viewport">
+  <!-- data-width/height: the replica's design size. Desktop web apps: 1280x800 to 1440x900. -->
+  <div id="stage" data-width="1280" data-height="800">
+    <div class="app">
+      <header>
+        <strong data-guide="logo" data-tip="Your app's logo goes home">Example</strong>
+        <span style="flex:1"></span>
+        <button data-guide="inbox" data-tip="Messages from your team">Inbox</button>
+        <button data-guide="account" data-tip="Account menu">Account ▾</button>
+      </header>
+      <div class="menu" data-guide="menu">
+        <button style="width:100%;text-align:left" data-guide="settings">Settings</button>
+      </div>
+      <main>
+        <nav class="panel" data-guide="sidebar" data-tip="Switch between areas">Sidebar</nav>
+        <section class="panel" data-guide="content">Main content</section>
+      </main>
+    </div>
+    <div id="spot" class="none"></div>
+  </div>
+</div>
+
+<div class="coach" role="dialog" aria-live="polite" aria-labelledby="g-title">
+  <div class="arrow"></div>
+  <div class="step" id="g-step"></div>
+  <h2 id="g-title"></h2>
+  <p id="g-body"></p>
+  <div class="do" id="g-do" hidden></div>
+  <div class="nav">
+    <button type="button" id="g-back">Back</button>
+    <div class="bar"><i id="g-bar"></i></div>
+    <button type="button" class="primary" id="g-next">Next</button>
+  </div>
+</div>
+<div id="tip"></div>
+
+<script>
+/* =====================================================================
+   STEPS: the guide's content.
+   { target: data-guide id | null (centered card),
+     title, body,
+     action: "next" (button) | "click" (user must click the target),
+     do: the instruction line for click steps,
+     states: [state names active during this step],
+     place: "auto" | "right" | "left" | "below" | "above" }
+   ===================================================================== */
+window.GUIDE_STEPS = [
+  { target: null, title: "Welcome", body: "This short tour shows you around. Use Next, or press →." },
+  { target: "sidebar", title: "The sidebar", body: "Everything you can open lives here." },
+  { target: "account", title: "Your account", body: "Settings and sign-out live in this menu.", action: "click", do: "Click Account" },
+  { target: "settings", title: "Settings", body: "Change your preferences here.", states: ["menu"] },
+  { target: null, title: "That's the tour", body: "Choose Explore freely to look around. Hover anything for a label." },
+];
+</script>
+
+<script id="guide-engine">
+/* Guide engine (generally leave alone).
+   Keys: → / Enter next, ← back, Esc explore mode.
+   API: window.guide.go(i), .count, .explore() */
+(() => {
+  const steps = window.GUIDE_STEPS;
+  const stage = document.getElementById("stage");
+  const viewport = document.getElementById("viewport");
+  const spot = document.getElementById("spot");
+  const coach = document.querySelector(".coach");
+  const arrow = coach.querySelector(".arrow");
+  const $ = (id) => document.getElementById(id);
+  const W = +stage.dataset.width, H = +stage.dataset.height;
+  stage.style.setProperty("--w", W + "px"); stage.style.setProperty("--h", H + "px");
+  let i = 0, k = 1, exploring = false;
+
+  function fit() {
+    const vw = viewport.clientWidth, vh = viewport.clientHeight;
+    k = Math.min(vw / W, vh / H);
+    stage.style.transform = `translate(${(vw - W * k) / 2}px, ${(vh - H * k) / 2}px) scale(${k})`;
+    if (!exploring) place();
+  }
+
+  const target = () => steps[i].target && stage.querySelector(`[data-guide="${steps[i].target}"]`);
+
+  function place() {
+    const el = target();
+    coach.style.visibility = "visible";
+    if (!el) {
+      spot.className = "none";
+      arrow.style.display = "none";
+      const r = viewport.getBoundingClientRect();
+      coach.style.left = r.left + (r.width - coach.offsetWidth) / 2 + "px";
+      coach.style.top = r.top + (r.height - coach.offsetHeight) / 2 + "px";
+      return;
+    }
+    // spotlight in stage coordinates
+    const sr = stage.getBoundingClientRect(), er = el.getBoundingClientRect(), pad = 6;
+    spot.className = steps[i].action === "click" ? "pulse" : "";
+    spot.style.left = (er.left - sr.left) / k - pad + "px";
+    spot.style.top = (er.top - sr.top) / k - pad + "px";
+    spot.style.width = er.width / k + pad * 2 + "px";
+    spot.style.height = er.height / k + pad * 2 + "px";
+    // coach card in viewport coordinates, beside the target
+    if (innerWidth <= 760) return;
+    const cw = coach.offsetWidth, ch = coach.offsetHeight, gap = 18;
+    const room = { right: innerWidth - er.right, left: er.left, below: innerHeight - er.bottom, above: er.top };
+    let side = steps[i].place && steps[i].place !== "auto" ? steps[i].place
+      : room.right > cw + gap * 2 ? "right" : room.below > ch + gap * 2 ? "below" : room.left > cw + gap * 2 ? "left" : "above";
+    let x, y;
+    if (side === "right") { x = er.right + gap; y = er.top + er.height / 2 - ch / 2; }
+    if (side === "left") { x = er.left - gap - cw; y = er.top + er.height / 2 - ch / 2; }
+    if (side === "below") { x = er.left + er.width / 2 - cw / 2; y = er.bottom + gap; }
+    if (side === "above") { x = er.left + er.width / 2 - cw / 2; y = er.top - gap - ch; }
+    const cx = Math.max(12, Math.min(innerWidth - cw - 12, x));
+    const cy = Math.max(56, Math.min(innerHeight - ch - 12, y));
+    coach.style.left = cx + "px"; coach.style.top = cy + "px";
+    arrow.style.display = "block";
+    const ax = Math.max(16, Math.min(cw - 30, er.left + er.width / 2 - cx - 7));
+    const ay = Math.max(16, Math.min(ch - 30, er.top + er.height / 2 - cy - 7));
+    Object.assign(arrow.style, { left: "", right: "", top: "", bottom: "" });
+    if (side === "right") Object.assign(arrow.style, { left: "-9px", top: ay + "px", borderWidth: "0 0 2px 2px" });
+    if (side === "left") Object.assign(arrow.style, { right: "-9px", top: ay + "px", borderWidth: "2px 2px 0 0" });
+    if (side === "below") Object.assign(arrow.style, { top: "-9px", left: ax + "px", borderWidth: "2px 0 0 2px" });
+    if (side === "above") Object.assign(arrow.style, { bottom: "-9px", left: ax + "px", borderWidth: "0 2px 2px 0" });
+    arrow.style.borderStyle = "solid";
+  }
+
+  function go(n) {
+    exploring = false; document.body.classList.remove("exploring");
+    i = Math.max(0, Math.min(steps.length - 1, n));
+    const s = steps[i];
+    [...stage.classList].filter((c) => c.startsWith("s-")).forEach((c) => stage.classList.remove(c));
+    (s.states || []).forEach((st) => stage.classList.add("s-" + st));
+    $("g-step").textContent = `Step ${i + 1} of ${steps.length}`;
+    $("g-title").textContent = s.title;
+    $("g-body").innerHTML = s.body;
+    $("g-do").hidden = s.action !== "click";
+    $("g-do").textContent = s.do || "Click the highlighted item";
+    $("g-back").hidden = i === 0;
+    const last = i === steps.length - 1;
+    $("g-next").hidden = s.action === "click";
+    $("g-next").textContent = last ? "Explore freely" : "Next";
+    $("g-bar").style.width = ((i + 1) / steps.length) * 100 + "%";
+    spot.style.display = "";
+    requestAnimationFrame(() => { place(); (s.action === "click" ? coach : $("g-next")).focus?.({ preventScroll: true }); });
+  }
+  const next = () => (i === steps.length - 1 ? explore() : go(i + 1));
+
+  function explore() {
+    exploring = true; document.body.classList.add("exploring");
+    [...stage.classList].filter((c) => c.startsWith("s-")).forEach((c) => stage.classList.remove(c));
+    spot.style.display = "none"; coach.style.visibility = "hidden";
+  }
+
+  // During the tour only the target responds; elsewhere the card nudges.
+  stage.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (exploring) return;
+    const s = steps[i], el = target();
+    if (s.action === "click" && el && el.contains(e.target)) return next();
+    coach.classList.remove("nudge"); void coach.offsetWidth; coach.classList.add("nudge");
+  }, true);
+
+  $("g-next").addEventListener("click", next);
+  $("g-back").addEventListener("click", () => go(i - 1));
+  $("g-restart").addEventListener("click", () => go(0));
+  $("g-explore").addEventListener("click", explore);
+  addEventListener("keydown", (e) => {
+    if (e.key === "Escape") return explore();
+    if (exploring) return;
+    if (e.key === "Enter" && e.target.closest("button")) return;
+    if (e.key === "ArrowRight" || e.key === "Enter") { e.preventDefault(); next(); }  // Enter also "clicks" the target, for keyboard users
+    if (e.key === "ArrowLeft") go(i - 1);
+  });
+  addEventListener("resize", fit);
+
+  // Explore-mode labels
+  const tip = $("tip");
+  stage.addEventListener("mousemove", (e) => {
+    const t = exploring && e.target.closest("[data-tip]");
+    if (!t) return tip.classList.remove("on");
+    tip.textContent = t.dataset.tip; tip.classList.add("on");
+    tip.style.left = Math.min(innerWidth - tip.offsetWidth - 8, e.clientX + 14) + "px";
+    tip.style.top = e.clientY + 18 + "px";
+  });
+  stage.addEventListener("mouseleave", () => tip.classList.remove("on"));
+
+  window.guide = { go, next, explore, get count() { return steps.length; } };
+  fit(); go(0);
+})();
+</script>
+</body>
+</html>
