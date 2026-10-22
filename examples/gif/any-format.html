@@ -120,6 +120,13 @@
     <path id="cursor" d="M 0 0 L 0 44 L 12 33 L 21 52 L 30 48 L 21 30 L 36 30 Z" fill="var(--card)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
   </g>
 
+  <g id="c-stack">
+    <g id="chip0"><rect x="40" y="56" width="210" height="150" rx="18" fill="var(--signal)" stroke="var(--ink)" stroke-width="5"/><text x="145" y="149" text-anchor="middle" font-size="50" font-weight="900" style="font-stretch:104%" fill="var(--ink)">HTML</text></g>
+    <g id="chip1"><rect x="275" y="56" width="210" height="150" rx="18" fill="var(--card)" stroke="var(--ink)" stroke-width="5"/><text x="380" y="149" text-anchor="middle" font-size="50" font-weight="900" style="font-stretch:104%" fill="var(--ink)">CSS</text></g>
+    <g id="chip2"><rect x="510" y="56" width="210" height="150" rx="18" fill="var(--ink)" stroke="var(--ink)" stroke-width="5"/><text x="615" y="149" text-anchor="middle" font-size="50" font-weight="900" style="font-stretch:104%" fill="var(--card)">JS</text></g>
+    <text id="stackline" x="380" y="282" text-anchor="middle" font-size="34" font-weight="650" fill="var(--steel)">That's the whole stack.</text>
+  </g>
+
   <text class="foot1" x="64" y="1000">Build the disc, not the butler.</text>
   <text class="foot2" x="64" y="1040">github.com/htank898/Seneca</text>
 </svg>
@@ -127,7 +134,7 @@
 <div id="hud">space pause · ←/→ scrub · <span id="tc">0.000</span></div>
 
 <script>
-window.MOTION = { width: 1080, height: 1080, fps: 24, seconds: 10 };
+window.MOTION = { width: 1080, height: 1080, fps: 24, seconds: 12 };
 
 const TAU = Math.PI * 2;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -153,6 +160,7 @@ const STATES = [
   { word: "Any data.", w: 760, h: 460, cx: 540, c: "c-data", dur: 2.2 },
   { word: "Any API.", w: 600, h: 430, cx: 670, c: "c-api", dur: 2.4 },
   { word: "Any interaction.", w: 760, h: 460, cx: 540, c: "c-ui", dur: 2.5 },
+  { word: "No libraries.", w: 760, h: 340, cx: 540, c: "c-stack", dur: 2.3 },
 ];
 const TOTAL = STATES.reduce((a, s) => a + s.dur, 0);
 const MORPH = 0.26, FADE_IN = [0.2, 0.34], FADE_OUT = 0.1;
@@ -265,6 +273,14 @@ window.renderFrame = function (t) {
     $("panel").setAttribute("opacity", open.toFixed(3));
     $("panel").setAttribute("transform", `translate(0 ${(1 - open) * 18})`);
     minibars.forEach((b, i) => { const g = ease.outBack(seg(u, 1.15 + i * 0.07, 1.55 + i * 0.07)); const bh = Math.max(0.01, MINI[i] * 160 * g); set(b, { y: 395 - bh, height: bh }); });
+  }
+  // no libraries
+  if (S.c === "c-stack") {
+    [0, 1, 2].forEach((i) => {
+      const p = ease.outBack(seg(u, 0.24 + i * 0.12, 0.6 + i * 0.12));
+      $("chip" + i).setAttribute("transform", `translate(${145 + i * 235} 131) scale(${Math.max(0.001, p)}) translate(${-(145 + i * 235)} -131)`);
+    });
+    $("stackline").setAttribute("opacity", ease.outCubic(seg(u, 0.75, 1.05)).toFixed(3));
   }
   $("tc").textContent = t.toFixed(3);
 };
