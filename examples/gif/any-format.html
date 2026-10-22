@@ -144,7 +144,7 @@
 <div id="hud">space pause · ←/→ scrub · <span id="tc">0.000</span></div>
 
 <script>
-window.MOTION = { width: 1080, height: 1080, fps: 24, seconds: 15 };
+window.MOTION = { width: 1080, height: 1080, fps: 24, seconds: 16 };
 
 const TAU = Math.PI * 2;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -163,12 +163,12 @@ const set = (e, attrs) => { for (const k in attrs) e.setAttribute(k, attrs[k]); 
 /* ---- the sequence: each state is a word, a card size/position, and a content group ---- */
 const CY = 600;
 const STATES = [
-  { k: "Visual thinkers?", word: "Animate it.", w: 520, h: 520, cx: 540, c: "c-anim", dur: 1.9 },
-  { k: "Numbers people?", word: "Chart it.", w: 760, h: 460, cx: 540, c: "c-chart", dur: 1.9 },
-  { k: "Hands-on learners?", word: "Make a walkthrough.", w: 760, h: 460, cx: 540, c: "c-ui", dur: 2.4 },
-  { k: "Executives?", word: "One slide.", w: 760, h: 428, cx: 540, c: "c-slide", dur: 1.6 },
-  { k: "Formal occasion?", word: "Put it in writing.", w: 420, h: 560, cx: 540, c: "c-page", dur: 1.6 },
-  { k: "Live numbers?", word: "Wire in the API.", w: 600, h: 430, cx: 670, c: "c-api", dur: 2.1 },
+  { k: "Visual thinkers?", word: "Animate it.", w: 520, h: 520, cx: 540, c: "c-anim", dur: 2.2 },
+  { k: "Numbers people?", word: "Chart it.", w: 760, h: 460, cx: 540, c: "c-chart", dur: 2.2 },
+  { k: "Hands-on learners?", word: "Make a walkthrough.", w: 760, h: 460, cx: 540, c: "c-ui", dur: 2.2 },
+  { k: "Executives?", word: "One slide.", w: 760, h: 428, cx: 540, c: "c-slide", dur: 2.2 },
+  { k: "Formal occasion?", word: "Put it in writing.", w: 420, h: 560, cx: 540, c: "c-page", dur: 2.2 },
+  { k: "Live numbers?", word: "Wire in the API.", w: 600, h: 430, cx: 670, c: "c-api", dur: 2.2 },
   { k: "Meet every audience where they are.", word: "Built for agents.", w: 760, h: 330, cx: 540, c: "c-close", dur: 3.0 },
 ];
 const TOTAL = STATES.reduce((a, s) => a + s.dur, 0);
@@ -239,7 +239,7 @@ window.renderFrame = function (t) {
 
   // animation
   if (S.c === "c-anim") {
-    const a = TAU * u / 1.9;
+    const a = TAU * u / 2.2;
     set($("o0"), { cx: 260 + 175 * Math.cos(a), cy: 260 + 175 * Math.sin(a) });
     set($("o1"), { cx: 260 + 105 * Math.cos(-2 * a + 1), cy: 260 + 105 * Math.sin(-2 * a + 1) });
     $("o2").setAttribute("transform", `translate(${260 + 175 * Math.cos(a + Math.PI)} ${260 + 175 * Math.sin(a + Math.PI)}) rotate(${(a * 180 / Math.PI) * 2})`);
