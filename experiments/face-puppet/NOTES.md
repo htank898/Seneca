@@ -52,6 +52,14 @@ The jitter metric is the mean absolute second difference per frame, stored in `t
 - **`mouthPucker` spikes on some vowels.** It peaks at 0.87, which sometimes over-rounds the mouth. Its gain needs a per-channel ceiling, not a percentile.
 - **Some channels are always near zero for this face and camera:** `cheekSquint*` (0), `browDown*` and `eyeWide*`. Frown and surprise have little dynamic range, so with the minimum span in place, brow-down is now barely visible. That's honest, but a frown will need a better signal, for example brow-to-eye landmark distance.
 
+## Direction: the gist, not a mirror
+
+After seeing the mirrored version, Harrison set the target as the gist of the performance, not a frame-exact copy. The rig now takes these liberties on purpose:
+
+- **Eyes look at the camera.** Tracked gaze is ignored, because it's noisy and literal mirroring read as the puppet looking past you. The eyes hold on camera and take small seeded glances: a 0.8–2 s hold, then a short look-away, with a 3-frame dart between them. They also counter-rotate against the head (`gaze -= headYaw / 30`), so a head turn doesn't drag them off you. The schedule comes from a fixed-seed PRNG, so every render is identical.
+- **Head pose is smoothed and compressed.** A zero-phase Gaussian (σ ≈ 7–9 frames) keeps the broad turns and nods and drops the twitch. A `tanh` soft clip keeps big moves in range: about ±22° yaw and ±12° pitch and roll, and in practice ±8°.
+- **The face still tracks closely.** Blinks, brows, jaw and mouth stay tracked, because they carry the speech and the emotion.
+
 ## Lip sync (Rhubarb)
 
 I downloaded Rhubarb Lip Sync 1.14.0 for macOS with Harrison's OK. It went into the scratchpad, not the repo. It **segfaults** (exit 139) at the "speech recognition" step with both the `pocketSphinx` and `phonetic` recognizers, at 16 kHz and 44.1 kHz, and with one thread. It's an x86_64 binary running under Rosetta on Apple Silicon. Voice-activity detection runs, so the crash is inside its recogniser. The mouth is therefore driven from blendshapes:

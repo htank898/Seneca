@@ -156,17 +156,56 @@ const MIN_SPAN = 0.25;
 const norm = (f, k, gain = 1) => {
   const c = CAL[k]; return clamp(((f[CH[k]] - c.lo) / Math.max(MIN_SPAN, c.hi - c.lo)) * gain, 0, 1.4);
 };
-// Blendshape Left/Right are the performer's own sides (not mirrored): eyeLookOutLeft
-// = looking toward the viewer's right. Checked against iris crops at frames 75/180.
-// The puppet is drawn as the viewer sees the performer, so rig "L" = viewer's left.
+// Head pose: the gist, not a mirror. A zero-phase Gaussian (offline, so it can look
+// ahead) keeps the broad turns and nods and drops the twitch; tanh soft-clips big
+// moves instead of slamming into a limit.
+const col = (k) => TRACK.data.map((r) => r[CH[k]]);
+function gaussian(xs, sigma) {
+  const rad = Math.ceil(sigma * 3), w = [];
+  for (let d = -rad; d <= rad; d++) w.push(Math.exp(-(d * d) / (2 * sigma * sigma)));
+  return xs.map((_, i) => {
+    let s = 0, n = 0;
+    for (let d = -rad; d <= rad; d++) { const j = i + d; if (j < 0 || j >= xs.length) continue; s += xs[j] * w[d + rad]; n += w[d + rad]; }
+    return s / n;
+  });
+}
 const RIG_SPEC = {
-  headYaw:   { gain: 1.5, clamp: 35 },  // degrees, relative to the performer's median pose
-  headPitch: { gain: 1.4, clamp: 25 },
-  headRoll:  { gain: 1.2, clamp: 22 },
+  headYaw:   { gain: 1.0, limit: 22, sigma: 7 },  // degrees, relative to the performer's median pose
+  headPitch: { gain: 0.8, limit: 12, sigma: 7 },
+  headRoll:  { gain: 0.8, limit: 12, sigma: 9 },
 };
-function retarget(f) {
+const POSE = Object.fromEntries([["headYaw", "yaw"], ["headPitch", "pitch"], ["headRoll", "roll"]].map(([p, k]) => {
+  const s = RIG_SPEC[p];
+  return [p, gaussian(col(k), s.sigma).map((x) => s.limit * Math.tanh(((x - CAL[k].mid) * s.gain) / s.limit))];
+}));
+
+// Eyes: assume the performer is talking to camera. Tracked gaze is ignored on
+// purpose; it's noisy and literal mirroring read as the puppet looking past you.
+// Instead: hold on camera, take small seeded glances (a fixation, then a quick
+// dart, like real eyes), and counter-rotate against the head so a turn of the
+// head doesn't drag the eyes off you.
+const GLANCES = (() => {
+  let s = 1234567;                                            // fixed seed: same every render
+  const rnd = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const out = [];
+  for (let f = 0, k = 0; f < TRACK.frames; k++) {
+    const away = k % 2 === 1;                                 // alternate: camera, glance, camera...
+    const dur = Math.round(away ? 10 + rnd() * 14 : 24 + rnd() * 36);
+    const x = away ? (rnd() < 0.5 ? -1 : 1) * (0.25 + rnd() * 0.25) : (rnd() - 0.5) * 0.12;
+    const y = away ? (rnd() - 0.6) * 0.35 : (rnd() - 0.5) * 0.08;
+    out.push({ start: f, x, y }); f += dur;
+  }
+  return out;
+})();
+function glanceAt(i) {
+  let k = 0; while (k + 1 < GLANCES.length && GLANCES[k + 1].start <= i) k++;
+  const cur = GLANCES[k], prev = GLANCES[Math.max(0, k - 1)];
+  const dart = 1 - Math.pow(1 - clamp((i - cur.start) / 3), 3);   // ~3-frame saccade
+  return { x: lerp(prev.x, cur.x, k ? dart : 1), y: lerp(prev.y, cur.y, k ? dart : 1) };
+}
+
+function retarget(f, i) {
   const v = (k) => f[CH[k]];
-  const rel = (k, spec) => clamp((v(k) - CAL[k].mid) * spec.gain, -spec.clamp, spec.clamp);
   // Blink: MediaPipe reports ~0.15-0.2 when open and leaks in when looking down.
   // A smoothstep window turns that mush into a decisive close.
   // Looking down drags the lids (and the blink score) down too; discount it.
@@ -175,15 +214,11 @@ function retarget(f) {
     const x = v(k) - 0.6 * Math.max(0, v(dn) - CAL[dn].mid);
     return smooth(Math.max(0.36, CAL[k].mid + 0.15), 0.62, x);
   };
-  const lookX = (v("eyeLookOutLeft") - v("eyeLookInLeft") + v("eyeLookInRight") - v("eyeLookOutRight")) / 2;  // + = viewer's right
-  const lookY = (v("eyeLookUpLeft") + v("eyeLookUpRight") - v("eyeLookDownLeft") - v("eyeLookDownRight")) / 2;
-  const lookMidX = (CAL.eyeLookOutLeft.mid - CAL.eyeLookInLeft.mid + CAL.eyeLookInRight.mid - CAL.eyeLookOutRight.mid) / 2;
-  const lookMidY = (CAL.eyeLookUpLeft.mid + CAL.eyeLookUpRight.mid - CAL.eyeLookDownLeft.mid - CAL.eyeLookDownRight.mid) / 2;
   const browUp = (side) => clamp(0.55 * norm(f, "browInnerUp", 1.2) + 0.65 * norm(f, `browOuterUp${side}`, 1.2), 0, 1.2);
+  const headYaw = POSE.headYaw[i], headPitch = POSE.headPitch[i], g = glanceAt(i);
   return {
-    headYaw:   rel("yaw", RIG_SPEC.headYaw),
-    headPitch: rel("pitch", RIG_SPEC.headPitch),
-    headRoll:  rel("roll", RIG_SPEC.headRoll),
+    headYaw, headPitch,
+    headRoll: POSE.headRoll[i],
     blinkL: blink("eyeBlinkLeft"),
     blinkR: blink("eyeBlinkRight"),
     browUpL: browUp("Left"),
@@ -194,8 +229,8 @@ function retarget(f) {
     mouthRound: clamp(0.8 * norm(f, "mouthPucker", 1.1) + 0.6 * norm(f, "mouthFunnel", 1.2), 0, 1),
     mouthPress: clamp(norm(f, "mouthPressLeft") * (1 - norm(f, "jawOpen", 2)), 0, 1),  // M/B/P closure
     smile: clamp((norm(f, "mouthSmileLeft", 1.3) + norm(f, "mouthSmileRight", 1.3)) / 2, 0, 1.1),
-    gazeX: clamp((lookX - lookMidX) * 1.6, -1, 1),
-    gazeY: clamp((lookY - lookMidY) * 2.0, -1, 1),
+    gazeX: clamp(g.x - headYaw / 30, -1, 1),     // + = viewer's right
+    gazeY: clamp(g.y + headPitch / 30, -1, 1),   // chin up -> eyes drop to stay on camera
   };
 }
 
@@ -239,7 +274,7 @@ let lastRig = null;
 window.renderFrame = function (t) {
   const i = clamp(Math.floor(t * TRACK.frames), 0, TRACK.frames - 1);
   const f = TRACK.data[i];
-  const R = retarget(f);
+  const R = retarget(f, i);
   lastRig = R;
 
   const yaw = R.headYaw * D2R, pitch = R.headPitch * D2R;
