@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Lumen Desk Quote Builder</title>
+<style>
+  :root {
+    --paper: #f6f7f5;
+    --surface: #ffffff;
+    --sunk: #eceee9;
+    --ink: #1b2a33;
+    --ink-2: #4a5a63;
+    --ink-3: #66757c;
+    --rule: #d8ddd8;
+    --rule-strong: #b9c2bd;
+    --accent: #2f7d6d;
+    --accent-hover: #276b5d;
+    --accent-ink: #ffffff;
+    --accent-soft: #e1efeb;
+    --warm: #d9a441;
+    --warm-ink: #7a5714;
+    --warm-soft: #f7ecd5;
+    --focus: #2f7d6d;
+
+    --f-display: "Avenir Next", Avenir, "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --f-text: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --f-num: "SF Mono", ui-monospace, "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #10191e;
+      --surface: #16222a;
+      --sunk: #1d2b33;
+      --ink: #e7ece9;
+      --ink-2: #b4c0c3;
+      --ink-3: #8f9da3;
+      --rule: #2b3b44;
+      --rule-strong: #41545e;
+      --accent: #5fb8a3;
+      --accent-hover: #74c6b2;
+      --accent-ink: #0d1a17;
+      --accent-soft: #1b3530;
+      --warm: #e4b65c;
+      --warm-ink: #f0cd85;
+      --warm-soft: #3a2f19;
+      --focus: #74c6b2;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.55 var(--f-text);
+  }
+  .num { font-variant-numeric: tabular-nums; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 28px; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .vh { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Top bar */
+  header.top { border-bottom: 1px solid var(--rule); }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 600 15px/1 var(--f-display); letter-spacing: .01em; }
+  .mark { width: 22px; height: 22px; border-radius: 5px; background: var(--accent); position: relative; flex: none; }
+  .mark::after { content: ""; position: absolute; right: 4px; top: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--warm); }
+  .sample { font-size: 12.5px; color: var(--ink-3); border: 1px dashed var(--rule-strong); border-radius: 999px; padding: 4px 10px; }
+
+  /* Prepared-for header */
+  .intro { padding: 40px 0 28px; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 40px; align-items: end; border-bottom: 1px solid var(--rule); }
+  .eyebrow { font: 600 12px/1 var(--f-display); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+  h1 { font: 650 clamp(28px, 4vw, 42px)/1.1 var(--f-display); letter-spacing: -.015em; margin: 0 0 14px; }
+  .lede { font-size: 17.5px; color: var(--ink-2); margin: 0; max-width: 58ch; }
+  .meta { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 18px; font-size: 14.5px; border-left: 3px solid var(--warm); padding: 4px 0 4px 18px; }
+  .meta dt { color: var(--ink-3); }
+  .meta dd { margin: 0; font-weight: 600; }
+
+  .note {
+    margin: 24px 0 0; padding: 16px 18px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px;
+    display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; font-size: 15px; color: var(--ink-2);
+  }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--warm-soft); color: var(--warm-ink); display: grid; place-items: center; font: 650 14px/1 var(--f-display); letter-spacing: .02em; }
+  .note strong { color: var(--ink); }
+  .note p { margin: 0; }
+  .note p + p { margin-top: 6px; }
+
+  /* Main layout */
+  main.layout { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 40px; padding: 32px 0 56px; align-items: start; }
+  section.step { padding: 0 0 30px; margin: 0 0 30px; border-bottom: 1px solid var(--rule); }
+  section.step:last-of-type { border-bottom: 0; margin-bottom: 0; }
+  .step-head { display: flex; align-items: baseline; gap: 12px; margin: 0 0 16px; }
+  .step-num { font: 600 12px/1 var(--f-num); color: var(--accent); }
+  h2 { font: 650 21px/1.2 var(--f-display); margin: 0; letter-spacing: -.005em; }
+  .step-sub { color: var(--ink-2); font-size: 15px; margin: -6px 0 16px; }
+
+  /* Plan cards */
+  .plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; border: 0; padding: 0; margin: 0; }
+  .plan { position: relative; display: block; cursor: pointer; }
+  .plan input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .plan .card {
+    display: block; height: 100%; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 16px 14px;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .plan:hover .card { border-color: var(--rule-strong); }
+  .plan input:focus-visible + .card { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .plan input:checked + .card { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .plan .name { display: flex; justify-content: space-between; align-items: center; gap: 8px; font: 650 17px/1.2 var(--f-display); }
+  .check { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--rule-strong); flex: none; display: grid; place-items: center; }
+  .plan input:checked + .card .check { border-color: var(--accent); background: var(--accent); }
+  .plan input:checked + .card .check::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-ink); }
+  .price { display: block; margin: 10px 0 2px; font: 650 26px/1 var(--f-display); letter-spacing: -.01em; }
+  .price small { font: 400 13px/1 var(--f-text); color: var(--ink-3); letter-spacing: 0; }
+  .fit { display: block; font-size: 13.5px; color: var(--ink-2); margin: 0 0 12px; min-height: 2.8em; }
+  .incl { list-style: none; margin: 0; padding: 12px 0 0; border-top: 1px solid var(--rule); font-size: 13.5px; color: var(--ink-2); }
+  .incl li { position: relative; padding-left: 16px; margin: 0 0 5px; }
+  .incl li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 6px; height: 6px; border-radius: 1px; background: var(--accent); }
+  .incl li.no { color: var(--ink-3); }
+  .incl li.no::before { background: none; border: 1px solid var(--rule-strong); }
+  .tag { display: inline-block; font: 600 11px/1 var(--f-display); letter-spacing: .06em; text-transform: uppercase; color: var(--warm-ink); background: var(--warm-soft); border-radius: 4px; padding: 4px 6px; }
+
+  /* Steppers */
+  .row { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; }
+  .stepper { display: inline-flex; align-items: stretch; border: 1px solid var(--rule-strong); border-radius: 10px; background: var(--surface); overflow: hidden; }
+  .stepper button { appearance: none; border: 0; background: transparent; color: var(--ink); width: 44px; font: 500 20px/1 var(--f-text); cursor: pointer; }
+  .stepper button:hover:not(:disabled) { background: var(--sunk); }
+  .stepper button:disabled { color: var(--ink-3); cursor: not-allowed; opacity: .55; }
+  .stepper input {
+    width: 84px; border: 0; border-left: 1px solid var(--rule); border-right: 1px solid var(--rule); background: transparent; color: var(--ink);
+    text-align: center; font: 600 20px/1 var(--f-text); font-variant-numeric: tabular-nums; padding: 10px 4px; -moz-appearance: textfield;
+  }
+  .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper.small button { width: 38px; font-size: 18px; }
+  .stepper.small output { min-width: 48px; display: grid; place-items: center; border-left: 1px solid var(--rule); border-right: 1px solid var(--rule); font: 600 17px/1 var(--f-text); font-variant-numeric: tabular-nums; padding: 8px 4px; }
+  .hint { font-size: 14px; color: var(--ink-2); margin: 0; }
+  .hint b { color: var(--ink); font-weight: 600; }
+  .tiers { display: flex; gap: 6px; margin: 14px 0 0; font-size: 12.5px; color: var(--ink-3); }
+  .tiers span { flex: 1; border-top: 3px solid var(--rule); padding-top: 6px; }
+  .tiers span.on { border-top-color: var(--accent); color: var(--ink); font-weight: 600; }
+
+  /* Add-ons */
+  .addon { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 20px; align-items: center; }
+  .addon + .addon { margin-top: 10px; }
+  .addon h3 { font: 650 16px/1.25 var(--f-display); margin: 0; }
+  .addon .desc { grid-column: 1; margin: 0; font-size: 14px; color: var(--ink-2); }
+  .addon .cost { font-size: 13.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .addon .ctrl { grid-column: 2; grid-row: 1 / span 3; justify-self: end; }
+  .addon .why { grid-column: 1; margin: 2px 0 0; font-size: 13.5px; color: var(--warm-ink); font-weight: 600; }
+  .addon.off h3, .addon.off .desc { color: var(--ink-3); }
+  .addon .meter { grid-column: 1 / -1; margin: 6px 0 0; font-size: 13.5px; color: var(--ink-2); }
+  .meterbar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--sunk); margin: 8px 0 6px; }
+  .meterbar i { display: block; height: 100%; }
+  .meterbar .inc { background: var(--accent); }
+  .meterbar .ext { background: var(--warm); }
+
+  /* Switch */
+  .switch { position: relative; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; color: var(--ink-2); }
+  .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch .track { width: 44px; height: 26px; border-radius: 99px; background: var(--rule-strong); position: relative; transition: background .15s; flex: none; }
+  .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+  .switch input:checked + .track { background: var(--accent); }
+  .switch input:checked + .track::after { transform: translateX(18px); }
+  .switch input:focus-visible + .track { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .switch input:disabled + .track { opacity: .45; cursor: not-allowed; }
+
+  /* Billing segmented */
+  .seg { display: inline-grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--rule-strong); border-radius: 10px; padding: 3px; background: var(--surface); gap: 3px; }
+  .seg label { position: relative; cursor: pointer; }
+  .seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .seg span { display: block; padding: 9px 18px; border-radius: 7px; font: 600 15px/1.2 var(--f-display); color: var(--ink-2); text-align: center; }
+  .seg span small { display: block; font: 400 12px/1.3 var(--f-text); color: var(--ink-3); margin-top: 2px; }
+  .seg input:checked + span { background: var(--accent); color: var(--accent-ink); }
+  .seg input:checked + span small { color: var(--accent-ink); opacity: .85; }
+  .seg input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  /* Summary */
+  aside.summary { position: sticky; top: 20px; }
+  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; }
+  .panel-head { padding: 18px 20px 14px; border-bottom: 1px solid var(--rule); display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .panel-head h2 { font-size: 18px; }
+  .ref { font: 500 12.5px/1 var(--f-num); color: var(--ink-3); }
+  .lines { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .lines th, .lines td { padding: 7px 20px; text-align: left; vertical-align: top; font-weight: 400; }
+  .lines td { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lines .sub { display: block; font-size: 12.5px; color: var(--ink-3); }
+  .lines .group th { padding-top: 14px; font: 600 11.5px/1 var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+  .lines .disc th, .lines .disc td { color: var(--accent); }
+  .lines .total th, .lines .total td { border-top: 1px solid var(--rule); font-weight: 650; color: var(--ink); padding-top: 9px; }
+  .save {
+    margin: 12px 20px 0; padding: 10px 12px; border-radius: 8px; background: var(--accent-soft); color: var(--ink); font-size: 14px; font-weight: 600;
+    display: flex; gap: 8px; align-items: center;
+  }
+  .save::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex: none; }
+  .save.nudge { background: var(--warm-soft); font-weight: 500; }
+  .save.nudge::before { background: var(--warm); }
+  .grand { margin: 14px 0 0; padding: 16px 20px 18px; background: var(--sunk); display: grid; gap: 10px; }
+  .grand div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .grand .k { font-size: 13.5px; color: var(--ink-2); }
+  .grand .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .grand .big .k { font: 650 15px/1.2 var(--f-display); color: var(--ink); }
+  .grand .big .v { font: 650 28px/1 var(--f-display); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+  .fine { font-size: 12.5px; color: var(--ink-3); margin: 12px 4px 0; }
+  .reset {
+    margin: 12px 0 0; width: 100%; appearance: none; background: transparent; border: 1px dashed var(--rule-strong); color: var(--ink-2);
+    border-radius: 10px; padding: 10px 12px; font: 500 14px/1.2 var(--f-text); cursor: pointer;
+  }
+  .reset:hover:not(:disabled) { border-style: solid; color: var(--ink); }
+  .reset:disabled { opacity: .55; cursor: default; }
+
+  /* Send back */
+  .send { border-top: 1px solid var(--rule); padding-top: 40px; padding-bottom: 56px; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 40px; }
+  .send h2 { font-size: 24px; margin-bottom: 10px; }
+  .send p { color: var(--ink-2); margin: 0 0 12px; font-size: 15.5px; }
+  .promise { list-style: none; margin: 16px 0 0; padding: 0; font-size: 14.5px; color: var(--ink-2); }
+  .promise li { padding: 8px 0 8px 22px; border-top: 1px solid var(--rule); position: relative; }
+  .promise li::before { content: ""; position: absolute; left: 2px; top: 15px; width: 9px; height: 5px; border-left: 2px solid var(--accent); border-bottom: 2px solid var(--accent); transform: rotate(-45deg); }
+  .preview {
+    width: 100%; min-height: 360px; resize: vertical; margin: 0; padding: 16px 18px; border: 1px solid var(--rule); border-radius: 12px;
+    background: var(--surface); color: var(--ink); font: 13px/1.55 var(--f-num); white-space: pre; overflow: auto; tab-size: 4;
+  }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 0; align-items: center; }
+  .btn {
+    appearance: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 11px 18px;
+    font: 600 15px/1.1 var(--f-display); cursor: pointer; text-decoration: none; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink);
+  }
+  .btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--rule-strong); }
+  .btn.ghost:hover { background: var(--sunk); }
+  .status { font-size: 14px; color: var(--accent); min-height: 1.4em; margin: 10px 0 0; }
+
+  footer { border-top: 1px solid var(--rule); padding: 18px 0 28px; font-size: 13px; color: var(--ink-3); }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; }
+
+  /* Mobile total bar */
+  .mbar { display: none; }
+
+  .print-only { display: none; }
+
+  @media (max-width: 980px) {
+    main.layout { grid-template-columns: minmax(0, 1fr); }
+    aside.summary { position: static; }
+    .intro { grid-template-columns: minmax(0, 1fr); gap: 22px; }
+    .send { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  }
+  @media (max-width: 720px) {
+    .wrap { padding: 0 16px; }
+    .plans { grid-template-columns: minmax(0, 1fr); }
+    .fit { min-height: 0; }
+    .intro { padding-top: 28px; }
+    .addon { grid-template-columns: minmax(0, 1fr); }
+    .addon .ctrl { grid-column: 1; grid-row: auto; justify-self: start; margin-top: 6px; }
+    .seg { display: grid; width: 100%; }
+    .preview { font-size: 11px; padding: 12px 10px; min-height: 300px; }
+    .lines th, .lines td { padding-left: 16px; padding-right: 16px; }
+    .grand { padding-left: 16px; padding-right: 16px; }
+    .mbar {
+      display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; justify-content: space-between; align-items: center; gap: 12px;
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--rule-strong);
+      box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+    }
+    .mbar .k { font-size: 12.5px; color: var(--ink-3); display: block; }
+    .mbar .v { font: 650 20px/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
+    .mbar a { font: 600 14px/1 var(--f-display); color: var(--accent); text-decoration: none; padding: 10px 0 10px 10px; }
+    body { padding-bottom: 72px; }
+  }
+
+  @media print {
+    @page { margin: 12mm; }
+    :root {
+      --paper: #fff; --surface: #fff; --sunk: #f1f3f0; --ink: #1b2a33; --ink-2: #3b4a52; --ink-3: #5f6d74; --rule: #cfd5d0; --rule-strong: #b9c2bd;
+      --accent: #2f7d6d; --accent-ink: #fff; --accent-soft: #e6f1ee; --warm: #d9a441; --warm-ink: #7a5714; --warm-soft: #f7ecd5;
+    }
+    body { font-size: 11pt; background: #fff; padding: 0; }
+    .wrap { max-width: none; padding: 0; }
+    .no-print, .config, .send, .mbar, .reset, .note, .lede { display: none !important; }
+    .print-only { display: block; }
+    header.top .wrap { padding: 0 0 8px; }
+    .intro { padding: 10px 0 10px; gap: 20px; grid-template-columns: 1.2fr 1fr; }
+    h1 { font-size: 18pt; margin-bottom: 0; }
+    main.layout { display: block; padding: 14px 0 0; }
+    aside.summary { position: static; }
+    .panel { border-color: var(--rule-strong); break-inside: avoid; }
+    .grand { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .save { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .print-config { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px 20px; margin: 0 0 10px; padding: 0; font-size: 10.5pt; }
+    .print-config div { border-top: 2px solid var(--accent); padding-top: 5px; }
+    .print-config dt { color: var(--ink-3); font-size: 9pt; text-transform: uppercase; letter-spacing: .08em; }
+    .print-config dd { margin: 2px 0 0; font-weight: 600; }
+    .print-foot { margin-top: 14px; font-size: 9.5pt; color: var(--ink-2); }
+    footer { padding: 8px 0 0; margin-top: 10px; font-size: 8.5pt; }
+    .eyebrow { margin-bottom: 6px; }
+    .meta { font-size: 9.5pt; gap: 3px 14px; }
+    .panel-head { padding: 10px 16px 8px; }
+    .lines { font-size: 10pt; }
+    .lines th, .lines td { padding: 3px 16px; }
+    .lines .sub { display: inline; font-size: 9pt; margin-left: 8px; }
+    .lines .group th { padding-top: 8px; font-size: 8pt; }
+    .lines .total th, .lines .total td { padding-top: 5px; }
+    .save { margin: 8px 16px 0; padding: 6px 10px; font-size: 10pt; }
+    .grand { margin-top: 8px; padding: 10px 16px; gap: 5px; }
+    .grand .big .v { font-size: 18pt; }
+    .fine, .print-foot { font-size: 8.5pt; margin-top: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>Lumen Desk</div>
+    <span class="sample">Sample scenario: Lumen Desk is fictional</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="intro" aria-labelledby="title">
+    <div>
+      <p class="eyebrow">Quote · Prepared for Brightline Clinics</p>
+      <h1 id="title">Build the Lumen Desk setup that fits Brightline</h1>
+      <p class="lede">Start from the configuration Maya suggested, then change anything: plan, seats, add-ons, billing. The price updates as you go, and when it looks right you can send the quote straight back.</p>
+    </div>
+    <dl class="meta">
+      <dt>Prepared for</dt><dd>Brightline Clinics</dd>
+      <dt>Prepared by</dt><dd>Maya Okafor, Account Executive</dd>
+      <dt>Quote date</dt><dd id="quoteDate">October 22, 2026</dd>
+      <dt>Valid through</dt><dd id="expiry">—</dd>
+      <dt>Price list</dt><dd>Effective January 1, 2027</dd>
+    </dl>
+  </section>
+
+  <div class="note no-print">
+    <span class="avatar" aria-hidden="true">MO</span>
+    <div>
+      <p><strong>Maya's suggestion:</strong> Pro with 60 seats covers the front desks and nurse lines across your four clinics, and it lands you in the 5% volume tier. You mentioned roughly 28,000 patient messages a month, so I added two extra AI triage blocks on top of the 10,000 Pro includes. Annual billing gives you two months free.</p>
+      <p>Change whatever doesn't match how your team works. You can always come back to this starting point.</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <main class="layout">
+    <div class="config">
+
+      <section class="step" aria-labelledby="h-plan">
+        <div class="step-head"><span class="step-num">01</span><h2 id="h-plan">Choose a plan</h2></div>
+        <fieldset class="plans">
+          <legend class="vh">Plan</legend>
+          <label class="plan">
+            <input type="radio" name="plan" value="starter">
+            <span class="card">
+              <span class="name">Starter <span class="check" aria-hidden="true"></span></span>
+              <span class="price num">$19<small> per seat / month</small></span>
+              <span class="fit">For small teams getting a shared inbox in order.</span>
+              <ul class="incl">
+                <li>Ticketing and shared inbox</li>
+                <li class="no">No AI ticket triage</li>
+                <li class="no">Add-ons limited to onboarding</li>
+              </ul>
+            </span>
+          </label>
+          <label class="plan">
+            <input type="radio" name="plan" value="pro">
+            <span class="card">
+              <span class="name">Pro <span class="tag">Suggested</span><span class="check" aria-hidden="true"></span></span>
+              <span class="price num">$59<small> per seat / month</small></span>
+              <span class="fit">For teams that want AI to sort and route the queue.</span>
+              <ul class="incl">
+                <li>AI ticket triage, 10,000 tickets / month included</li>
+                <li>SLA reporting</li>
+                <li>24/7 chat support</li>
+              </ul>
+            </span>
+          </label>
+          <label class="plan">
+            <input type="radio" name="plan" value="enterprise">
+            <span class="card">
+              <span class="name">Enterprise <span class="check" aria-hidden="true"></span></span>
+              <span class="price num">$89<small> per seat / month</small></span>
+              <span class="fit">Everything in Pro, plus the controls larger organizations need.</span>
+              <ul class="incl">
+                <li>AI ticket triage, 50,000 tickets / month included</li>
+                <li>SSO / SAML and audit log</li>
+                <li>99.9% uptime SLA</li>
+                <li>Dedicated success manager</li>
+              </ul>
+            </span>
+          </label>
+        </fieldset>
+      </section>
+
+      <section class="step" aria-labelledby="h-seats">
+        <div class="step-head"><span class="step-num">02</span><h2 id="h-seats">How many seats?</h2></div>
+        <p class="step-sub">One seat per person who answers tickets. Seat price drops 5% at 50 seats and 10% at 100.</p>
+        <div class="row">
+          <div class="stepper" role="group" aria-label="Seats">
+            <button type="button" id="seatDown" aria-label="Remove a seat">−</button>
+            <input id="seats" type="number" inputmode="numeric" min="1" max="500" step="1" aria-label="Number of seats, 1 to 500">
+            <button type="button" id="seatUp" aria-label="Add a seat">+</button>
+          </div>
+          <p class="hint" id="seatHint" aria-live="polite"></p>
+        </div>
+        <div class="tiers" aria-hidden="true">
+          <span id="tier0">1–49 seats<br>List price</span>
+          <span id="tier1">50–99 seats<br>5% off seats</span>
+          <span id="tier2">100–500 seats<br>10% off seats</span>
+        </div>
+      </section>
+
+      <section class="step" aria-labelledby="h-addons">
+        <div class="step-head"><span class="step-num">03</span><h2 id="h-addons">Add-ons</h2></div>
+
+        <div class="addon" id="addonAnalytics">
+          <h3>Advanced analytics</h3>
+          <p class="desc">Custom dashboards and trend reports on volume, response times, and team workload. <span class="cost">$8 per seat / month</span></p>
+          <p class="why" id="whyAnalytics" hidden>Available on Pro and Enterprise.</p>
+          <label class="switch ctrl"><input type="checkbox" id="analytics"><span class="track" aria-hidden="true"></span><span>Include</span></label>
+        </div>
+
+        <div class="addon" id="addonTriage">
+          <h3>Extra AI triage volume</h3>
+          <p class="desc">More tickets sorted, tagged, and routed by AI each month, in blocks of 10,000. <span class="cost">$150 per block / month</span></p>
+          <p class="why" id="whyTriage" hidden>Available on Pro and Enterprise. Starter doesn't include AI triage.</p>
+          <div class="stepper small ctrl" role="group" aria-label="Extra AI triage blocks">
+            <button type="button" id="triDown" aria-label="Remove a 10,000-ticket block">−</button>
+            <output id="triage" aria-live="polite">0</output>
+            <button type="button" id="triUp" aria-label="Add a 10,000-ticket block">+</button>
+          </div>
+          <div class="meter" id="triMeter">
+            <div class="meterbar" aria-hidden="true"><i class="inc" id="barInc"></i><i class="ext" id="barExt"></i></div>
+            <span id="triText"></span>
+          </div>
+        </div>
+
+        <div class="addon" id="addonOnboarding">
+          <h3>Premium onboarding</h3>
+          <p class="desc">A Lumen Desk specialist migrates your history, sets up routing and SLAs with your team, and runs live training. <span class="cost">$2,500 one-time</span></p>
+          <label class="switch ctrl"><input type="checkbox" id="onboarding"><span class="track" aria-hidden="true"></span><span>Include</span></label>
+        </div>
+      </section>
+
+      <section class="step" aria-labelledby="h-billing">
+        <div class="step-head"><span class="step-num">04</span><h2 id="h-billing">Billing</h2></div>
+        <p class="step-sub">Annual billing covers 12 months for the price of 10. It applies to recurring charges; onboarding is billed once either way.</p>
+        <div class="seg" role="radiogroup" aria-label="Billing">
+          <label><input type="radio" name="billing" value="monthly"><span>Monthly<small>Pay as you go</small></span></label>
+          <label><input type="radio" name="billing" value="annual"><span>Annual<small>2 months free</small></span></label>
+        </div>
+      </section>
+    </div>
+
+    <aside class="summary" id="summary" aria-labelledby="h-sum">
+      <dl class="print-config print-only" id="printConfig"></dl>
+      <div class="panel">
+        <div class="panel-head"><h2 id="h-sum">Your quote</h2><span class="ref" id="refCode"></span></div>
+        <table class="lines" aria-describedby="h-sum">
+          <tbody id="lines"></tbody>
+        </table>
+        <div id="saveNote"></div>
+        <div class="grand" id="grand"></div>
+      </div>
+      <p class="fine">Prices in USD, before applicable taxes. Based on the Lumen Desk price list effective January 1, 2027. Monthly equivalent is rounded to the cent.</p>
+      <button type="button" class="reset no-print" id="reset">Back to Maya's suggestion</button>
+      <p class="print-foot print-only" id="printFoot"></p>
+    </aside>
+  </main>
+</div>
+
+<section class="send wrap" id="send" aria-labelledby="h-send">
+  <div>
+    <h2 id="h-send">Send this quote back</h2>
+    <p>Below is a plain-text copy of exactly what you configured, with a reference code Maya can use to issue the order form. Copy it into a reply, email it to the sales team, or print it.</p>
+    <ul class="promise">
+      <li>Nothing is sent automatically. You decide if and when it goes anywhere.</li>
+      <li>"Email to sales" opens your own mail app with the quote filled in, for you to review and send.</li>
+      <li>This page has no tracking and makes no network requests. It works offline.</li>
+    </ul>
+  </div>
+  <div>
+    <label class="vh" for="quoteText">Quote summary text</label>
+    <textarea class="preview" id="quoteText" readonly spellcheck="false"></textarea>
+    <div class="actions">
+      <button type="button" class="btn" id="copyBtn">Copy quote</button>
+      <a class="btn ghost" id="mailBtn" href="mailto:sales@lumendesk.example">Email to sales</a>
+      <button type="button" class="btn ghost" id="printBtn">Print or save as PDF</button>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Lumen Desk · sales@lumendesk.example · Sample scenario: Lumen Desk is fictional, and all prices are sample data.</span>
+    <span>One file, no account, no internet needed.</span>
+  </div>
+</footer>
+
+<div class="mbar" aria-hidden="true">
+  <div><span class="k" id="mbarK">First-year total</span><span class="v" id="mbarV"></span></div>
+  <a href="#summary">See breakdown</a>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Price list (integer cents) ---------- */
+  var PLANS = {
+    starter:    { name: "Starter",    seat: 1900, analytics: false, triage: false, included: 0 },
+    pro:        { name: "Pro",        seat: 5900, analytics: true,  triage: true,  included: 10000 },
+    enterprise: { name: "Enterprise", seat: 8900, analytics: true,  triage: true,  included: 50000 }
+  };
+  var ANALYTICS_SEAT = 800;      // per seat per month
+  var TRIAGE_BLOCK = 15000;      // per 10,000 tickets per month
+  var TRIAGE_BLOCK_TICKETS = 10000;
+  var ONBOARDING = 250000;       // one-time
+  var SEAT_MIN = 1, SEAT_MAX = 500, TRIAGE_MAX = 20;
+
+  var QUOTE_DATE = { y: 2026, m: 10, d: 22 }; // fixed by the rep when the quote was issued
+  var VALID_DAYS = 30;
+  var SALES = "sales@lumendesk.example";
+
+  var DEFAULT = { plan: "pro", seats: 60, billing: "annual", analytics: true, triage: 2, onboarding: true };
+
+  function volumePct(seats) { return seats >= 100 ? 10 : seats >= 50 ? 5 : 0; }
+
+  function clampInt(v, lo, hi, fallback) {
+    var n = typeof v === "number" ? v : parseInt(String(v), 10);
+    if (!isFinite(n) || isNaN(n)) return fallback;
+    n = Math.round(n);
+    return Math.min(hi, Math.max(lo, n));
+  }
+
+  function normalize(cfg) {
+    var c = cfg || {};
+    var plan = PLANS[c.plan] ? c.plan : DEFAULT.plan;
+    return {
+      plan: plan,
+      seats: clampInt(c.seats, SEAT_MIN, SEAT_MAX, DEFAULT.seats),
+      billing: c.billing === "monthly" ? "monthly" : (c.billing === "annual" ? "annual" : DEFAULT.billing),
+      analytics: !!c.analytics,
+      triage: clampInt(c.triage, 0, TRIAGE_MAX, 0),
+      onboarding: !!c.onboarding
+    };
+  }
+
+  /* Effective config: add-ons a plan can't take are dropped. */
+  function effective(cfg) {
+    var c = normalize(cfg), p = PLANS[c.plan];
+    return {
+      plan: c.plan, seats: c.seats, billing: c.billing,
+      analytics: p.analytics ? c.analytics : false,
+      triage: p.triage ? c.triage : 0,
+      onboarding: c.onboarding
+    };
+  }
+
+  /* Order of calculation: seat price x seats -> minus volume discount -> plus add-ons
+     -> annual billing discount on recurring -> plus one-time fees. All integer cents. */
+  function compute(cfg) {
+    var c = effective(cfg), p = PLANS[c.plan];
+    var seatGross = p.seat * c.seats;
+    var pct = volumePct(c.seats);
+    var volumeDiscount = Math.round(seatGross * pct / 100);
+    var seatNet = seatGross - volumeDiscount;
+    var analytics = c.analytics ? ANALYTICS_SEAT * c.seats : 0;
+    var triage = TRIAGE_BLOCK * c.triage;
+    var recurringMonthly = seatNet + analytics + triage;
+    var twelveMonths = recurringMonthly * 12;
+    var annualSaving = c.billing === "annual" ? recurringMonthly * 2 : 0;
+    var recurringYear = twelveMonths - annualSaving;          // annual = 10 months for 12
+    var oneTime = c.onboarding ? ONBOARDING : 0;
+    return {
+      config: c,
+      seatPrice: p.seat, seatGross: seatGross, volumePct: pct, volumeDiscount: volumeDiscount, seatNet: seatNet,
+      analytics: analytics, triage: triage, recurringMonthly: recurringMonthly,
+      twelveMonths: twelveMonths, annualSaving: annualSaving, recurringYear: recurringYear,
+      annualCharge: c.billing === "annual" ? recurringYear : 0,
+      monthlyEquivalent: Math.round(recurringYear / 12),
+      oneTime: oneTime, firstYearTotal: recurringYear + oneTime,
+      potentialAnnualSaving: recurringMonthly * 2,
+      includedTickets: p.included, extraTickets: c.triage * TRIAGE_BLOCK_TICKETS
+    };
+  }
+
+  /* ---------- Formatting ---------- */
+  function usd(cents) {
+    var neg = cents < 0, a = Math.abs(cents);
+    var dollars = Math.floor(a / 100), c = a % 100;
+    var s = String(dollars).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return (neg ? "-" : "") + "$" + s + "." + (c < 10 ? "0" : "") + c;
+  }
+  function usdMinus(cents) { return "−" + usd(cents); }
+  function int(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  function fmtDate(dt) { return MONTHS[dt.getUTCMonth()] + " " + dt.getUTCDate() + ", " + dt.getUTCFullYear(); }
+  var quoteDate = new Date(Date.UTC(QUOTE_DATE.y, QUOTE_DATE.m - 1, QUOTE_DATE.d));
+  var expiryDate = new Date(Date.UTC(QUOTE_DATE.y, QUOTE_DATE.m - 1, QUOTE_DATE.d + VALID_DAYS));
+
+  /* ---------- Reference code (deterministic from configuration) ---------- */
+  function refCode(cfg) {
+    var c = effective(cfg);
+    var key = [c.plan, c.seats, c.billing, c.analytics ? 1 : 0, c.triage, c.onboarding ? 1 : 0].join("|");
+    var h = 0x811c9dc5;
+    for (var i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    var ALPH = "ABCDEFGHJKMNPQRSTUVWXYZ23456789", tail = "";
+    for (var j = 0; j < 4; j++) { tail += ALPH[h % ALPH.length]; h = Math.floor(h / ALPH.length); }
+    var seats = ("00" + c.seats).slice(-3);
+    return "LD-" + c.plan.charAt(0).toUpperCase() + seats + (c.billing === "annual" ? "A" : "M") + "-" + tail;
+  }
+
+  /* ---------- Hash (optional) ---------- */
+  function parseHash(hash) {
+    var h = String(hash || "").replace(/^#/, "");
+    if (!h || h.indexOf("=") === -1) return null;
+    var out = {}, any = false;
+    h.split(/[&;]/).forEach(function (pair) {
+      var i = pair.indexOf("="); if (i < 1) return;
+      var k, v;
+      try { k = decodeURIComponent(pair.slice(0, i)).trim().toLowerCase(); v = decodeURIComponent(pair.slice(i + 1)).trim().toLowerCase(); }
+      catch (e) { return; }
+      if (k === "plan" && PLANS[v]) { out.plan = v; any = true; }
+      else if (k === "seats") { var s = parseInt(v, 10); if (!isNaN(s)) { out.seats = clampInt(s, SEAT_MIN, SEAT_MAX, DEFAULT.seats); any = true; } }
+      else if (k === "billing" && (v === "monthly" || v === "annual")) { out.billing = v; any = true; }
+      else if (k === "analytics") { out.analytics = v === "1" || v === "true" || v === "yes"; any = true; }
+      else if (k === "triage") { var t = parseInt(v, 10); if (!isNaN(t)) { out.triage = clampInt(t, 0, TRIAGE_MAX, 0); any = true; } }
+      else if (k === "onboarding") { out.onboarding = v === "1" || v === "true" || v === "yes"; any = true; }
+    });
+    if (!any) return null;
+    var base = {}; for (var key in DEFAULT) base[key] = DEFAULT[key];
+    for (var k2 in out) base[k2] = out[k2];
+    return normalize(base);
+  }
+  function toHash(cfg) {
+    var c = effective(cfg);
+    return "#plan=" + c.plan + "&seats=" + c.seats + "&billing=" + c.billing +
+      "&analytics=" + (c.analytics ? 1 : 0) + "&triage=" + c.triage + "&onboarding=" + (c.onboarding ? 1 : 0);
+  }
+
+  /* ---------- Plain-text quote ---------- */
+  var W = 58;
+  function line(label, value) {
+    var gap = W - label.length - value.length;
+    return label + (gap > 1 ? new Array(gap + 1).join(" ") : "  ") + value;
+  }
+  function quoteText(cfg) {
+    var r = compute(cfg), c = r.config, p = PLANS[c.plan], L = [];
+    var rule = new Array(W + 1).join("-");
+    L.push("LUMEN DESK QUOTE " + refCode(c));
+    L.push(rule);
+    L.push("Prepared for:  Brightline Clinics");
+    L.push("Prepared by:   Maya Okafor, Account Executive, Lumen Desk");
+    L.push("Quote date:    " + fmtDate(quoteDate));
+    L.push("Valid through: " + fmtDate(expiryDate) + " (30 days)");
+    L.push("Price list:    Effective January 1, 2027 (USD)");
+    L.push("");
+    L.push("CONFIGURATION");
+    L.push("Plan:                    " + p.name);
+    L.push("Seats:                   " + c.seats);
+    L.push("Billing:                 " + (c.billing === "annual" ? "Annual (12 months for the price of 10)" : "Monthly"));
+    L.push("Advanced analytics:      " + (p.analytics ? (c.analytics ? "Yes" : "No") : "Not available on Starter"));
+    if (p.triage) {
+      L.push("Extra AI triage volume:  " + (c.triage ? c.triage + " x 10,000 tickets/month" : "None"));
+      L.push("AI triage capacity:      " + int(r.includedTickets + r.extraTickets) + " tickets/month (" + int(r.includedTickets) + " included)");
+    } else {
+      L.push("Extra AI triage volume:  Not available on Starter");
+    }
+    L.push("Premium onboarding:      " + (c.onboarding ? "Yes" : "No"));
+    L.push("");
+    L.push("RECURRING, PER MONTH");
+    L.push(line(p.name + " seats: " + c.seats + " x " + usd(r.seatPrice), usd(r.seatGross)));
+    if (r.volumeDiscount) L.push(line("Volume discount: " + r.volumePct + "% (" + (r.volumePct === 10 ? "100+" : "50-99") + " seats)", "-" + usd(r.volumeDiscount)));
+    if (r.analytics) L.push(line("Advanced analytics: " + c.seats + " x " + usd(ANALYTICS_SEAT), usd(r.analytics)));
+    if (r.triage) L.push(line("Extra AI triage: " + c.triage + " x " + usd(TRIAGE_BLOCK), usd(r.triage)));
+    L.push(line("Recurring per month", usd(r.recurringMonthly)));
+    L.push("");
+    if (c.billing === "annual") {
+      L.push("ANNUAL BILLING");
+      L.push(line("12 months of recurring charges", usd(r.twelveMonths)));
+      L.push(line("Annual billing: 2 months free", "-" + usd(r.annualSaving)));
+      L.push(line("Billed annually", usd(r.recurringYear)));
+      L.push(line("Monthly equivalent", usd(r.monthlyEquivalent)));
+    } else {
+      L.push("MONTHLY BILLING");
+      L.push(line("Billed monthly", usd(r.recurringMonthly)));
+      L.push(line("12 months of recurring charges", usd(r.recurringYear)));
+    }
+    L.push("");
+    L.push("ONE-TIME");
+    L.push(line("Premium onboarding", r.oneTime ? usd(r.oneTime) : "Not included"));
+    L.push("");
+    L.push(rule);
+    L.push(line("FIRST-YEAR TOTAL", usd(r.firstYearTotal)));
+    if (r.annualSaving) L.push("You save " + usd(r.annualSaving) + " with annual billing.");
+    L.push(rule);
+    L.push("");
+    L.push("Prices before applicable taxes. Questions or ready to order:");
+    L.push("reply to Maya or write to " + SALES + " with reference " + refCode(c) + ".");
+    return L.join("\n");
+  }
+
+  /* Exposed for verification and for anyone curious how the numbers are made. */
+  window.LumenQuote = { compute: compute, quoteText: quoteText, refCode: refCode, parseHash: parseHash, toHash: toHash,
+    usd: usd, DEFAULT: DEFAULT, expiry: function () { return fmtDate(expiryDate); } };
+
+  /* ---------- UI ---------- */
+  var $ = function (id) { return document.getElementById(id); };
+  var suggestion = parseHash(location.hash) || normalize(DEFAULT);
+  var state = normalize(suggestion);
+
+  $("quoteDate").textContent = fmtDate(quoteDate);
+  $("expiry").textContent = fmtDate(expiryDate);
+
+  function same(a, b) { var x = effective(a), y = effective(b); for (var k in x) if (x[k] !== y[k]) return false; return true; }
+
+  function row(label, sub, value, cls) {
+    var tr = document.createElement("tr"); if (cls) tr.className = cls;
+    var th = document.createElement("th"); th.scope = "row"; th.textContent = label;
+    if (sub) { var s = document.createElement("span"); s.className = "sub"; s.textContent = sub; th.appendChild(s); }
+    var td = document.createElement("td"); td.textContent = value || "";
+    tr.appendChild(th); tr.appendChild(td);
+    if (cls === "group") { th.colSpan = 2; tr.removeChild(td); }
+    return tr;
+  }
+
+  function render() {
+    var r = compute(state), c = r.config, p = PLANS[c.plan];
+
+    // plan + billing controls
+    document.querySelectorAll('input[name="plan"]').forEach(function (el) { el.checked = el.value === c.plan; });
+    document.querySelectorAll('input[name="billing"]').forEach(function (el) { el.checked = el.value === c.billing; });
+
+    // seats
+    var seatsEl = $("seats");
+    if (document.activeElement !== seatsEl || String(parseInt(seatsEl.value, 10)) !== String(c.seats)) {
+      if (document.activeElement !== seatsEl) seatsEl.value = c.seats;
+    }
+    $("seatDown").disabled = c.seats <= SEAT_MIN;
+    $("seatUp").disabled = c.seats >= SEAT_MAX;
+    var hint;
+    if (r.volumePct === 0) hint = "<b>" + (50 - c.seats) + " more seat" + (50 - c.seats === 1 ? "" : "s") + "</b> would unlock the 5% volume discount.";
+    else if (r.volumePct === 5) hint = "<b>5% off</b> the seat price at " + c.seats + " seats. At 100 seats it becomes 10%.";
+    else hint = "<b>10% off</b> the seat price, the highest volume tier.";
+    $("seatHint").innerHTML = hint;
+    $("tier0").className = r.volumePct === 0 ? "on" : "";
+    $("tier1").className = r.volumePct === 5 ? "on" : "";
+    $("tier2").className = r.volumePct === 10 ? "on" : "";
+
+    // analytics
+    var aOk = p.analytics;
+    $("analytics").disabled = !aOk;
+    $("analytics").checked = aOk && c.analytics;
+    $("whyAnalytics").hidden = aOk;
+    $("addonAnalytics").classList.toggle("off", !aOk);
+
+    // triage
+    var tOk = p.triage;
+    $("whyTriage").hidden = tOk;
+    $("addonTriage").classList.toggle("off", !tOk);
+    $("triage").textContent = tOk ? c.triage : "0";
+    $("triDown").disabled = !tOk || c.triage <= 0;
+    $("triUp").disabled = !tOk || c.triage >= TRIAGE_MAX;
+    $("triMeter").hidden = !tOk;
+    if (tOk) {
+      var total = r.includedTickets + r.extraTickets;
+      $("barInc").style.width = (r.includedTickets / total * 100) + "%";
+      $("barExt").style.width = (r.extraTickets / total * 100) + "%";
+      $("triText").textContent = p.name + " includes " + int(r.includedTickets) + " tickets a month" +
+        (c.triage ? ". With " + c.triage + " extra block" + (c.triage === 1 ? "" : "s") + ": " + int(total) + " tickets a month." : ". Add blocks if you expect more.");
+    }
+
+    $("onboarding").checked = c.onboarding;
+
+    // summary lines
+    var tb = $("lines"); tb.textContent = "";
+    tb.appendChild(row("Recurring, per month", null, null, "group"));
+    tb.appendChild(row(p.name + " seats", c.seats + " × " + usd(r.seatPrice), usd(r.seatGross)));
+    if (r.volumeDiscount) tb.appendChild(row("Volume discount", r.volumePct + "% off seats (" + (r.volumePct === 10 ? "100+" : "50–99") + " seats)", usdMinus(r.volumeDiscount), "disc"));
+    if (r.analytics) tb.appendChild(row("Advanced analytics", c.seats + " × " + usd(ANALYTICS_SEAT), usd(r.analytics)));
+    if (r.triage) tb.appendChild(row("Extra AI triage", c.triage + " × 10,000 tickets at " + usd(TRIAGE_BLOCK), usd(r.triage)));
+    tb.appendChild(row("Recurring per month", null, usd(r.recurringMonthly), "total"));
+    if (c.billing === "annual") {
+      tb.appendChild(row("Annual billing", null, null, "group"));
+      tb.appendChild(row("12 months of recurring", null, usd(r.twelveMonths)));
+      tb.appendChild(row("2 months free", "Pay 10 months for 12", usdMinus(r.annualSaving), "disc"));
+      tb.appendChild(row("Billed annually", null, usd(r.recurringYear), "total"));
+    }
+    tb.appendChild(row("One-time", null, null, "group"));
+    tb.appendChild(row("Premium onboarding", r.oneTime ? "Billed once, with your first invoice" : "Not included", r.oneTime ? usd(r.oneTime) : "—"));
+
+    var sn = $("saveNote"); sn.textContent = "";
+    var d = document.createElement("div");
+    if (r.annualSaving > 0) { d.className = "save"; d.textContent = "You save " + usd(r.annualSaving) + " with annual billing"; sn.appendChild(d); }
+    else if (r.potentialAnnualSaving > 0) { d.className = "save nudge"; d.textContent = "Annual billing would save " + usd(r.potentialAnnualSaving) + " a year"; sn.appendChild(d); }
+
+    var g = $("grand"); g.textContent = "";
+    function gl(k, v, big) { var e = document.createElement("div"); if (big) e.className = "big"; e.innerHTML = '<span class="k"></span><span class="v"></span>'; e.firstChild.textContent = k; e.lastChild.textContent = v; g.appendChild(e); }
+    if (c.billing === "annual") gl("Monthly equivalent", usd(r.monthlyEquivalent));
+    else gl("Billed monthly", usd(r.recurringMonthly));
+    if (r.oneTime) gl("One-time fees", usd(r.oneTime));
+    gl("First-year total", usd(r.firstYearTotal), true);
+
+    var code = refCode(c);
+    $("refCode").textContent = code;
+    $("mbarV").textContent = usd(r.firstYearTotal);
+
+    // print-only config
+    var pc = $("printConfig"); pc.textContent = "";
+    [["Plan", p.name], ["Seats", String(c.seats)], ["Billing", c.billing === "annual" ? "Annual (2 months free)" : "Monthly"],
+     ["Advanced analytics", aOk ? (c.analytics ? "Included" : "Not included") : "Not available"],
+     ["AI triage capacity", tOk ? int(r.includedTickets + r.extraTickets) + " tickets / month" : "Not available"],
+     ["Premium onboarding", c.onboarding ? "Included" : "Not included"]].forEach(function (kv) {
+      var w = document.createElement("div"), dt = document.createElement("dt"), dd = document.createElement("dd");
+      dt.textContent = kv[0]; dd.textContent = kv[1]; w.appendChild(dt); w.appendChild(dd); pc.appendChild(w);
+    });
+    $("printFoot").textContent = "Reference " + code + ". Valid through " + fmtDate(expiryDate) + ". To accept or ask questions, reply to Maya Okafor or write to " + SALES + ".";
+
+    // send-back
+    var text = quoteText(c);
+    $("quoteText").value = text;
+    var subject = "Quote " + code + " for Brightline Clinics: " + p.name + ", " + c.seats + " seats, " + c.billing;
+    $("mailBtn").href = "mailto:" + SALES + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(text.replace(/\n/g, "\r\n"));
+
+    $("reset").disabled = same(state, suggestion);
+  }
+
+  function set(patch) { for (var k in patch) state[k] = patch[k]; state = normalize(state); render(); }
+
+  document.querySelectorAll('input[name="plan"]').forEach(function (el) {
+    el.addEventListener("change", function () { if (el.checked) set({ plan: el.value }); });
+  });
+  document.querySelectorAll('input[name="billing"]').forEach(function (el) {
+    el.addEventListener("change", function () { if (el.checked) set({ billing: el.value }); });
+  });
+  $("seatDown").addEventListener("click", function () { set({ seats: state.seats - 1 }); });
+  $("seatUp").addEventListener("click", function () { set({ seats: state.seats + 1 }); });
+  $("seats").addEventListener("input", function () {
+    var n = parseInt(this.value, 10);
+    if (!isNaN(n)) set({ seats: n });
+  });
+  $("seats").addEventListener("change", function () { this.value = state.seats; });
+  $("seats").addEventListener("blur", function () { this.value = state.seats; });
+  $("analytics").addEventListener("change", function () { set({ analytics: this.checked }); });
+  $("onboarding").addEventListener("change", function () { set({ onboarding: this.checked }); });
+  $("triDown").addEventListener("click", function () { set({ triage: state.triage - 1 }); });
+  $("triUp").addEventListener("click", function () { set({ triage: state.triage + 1 }); });
+  $("reset").addEventListener("click", function () { state = normalize(suggestion); render(); flash("Back to Maya's suggested configuration."); });
+  $("printBtn").addEventListener("click", function () { window.print(); });
+
+  var flashTimer;
+  function flash(msg) { var s = $("status"); s.textContent = msg; clearTimeout(flashTimer); flashTimer = setTimeout(function () { s.textContent = ""; }, 5000); }
+
+  function selectText() { var ta = $("quoteText"); ta.focus(); ta.select(); try { ta.setSelectionRange(0, ta.value.length); } catch (e) {} }
+  $("copyBtn").addEventListener("click", function () {
+    var text = $("quoteText").value;
+    function fallback() {
+      selectText();
+      var ok = false; try { ok = document.execCommand("copy"); } catch (e) {}
+      flash(ok ? "Quote copied. Paste it into your reply to Maya." : "The quote text is selected. Press Ctrl+C or ⌘C to copy it.");
+    }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { flash("Quote copied. Paste it into your reply to Maya."); }, fallback);
+      } else { fallback(); }
+    } catch (e) { fallback(); }
+  });
+  $("mailBtn").addEventListener("click", function () { flash("Opening your mail app. Nothing is sent until you press Send there."); });
+
+  window.addEventListener("hashchange", function () { var h = parseHash(location.hash); if (h && !same(h, state)) { state = h; render(); } });
+
+  render();
+})();
+</script>
+</body>
+</html>
