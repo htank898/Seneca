@@ -47,6 +47,7 @@ This opens a visible browser. **The user signs in themselves** and navigates to 
 node scripts/render-steps.mjs path/to/guide.html --gif
 ```
 This writes one screenshot per step (plus an optional walkthrough GIF). Look at every step and check:
+- **Nothing overlaps.** No text sits on other text or on an icon, and no element clips another or the frame edge. When things crowd, fade the less important one out or move it to the side. Never let them collide. Coach cards must not cover the element they point at. Check every step for this before reporting.
 - The spotlight frames the right element.
 - The card doesn't cover the target.
 - States open and close on the right steps.

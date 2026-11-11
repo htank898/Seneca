@@ -35,6 +35,7 @@ node scripts/render-pdf.mjs path/to/doc.html --preview
 This writes `doc.pdf` and, with `--preview`, `doc.page-N.png` for each sheet. It prints the page count and paper size. The first run installs Playwright into this skill folder.
 
 ## 5. Verify before reporting
+- **Nothing overlaps.** No text sits on other text or on an icon, and no element clips another or the frame edge. When things crowd, fade the less important one out or move it to the side. Never let them collide. Check every preview page for this before reporting.
 - Look at every preview PNG. Check for clipped text at the bottom of the live area, ornaments colliding with text, orphaned single lines, and contrast.
 - Confirm the reported page count and size match what you intended. An extra blank page usually means something overflowed `.page` or a stray `break-after` caused it.
 - Delete the preview PNGs unless the user wants them. Report the PDF path.

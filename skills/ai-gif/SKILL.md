@@ -26,6 +26,9 @@ Infer what you can from the request and use the defaults in `reference/motion-pa
    - The loop must be seamless: `renderFrame(0)` and `renderFrame(1)` must look identical. Use the helpers (`wave`, `pingpong`, integer cycle counts) or end each sequence back at its starting pose.
    - Plan the loop as **beats** with `seg(t, a, b)` windows (for example intro 0–0.15, action 0.15–0.7, punchline 0.7–0.9, reset 0.9–1).
    - Keep any text on screen for ≥ 1.2 s and at ≥ 36 px at 1080 wide.
+   - **Stable layout:** give each element a fixed position, row, or lane. Never recompute it every frame from where its neighbors are, because that makes things jump. When elements crowd, fade one out smoothly rather than moving or reflowing it.
+   - **Nothing overlaps or clips**, in any frame. Fade early so the fade finishes before anything touches. A character deliberately passing in front of scenery is fine. Labels colliding with labels or icons is not.
+   - **Honest scale:** when the piece shows magnitude, draw every frame to a true linear scale. The camera may zoom in log steps, but the axis must not be logarithmic, or equal-looking distances will lie about unequal amounts.
 4. Open the HTML in a browser to preview. It autoplays; space pauses, ←/→ scrubs.
 
 ## 4. Render
@@ -36,6 +39,7 @@ Flags: `--out`, `--width`, `--height`, `--fps`, `--seconds`, `--scale 0.75`, `--
 The first run installs Playwright into this skill folder. Requires `ffmpeg` on PATH.
 
 ## 5. Verify before reporting
+- **Check every frame for overlaps**, not just the keyframes: render with `--keep-frames` and step through the transitions, which is where collisions happen. If the page publishes `window.__boxes` (name, box, opacity per element, as ai-scale does), use an automated pass like `ai-scale/scripts/check-overlaps.mjs`.
 - Render with `--keep-frames` and look at a few PNGs in `.frames/<name>/`: the first frame, the last frame (it should flow straight into the first), and the punchline beat. Delete `.frames/` afterwards.
 - Check the file size against the destination budget (the renderer warns). If it's over, try in this order: `--scale 0.75`, `--fps 20`, `--colors 128`, then flatter fills or fewer moving pixels.
 - Report the GIF path (and MP4 path), its dimensions, duration, and size.

@@ -1,0 +1,509 @@
+{
+  "kind": "tower",
+  "size": [
+    1080,
+    1350
+  ],
+  "fps": 30,
+  "title": "How many folds to reach the Moon?",
+  "note": "Starts 0.1 mm thick and doubles each time. Real paper tears long before this; the math doesn't.",
+  "hud": {
+    "prefix": "Fold ",
+    "suffix": "",
+    "interp": "linear"
+  },
+  "steps": [
+    {
+      "value": 0,
+      "h": 0.0001,
+      "headline": "Fold 0",
+      "sub": "0.1 mm thick",
+      "caption": "One sheet.",
+      "hold": 1.7
+    },
+    {
+      "value": 1,
+      "h": 0.0002,
+      "headline": "Fold 1",
+      "sub": "0.2 mm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 2,
+      "h": 0.0004,
+      "headline": "Fold 2",
+      "sub": "0.4 mm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 3,
+      "h": 0.0008,
+      "headline": "Fold 3",
+      "sub": "0.8 mm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 4,
+      "h": 0.0016,
+      "headline": "Fold 4",
+      "sub": "1.6 mm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 5,
+      "h": 0.0032,
+      "headline": "Fold 5",
+      "sub": "3.2 mm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 6,
+      "h": 0.0064,
+      "headline": "Fold 6",
+      "sub": "6.4 mm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 7,
+      "h": 0.0128,
+      "headline": "Fold 7",
+      "sub": "1.3 cm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 8,
+      "h": 0.0256,
+      "headline": "Fold 8",
+      "sub": "2.6 cm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 9,
+      "h": 0.0512,
+      "headline": "Fold 9",
+      "sub": "5.1 cm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 10,
+      "h": 0.1024,
+      "headline": "Fold 10",
+      "sub": "10 cm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 11,
+      "h": 0.2048,
+      "headline": "Fold 11",
+      "sub": "20 cm thick",
+      "caption": "Ankle-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 12,
+      "h": 0.4096,
+      "headline": "Fold 12",
+      "sub": "41 cm thick",
+      "caption": "Shin-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 13,
+      "h": 0.8192,
+      "headline": "Fold 13",
+      "sub": "82 cm thick",
+      "caption": "Knee-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 14,
+      "h": 1.6384,
+      "headline": "Fold 14",
+      "sub": "1.64 m thick",
+      "caption": "Chest-high next to you.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 15,
+      "h": 3.2768,
+      "headline": "Fold 15",
+      "sub": "3.28 m thick",
+      "caption": "Taller than you. Short of a giraffe.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 16,
+      "h": 6.5536,
+      "headline": "Fold 16",
+      "sub": "6.55 m thick",
+      "caption": "Taller than a giraffe. Short of a two-storey house.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 17,
+      "h": 13.1072,
+      "headline": "Fold 17",
+      "sub": "13.1 m thick",
+      "caption": "Taller than a two-storey house. Short of the Statue of Liberty.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 18,
+      "h": 26.2144,
+      "headline": "Fold 18",
+      "sub": "26.2 m thick",
+      "caption": "Taller than a two-storey house. Short of the Statue of Liberty.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 19,
+      "h": 52.4288,
+      "headline": "Fold 19",
+      "sub": "52.4 m thick",
+      "caption": "5.8× the height of a two-storey house. Short of the Statue of Liberty.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 20,
+      "h": 104.8576,
+      "headline": "Fold 20",
+      "sub": "105 m thick",
+      "caption": "Taller than the Statue of Liberty. Short of the Great Pyramid.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 21,
+      "h": 209.7152,
+      "headline": "Fold 21",
+      "sub": "210 m thick",
+      "caption": "Taller than the Great Pyramid. Short of the Eiffel Tower.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 22,
+      "h": 419.4304,
+      "headline": "Fold 22",
+      "sub": "419 m thick",
+      "caption": "About as tall as the Empire State Building.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 23,
+      "h": 838.8608,
+      "headline": "Fold 23",
+      "sub": "839 m thick",
+      "caption": "About as tall as the Burj Khalifa.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 24,
+      "h": 1677.7216,
+      "headline": "Fold 24",
+      "sub": "1.68 km thick",
+      "caption": "Taller than the Burj Khalifa. Short of Mount Everest.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 25,
+      "h": 3355.4432,
+      "headline": "Fold 25",
+      "sub": "3.36 km thick",
+      "caption": "4.1× the height of the Burj Khalifa. Short of Mount Everest.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 26,
+      "h": 6710.8864,
+      "headline": "Fold 26",
+      "sub": "6.71 km thick",
+      "caption": "8.1× the height of the Burj Khalifa. Short of Mount Everest.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 27,
+      "h": 13421.7728,
+      "headline": "Fold 27",
+      "sub": "13.4 km thick",
+      "caption": "Past cruising airliners. Short of the edge of space.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 28,
+      "h": 26843.5456,
+      "headline": "Fold 28",
+      "sub": "26.8 km thick",
+      "caption": "Past cruising airliners. Short of the edge of space.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 29,
+      "h": 53687.0912,
+      "headline": "Fold 29",
+      "sub": "53.7 km thick",
+      "caption": "Past cruising airliners. Short of the edge of space.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 30,
+      "h": 107374.1824,
+      "headline": "Fold 30",
+      "sub": "107 km thick",
+      "caption": "About as high as the edge of space.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 31,
+      "h": 214748.3648,
+      "headline": "Fold 31",
+      "sub": "215 km thick",
+      "caption": "Past the edge of space. Short of the Space Station.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 32,
+      "h": 429496.7296,
+      "headline": "Fold 32",
+      "sub": "429 km thick",
+      "caption": "About as high as the Space Station.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 33,
+      "h": 858993.4592,
+      "headline": "Fold 33",
+      "sub": "859 km thick",
+      "caption": "Past the Space Station. Short of GPS satellites.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 34,
+      "h": 1717986.9184,
+      "headline": "Fold 34",
+      "sub": "1,720 km thick",
+      "caption": "Past the Space Station. Short of GPS satellites.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 35,
+      "h": 3435973.8368,
+      "headline": "Fold 35",
+      "sub": "3,440 km thick",
+      "caption": "Past the Space Station. Short of GPS satellites.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 36,
+      "h": 6871947.6736,
+      "headline": "Fold 36",
+      "sub": "6,870 km thick",
+      "caption": "Past the Space Station. Short of GPS satellites.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 37,
+      "h": 13743895.3472,
+      "headline": "Fold 37",
+      "sub": "13,700 km thick",
+      "caption": "Past the Space Station. Short of GPS satellites.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 38,
+      "h": 27487790.6944,
+      "headline": "Fold 38",
+      "sub": "27,500 km thick",
+      "caption": "Past GPS satellites. Short of the Moon.",
+      "move": 0.55,
+      "hold": 1.7
+    },
+    {
+      "value": 39,
+      "h": 54975581.3888,
+      "headline": "Fold 39",
+      "sub": "55,000 km thick",
+      "caption": "Past GPS satellites. Short of the Moon.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 40,
+      "h": 109951162.7776,
+      "headline": "Fold 40",
+      "sub": "110,000 km thick",
+      "caption": "Past GPS satellites. Short of the Moon.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 41,
+      "h": 219902325.5552,
+      "headline": "Fold 41",
+      "sub": "220,000 km thick",
+      "caption": "Past GPS satellites. Short of the Moon.",
+      "move": 0.2,
+      "hold": 0
+    },
+    {
+      "value": 42,
+      "h": 439804651.1104,
+      "headline": "Fold 42",
+      "sub": "440,000 km thick",
+      "caption": "Past the Moon.",
+      "move": 0.55,
+      "hold": 1.7
+    }
+  ],
+  "unit": {
+    "name": "paper",
+    "width_m": 0.216,
+    "thickness_m": 0.0001,
+    "color": "#ffffff",
+    "band": 0
+  },
+  "anchor": {
+    "name": "You",
+    "h": 1.75,
+    "icon": "person",
+    "kind": "anchor",
+    "ref": "you"
+  },
+  "landmarks": [
+    {
+      "name": "You",
+      "h": 1.75,
+      "icon": "person",
+      "kind": "anchor",
+      "ref": "you"
+    },
+    {
+      "name": "Giraffe",
+      "h": 5.5,
+      "icon": "giraffe",
+      "ref": "a giraffe"
+    },
+    {
+      "name": "Two-storey house",
+      "h": 9,
+      "icon": "house",
+      "ref": "a two-storey house"
+    },
+    {
+      "name": "Statue of Liberty",
+      "h": 93,
+      "icon": "statue",
+      "ref": "the Statue of Liberty"
+    },
+    {
+      "name": "Great Pyramid",
+      "h": 139,
+      "icon": "pyramid",
+      "ref": "the Great Pyramid"
+    },
+    {
+      "name": "Eiffel Tower",
+      "h": 330,
+      "icon": "eiffel",
+      "ref": "the Eiffel Tower"
+    },
+    {
+      "name": "Empire State Building",
+      "h": 443,
+      "icon": "building",
+      "ref": "the Empire State Building"
+    },
+    {
+      "name": "Burj Khalifa",
+      "h": 828,
+      "icon": "spire",
+      "ref": "the Burj Khalifa"
+    },
+    {
+      "name": "Mount Everest",
+      "h": 8849,
+      "icon": "mountain",
+      "ref": "Mount Everest"
+    },
+    {
+      "name": "Airliners cruise",
+      "h": 11000,
+      "icon": "plane",
+      "kind": "marker",
+      "ref": "cruising airliners"
+    },
+    {
+      "name": "Edge of space",
+      "h": 100000,
+      "icon": "line",
+      "kind": "marker",
+      "ref": "the edge of space"
+    },
+    {
+      "name": "Space station",
+      "h": 410000,
+      "icon": "satellite",
+      "kind": "marker",
+      "ref": "the Space Station"
+    },
+    {
+      "name": "GPS satellites",
+      "h": 20200000,
+      "icon": "satellite",
+      "kind": "marker",
+      "ref": "GPS satellites"
+    },
+    {
+      "name": "The Moon",
+      "h": 384400000,
+      "icon": "moon",
+      "kind": "marker",
+      "ref": "the Moon"
+    }
+  ]
+}

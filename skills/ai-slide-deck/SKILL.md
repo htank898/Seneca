@@ -40,6 +40,7 @@ node scripts/render-deck-pdf.mjs path/to/deck.html --png
 This writes `deck.pdf` (one slide per page, at the deck's exact size, with all builds shown) and, with `--png`, `deck.slide-N.png` for QA. The first run installs Playwright into this skill folder.
 
 ## 5. Verify before reporting
+- **Nothing overlaps.** No text sits on other text or on an icon, and no element clips another or the frame edge. When things crowd, fade the less important one out or move it to the side. Never let them collide. Check every slide PNG, with all builds shown, for this before reporting.
 - Look at every slide PNG. Check for overflow or clipping, text below the minimum size, unbalanced layouts, contrast, and repeated layouts more than two slides in a row.
 - The PDF page count must equal the slide count (the script warns if it doesn't).
 - Delete the QA PNGs unless the user wants thumbnails. Report the HTML path (the live deck) and the PDF path (for attaching or emailing).
