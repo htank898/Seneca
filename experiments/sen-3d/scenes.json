@@ -1,0 +1,11 @@
+{
+  "hello": {
+    "id": "hello",
+    "visemes": "voice/visemes.json",
+    "audio": "voice/01-hello.wav",
+    "lead": 0.5,
+    "tail": 1.2,
+    "stress": ["hi", "sen", "seneca"],
+    "blinks": [0.25, 2.75, 4.7]
+  }
+}
