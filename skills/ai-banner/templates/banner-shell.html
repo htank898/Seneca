@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banner</title>
+<!-- Fonts: load from Google Fonts if you want them; render-banner waits for document.fonts.ready -->
+<style>
+  /* Themes: the default is :root. Each [data-theme] block is a colorway; render them all with
+     --theme a,b. Keep every color in a token so a new theme never touches the layout. */
+  :root {
+    --field: #eef1f4;
+    --ink: #1f2328;
+    --muted: #5b6168;
+    --accent: #2f5bea;
+    --accent-soft: #c9d4fb;
+  }
+  [data-theme="night"] {
+    --field: #1d2230;
+    --ink: #f2f3f5;
+    --muted: #a9b0bd;
+    --accent: #ffb547;
+    --accent-soft: #4a3f2e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #111; overflow: hidden; }
+  html.capture, html.capture body { background: transparent; }
+  /* The banner is always exactly BANNER.width x BANNER.height. In preview it is scaled to fit. */
+  #banner {
+    position: absolute; left: 0; top: 0;
+    width: var(--w); height: var(--h);
+    background: var(--field); color: var(--ink);
+    overflow: hidden; transform-origin: 0 0;
+    font-family: system-ui, sans-serif;
+  }
+
+  /* ---------- scene: replace everything below ---------- */
+  .copy { position: absolute; right: 120px; top: 50%; transform: translateY(-50%); text-align: right; }
+  .copy h1 { font-size: 88px; line-height: 1; letter-spacing: -0.03em; }
+  .copy p { margin-top: 14px; font-size: 26px; color: var(--muted); }
+  .mark { position: absolute; left: 520px; top: 70px; width: 256px; height: 256px; border-radius: 50%; background: var(--accent-soft); }
+  .mark::after { content: ""; position: absolute; inset: 64px; border-radius: 50%; background: var(--accent); }
+</style>
+</head>
+<body>
+<div id="banner">
+  <div class="mark"></div>
+  <div class="copy">
+    <h1>Your Name</h1>
+    <p>One plain line about what you do.</p>
+  </div>
+</div>
+
+<script>
+/* ---------- platform presets ----------
+   Sizes are what the platform asks you to upload. Safe areas are in upload pixels:
+   "keep-clear" = something sits on top of the banner there (an avatar, a logo);
+   "keep-inside" = some views crop to this box, so keep text inside it.
+   Platforms change these. See reference/banner-parameters.md and check before relying on them. */
+const PRESETS = {
+  "linkedin-profile": { width: 1584, height: 396, maxMB: 8, safe: [
+    { kind: "keep-clear", x: 30, y: 170, w: 400, h: 226, label: "profile photo (approx.)" },
+    { kind: "keep-inside", x: 120, y: 0, w: 1344, h: 396, label: "mobile crop (approx.)" } ] },
+  "linkedin-company": { width: 1128, height: 191, maxMB: 3, safe: [
+    { kind: "keep-clear", x: 16, y: 80, w: 220, h: 111, label: "page logo (approx.)" } ] },
+  "x-header": { width: 1500, height: 500, maxMB: 2, safe: [
+    { kind: "keep-clear", x: 20, y: 330, w: 320, h: 170, label: "avatar (approx.)" },
+    { kind: "keep-inside", x: 0, y: 60, w: 1500, h: 380, label: "feed crop (approx.)" } ] },
+  "youtube-channel": { width: 2560, height: 1440, maxMB: 6, safe: [
+    { kind: "keep-inside", x: 507, y: 508, w: 1546, h: 423, label: "safe on every device" } ] },
+  "github-social": { width: 1280, height: 640, maxMB: 1, safe: [
+    { kind: "keep-inside", x: 40, y: 40, w: 1200, h: 560, label: "border" } ] },
+  "og-card": { width: 1200, height: 630, maxMB: 5, safe: [
+    { kind: "keep-inside", x: 285, y: 0, w: 630, h: 630, label: "square crop" } ] },
+};
+
+/* ---------- config ---------- */
+// Pick a preset, or pass { width, height, safe } for a custom size.
+window.BANNER = { ...PRESETS["linkedin-profile"] };
+
+/* ---------- harness: sizing + preview (do not edit) ---------- */
+(function () {
+  const { width, height } = window.BANNER;
+  const root = document.documentElement, banner = document.getElementById("banner");
+  root.style.setProperty("--w", width + "px");
+  root.style.setProperty("--h", height + "px");
+  if (window.__CAPTURE__) { root.classList.add("capture"); return; }
+  // Preview: ?theme=name previews a colorway; the banner is scaled to fit the window.
+  const theme = new URLSearchParams(location.search).get("theme");
+  if (theme) root.dataset.theme = theme;
+  const fit = () => {
+    const k = Math.min(innerWidth / width, innerHeight / height) * 0.96;
+    banner.style.transform = `translate(${(innerWidth - width * k) / 2}px, ${(innerHeight - height * k) / 2}px) scale(${k})`;
+  };
+  addEventListener("resize", fit); fit();
+})();
+</script>
+</body>
+</html>

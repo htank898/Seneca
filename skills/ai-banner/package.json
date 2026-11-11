@@ -1,0 +1,8 @@
+{
+  "name": "ai-banner-scripts",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "playwright": "1.59.1"
+  }
+}

@@ -6,7 +6,7 @@ Robotics spent fifty years learning that you shouldn't automate a job by copying
 
 AI at work is still building butlers. We ask it to drive PowerPoint and Word, tools designed for a human with a mouse, when it's already fluent in the thing browsers render best: **HTML, CSS, and JavaScript.**
 
-This repo has four [Claude Code](https://claude.com/claude-code) skills that build communication artifacts the way AI works best:
+This repo has five [Claude Code](https://claude.com/claude-code) skills that build communication artifacts the way AI works best:
 
 | Skill | What it makes | Output |
 |---|---|---|
@@ -14,8 +14,9 @@ This repo has four [Claude Code](https://claude.com/claude-code) skills that bui
 | **ai-pdf** | Letters, invitations, itineraries, and one-pagers on custom-designed stationery | Print-accurate `.pdf` |
 | **ai-gif** | Looping motion graphics for explainers, social posts, and visual gags | `.gif` + optional `.mp4` |
 | **ai-interactive-guide** | Click-through software walkthroughs: a rebuilt replica of the app with a spotlight and step-by-step coach marks | One `.html` file + optional walkthrough `.gif` |
+| **ai-banner** | Profile banners and header images (LinkedIn, X, YouTube, GitHub, link cards) at each platform's exact size, checked against where the avatar covers it | Static `.png` at 2×, one per colorway |
 
-Each skill pairs with Anthropic's `frontend-design` skill for the design pass, and gives Claude a reference sheet of the parameters a professional would think about: form factors, safe areas, type scales, paper sizes, loop timing, file-size budgets.
+Each skill pairs with Anthropic's `frontend-design` skill for the design pass, and gives Claude a reference sheet of the parameters a professional would think about: form factors, safe areas, type scales, paper sizes, loop timing, banner crops, file-size budgets.
 
 ## Examples
 
@@ -58,6 +59,7 @@ Just ask:
 - *"Write a letter to my team announcing the offsite, on stationery that feels like a vintage national-park poster."*
 - *"Make a 4-second looping GIF of a progress bar that gets to 99% and then starts over, for a Slack joke."*
 - *"Build an interactive guide that walks new reps through converting a lead in our CRM."*
+- *"Make me a LinkedIn banner that says AI strategist, and show me it in a few color schemes."*
 
 Claude picks the skill, does a design pass, builds the HTML, renders it, checks its own output, and hands you the files.
 
@@ -67,6 +69,7 @@ You can also run the renderers yourself on any HTML that follows the templates' 
 node skills/ai-slide-deck/scripts/render-deck-pdf.mjs deck.html --png
 node skills/ai-pdf/scripts/render-pdf.mjs letter.html --preview
 node skills/ai-gif/scripts/render-gif.mjs motion.html --mp4
+node skills/ai-banner/scripts/render-banner.mjs banner.html --theme a,b --guides
 node skills/ai-interactive-guide/scripts/render-steps.mjs guide.html --gif
 node skills/ai-interactive-guide/scripts/capture-ui-map.mjs https://app.example.com --headed --profile ./.guide-profile --wait
 ```
@@ -76,6 +79,7 @@ node skills/ai-interactive-guide/scripts/capture-ui-map.mjs https://app.example.
 - **Decks:** a small engine in a single HTML file handles navigation, transitions, builds, notes, and print. Chromium prints it to PDF at the deck's exact size.
 - **PDFs:** pages are laid out at real paper dimensions with CSS `@page`. Stationery art is a background layer of SVG and CSS, and Chromium's print engine writes the PDF.
 - **Guides:** the replica is ordinary HTML/CSS. A small engine spotlights the element each step points at, positions the coach card, and only advances click steps when the learner clicks the right thing. An optional capture script records a real app's layout (positions and labels, not its code) so the replica is accurate.
+- **Banners:** the banner is laid out at the platform's upload size and screenshotted at 2× to a PNG. Colors live in tokens, so each `[data-theme]` colorway renders from the same source, and `--guides` draws the platform's avatar and crop zones on top for checking.
 - **GIFs:** the animation is a pure function `renderFrame(t)`. Playwright steps through every frame and screenshots it, then ffmpeg builds an optimized palette and encodes a seamless loop.
 
 ## License
