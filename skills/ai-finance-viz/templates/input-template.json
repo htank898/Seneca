@@ -1,0 +1,15 @@
+{
+  "title": "Peer valuation",
+  "asOf": "YYYY-MM-DD",
+  "source": "Company 10-K/10-Q filings; prices from <provider> at market close",
+  "sample": false,
+  "currency": "$",
+  "benchmark": { "label": "10-yr Treasury", "rate": "4.0%", "source": "<provider>", "asOf": "YYYY-MM-DD" },
+  "notes": [],
+  "tickers": [
+    { "symbol": "AAA", "name": "Company A", "price": 100, "shares": "1B", "eps_ttm": 5, "eps_fwd": 5.5,
+      "revenue": "40B", "gross_profit": "20B", "operating_income": "8B", "net_income": "5B", "ebitda": "10B",
+      "fcf": "6B", "debt": "10B", "cash": "4B", "book_value": "25B", "dividend": 1.2, "growth": "10%",
+      "source": "optional per-ticker override", "asOf": "optional per-ticker override" }
+  ]
+}
