@@ -42,6 +42,8 @@ const dither = args.dither || "sierra2_4a";
 const total = Math.round(fps * seconds);
 
 await page.setViewportSize({ width, height });
+// Let Chromium repaint at the new size; otherwise frame 0 can capture stale tiles from before the resize.
+await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 const hasRender = await page.evaluate(() => typeof window.renderFrame === "function");
 if (!hasRender) {
   console.error("page does not define window.renderFrame(t)");

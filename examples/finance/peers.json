@@ -1,0 +1,23 @@
+{
+  "title": "Four big names, side by side",
+  "sample": true,
+  "source": "Round, made-up figures in the rough shape of each company's public filings, for demonstration only",
+  "benchmark": { "label": "10-yr Treasury", "rate": "4.2%", "source": "illustrative" },
+  "notes": [
+    "Every number in this example is illustrative. Replace it with figures from a filing or data provider, with a date, before sharing anything that looks like analysis."
+  ],
+  "tickers": [
+    { "symbol": "AAPL", "name": "Apple", "price": 230, "shares": "15.0B", "eps_ttm": 6.60, "eps_fwd": 7.40,
+      "revenue": "400B", "gross_profit": "186B", "operating_income": "125B", "net_income": "99B", "ebitda": "135B",
+      "fcf": "105B", "debt": "100B", "cash": "65B", "book_value": "65B", "dividend": 1.04, "growth": "9%" },
+    { "symbol": "NVDA", "name": "Nvidia", "price": 180, "shares": "24.4B", "eps_ttm": 3.50, "eps_fwd": 4.60,
+      "revenue": "165B", "gross_profit": "115B", "operating_income": "100B", "net_income": "86B", "ebitda": "102B",
+      "fcf": "75B", "debt": "10B", "cash": "55B", "book_value": "100B", "dividend": 0.04, "growth": "30%" },
+    { "symbol": "KO", "name": "Coca-Cola", "price": 70, "shares": "4.3B", "eps_ttm": 2.80, "eps_fwd": 3.00,
+      "revenue": "47B", "gross_profit": "29B", "operating_income": "14B", "net_income": "12B", "ebitda": "16B",
+      "fcf": "9.5B", "debt": "45B", "cash": "13B", "book_value": "28B", "dividend": 2.04, "growth": "6%" },
+    { "symbol": "INTC", "name": "Intel", "price": 24, "shares": "4.4B", "eps_ttm": -4.40, "eps_fwd": 0.40,
+      "revenue": "53B", "gross_profit": "18B", "operating_income": "-10B", "net_income": "-19B", "ebitda": "2B",
+      "fcf": "-10B", "debt": "50B", "cash": "22B", "book_value": "100B", "dividend": 0, "growth": null }
+  ]
+}
