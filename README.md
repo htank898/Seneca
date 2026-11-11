@@ -6,7 +6,7 @@ Robotics spent fifty years learning that you shouldn't automate a job by copying
 
 AI at work is still building butlers. We ask it to drive PowerPoint and Word, tools designed for a human with a mouse, when it's already fluent in the thing browsers render best: **HTML, CSS, and JavaScript.**
 
-This repo has six [Claude Code](https://claude.com/claude-code) skills that build communication artifacts the way AI works best, plus a front door, `/seneca`, that picks which ones fit your audience and builds them together:
+This repo has thirteen [Claude Code](https://claude.com/claude-code) skills that build communication artifacts the way AI works best, plus a front door, `/seneca`, that picks which ones fit your audience and builds them together:
 
 | Skill | What it makes | Output |
 |---|---|---|
@@ -18,6 +18,10 @@ This repo has six [Claude Code](https://claude.com/claude-code) skills that buil
 | **ai-graphic** | Static graphics at any size: profile banners, social posts, link-preview images, thumbnails, avatars, stickers | `.png` (or `.jpg`) per artboard, with platform safe-zone checks |
 | **ai-math** | Math as code: Manim animations, KaTeX equations inside any of the formats above, and real LaTeX documents | `.mp4` / `.gif` / transparent clip, typeset `.html`, LaTeX `.pdf` |
 | **ai-video-edit** | Edits a selfie or talking-head recording by what's said: name tags, stat callouts, price quotes, CTAs, captions, and end cards, timed to the speaker's words (transcribed locally with Whisper) | Edited `.mp4` + an `edit.json` you can tweak and re-render |
+| **ai-video** | Narrated videos: HTML/SVG animation with a voice-over generated locally with Kokoro (no API keys) | `.mp4` (H.264 + AAC) with `.vtt` and `.srt` captions |
+| **ai-finance-viz** | Stock and company financials made intuitive: valuation metrics, fundamentals, and side-by-side peer comparisons | `.gif`/`.mp4`, an interactive `.html` explorer, and `.png` stills |
+| **ai-blender** | 3D scenes built in Blender from Python scripts run headless: product shots, hero images, logo renders, turntables | `.png` renders and turntable `.mp4` |
+| **ai-pitch-page** | A one-page pitch for one specific role or person: requirements mapped to real evidence, a small live demo, a link-preview image, and LinkedIn message drafts | One `.html` page + preview `.png` + message drafts |
 | **ai-banner** | Profile banners and header images (LinkedIn, X, YouTube, GitHub, link cards) at each platform's exact size, checked against where the avatar covers it | Static `.png` at 2×, one per colorway |
 
 Each skill pairs with Anthropic's `frontend-design` skill for the design pass, and gives Claude a reference sheet of the parameters a professional would think about: form factors, safe areas, type scales, paper sizes, loop timing, banner crops, file-size budgets.
