@@ -10,12 +10,15 @@
 // CLI flags override MOTION:
 //   node render-gif.mjs motion.html [--out motion.gif] [--width 1080] [--height 1080]
 //     [--fps 24] [--seconds 6] [--scale 1] [--colors 256] [--dither sierra2_4a]
-//     [--mp4] [--mp4-loops 3] [--video] [--keep-frames] [--budget-mb 5]
+//     [--mp4] [--mp4-loops 3] [--video] [--no-audio] [--keep-frames] [--budget-mb 5]
 //   --video writes only an MP4 that plays once, with the page's audio if it has any.
+// If the page defines window.SOUND cues, the MP4 gets a soundtrack synthesized offline
+// with the Web Audio API (works headless; no audio device or sound files needed). It is
+// mixed with MOTION.audio when the page has both.
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, rmdirSync, statSync, existsSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, rmdirSync, statSync, existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
-import { launch, parseArgs, fileUrl } from "./_browser.mjs";
+import { launch, parseArgs, fileUrl, SKILL_DIR } from "./_browser.mjs";
 
 const args = parseArgs(process.argv.slice(2));
 const input = args._[0];
@@ -70,6 +73,25 @@ for (let i = 0; i < total; i++) {
   if (i % 24 === 0) process.stderr.write(`\r[gif] frame ${i + 1}/${total}`);
 }
 process.stderr.write(`\r[gif] captured ${total} frames      \n`);
+
+const wantMp4 = !!(args.mp4 || video);
+const loops = video ? 1 : +(args["mp4-loops"] || 3);
+const sfxPath = join(framesDir, "audio.wav");
+let hasSfx = false;
+if (wantMp4 && !args["no-audio"]) {
+  const cues = await page.evaluate(() => (window.SOUND && window.SOUND.cues && window.SOUND.cues.length) || 0);
+  if (cues) {
+    // Pages made before the sound engine existed can still declare SOUND; borrow the template's engine.
+    if (!(await page.evaluate(() => !!window.SFX))) {
+      const shell = readFileSync(join(SKILL_DIR, "templates", "motion-shell.html"), "utf8");
+      await page.addScriptTag({ content: shell.match(/<script id="sfx-engine">([\s\S]*?)<\/script>/)[1] });
+    }
+    const b64 = await page.evaluate((o) => window.SFX.render(o), { seconds, loops });
+    writeFileSync(sfxPath, Buffer.from(b64, "base64"));
+    hasSfx = true;
+    console.error(`[gif] rendered soundtrack: ${cues} cues x ${loops} loops`);
+  }
+}
 await browser.close();
 
 const outW = Math.round(width * scale);
@@ -89,32 +111,45 @@ if (statSync(out).size > budget * 1048576) {
 }
 }
 
-if (args.mp4 || video) {
-  const loops = video ? 1 : +(args["mp4-loops"] || 3);
-  const audio = motion.audio && motion.audio.src ? motion.audio : null;
+if (wantMp4) {
+  const footage = !args["no-audio"] && motion.audio && motion.audio.src ? motion.audio : null;
   const ff = ["-y", "-loglevel", "error", "-stream_loop", String(loops - 1), "-framerate", String(fps), "-i", pattern];
-  const vf = `[0:v]scale=${outW - (outW % 2)}:-2:flags=lanczos[v]`;
-  let filter = vf, maps = ["-map", "[v]"];
-  if (audio && loops === 1) {
-    const src = resolve(dirname(inputPath), audio.src);
+  const parts = [`[0:v]scale=${outW - (outW % 2)}:-2:flags=lanczos[v]`];
+  const tracks = [];
+  let nextInput = 1;
+  if (footage && loops === 1) {
+    const src = resolve(dirname(inputPath), footage.src);
     if (!existsSync(src)) { console.error(`audio not found: ${src}`); process.exit(1); }
     ff.push("-i", src);
-    const segs = audio.segments || [{ from: 0, to: seconds, at: 0 }];
-    const parts = segs.map((s, i) =>
-      `[1:a]atrim=start=${s.from}:end=${s.to},asetpts=PTS-STARTPTS,adelay=${Math.round(s.at * 1000)}:all=1[a${i}]`);
-    const mix = segs.length > 1
-      ? `${segs.map((_, i) => `[a${i}]`).join("")}amix=inputs=${segs.length}:normalize=0:dropout_transition=0,apad[aout]`
-      : `[a0]apad[aout]`;
-    filter = [vf, ...parts, mix].join(";");
-    maps = ["-map", "[v]", "-map", "[aout]", "-c:a", "aac", "-b:a", "160k", "-t", String(total / fps)];
-  } else if (audio) {
-    console.warn("note: audio is only added to single-pass MP4s (use --video or --mp4-loops 1)");
+    const n = nextInput++;
+    const segs = footage.segments || [{ from: 0, to: seconds, at: 0 }];
+    segs.forEach((s, i) => parts.push(
+      `[${n}:a]atrim=start=${s.from}:end=${s.to},asetpts=PTS-STARTPTS,adelay=${Math.round(s.at * 1000)}:all=1[f${i}]`));
+    parts.push(segs.length > 1
+      ? `${segs.map((_, i) => `[f${i}]`).join("")}amix=inputs=${segs.length}:normalize=0:dropout_transition=0,apad[foot]`
+      : `[f0]apad[foot]`);
+    tracks.push("[foot]");
+  } else if (footage) {
+    console.warn("note: footage audio is only added to single-pass MP4s (use --video or --mp4-loops 1)");
+  }
+  if (hasSfx) {
+    ff.push("-i", sfxPath);
+    parts.push(`[${nextInput++}:a]apad[sfx]`);
+    tracks.push("[sfx]");
+  }
+  let maps = ["-map", "[v]"];
+  if (tracks.length) {
+    parts.push(tracks.length > 1
+      ? `${tracks.join("")}amix=inputs=${tracks.length}:normalize=0:dropout_transition=0[aout]`
+      : `${tracks[0]}anull[aout]`);
+    maps = ["-map", "[v]", "-map", "[aout]", "-c:a", "aac", "-b:a", "192k", "-t", String((total * loops) / fps)];
   }
   execFileSync("ffmpeg", [
-    ...ff, "-filter_complex", filter, ...maps,
+    ...ff, "-filter_complex", parts.join(";"), ...maps,
     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-movflags", "+faststart", mp4,
   ], { stdio: "inherit" });
-  console.log(`mp4: ${mp4} (${mb(mp4)} MB, ${loops === 1 ? "plays once" : loops + " loops"}${audio && loops === 1 ? ", with audio" : ""})`);
+  const sound = tracks.length ? `, with ${[footage && loops === 1 && "audio", hasSfx && "sound effects"].filter(Boolean).join(" and ")}` : "";
+  console.log(`mp4: ${mp4} (${mb(mp4)} MB, ${loops === 1 ? "plays once" : loops + " loops"}${sound})`);
 }
 
 if (!args["keep-frames"]) {
