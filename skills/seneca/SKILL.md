@@ -1,6 +1,6 @@
 ---
 name: seneca
-description: The front door to Seneca. Takes a communication need in plain words ("I have a meeting with the execs, summarize this for them", "announce the reorg", "get the team up to speed on the new CRM", "pitch this to a partner") and decides which formats fit the audience and moment: a slide deck, a PDF, a graphic, a GIF, a scale animation, an interactive guide, a video, or a pitch page. Then it builds them as one consistent package. Use when someone describes a situation, audience, or goal rather than a specific format, or asks "what's the best way to communicate this?". If they name one format ("make a deck"), use that skill directly.
+description: The front door to Seneca. Takes a communication need in plain words ("I have a meeting with the execs, summarize this for them", "announce the reorg", "get the team up to speed on the new CRM", "pitch this to a partner") and decides which formats fit the audience and moment: a slide deck, a PDF, a graphic, a GIF, a scale animation, a math animation, an interactive guide, a video, or a pitch page. Then it builds them as one consistent package. Use when someone describes a situation, audience, or goal rather than a specific format, or asks "what's the best way to communicate this?". If they name one format ("make a deck"), use that skill directly.
 ---
 
 # Seneca: pick the right formats, then build them
@@ -41,6 +41,8 @@ Pick the **smallest set of formats where each one has a distinct job**. That's u
 | Outreach to one specific person or role | **Pitch page** | **Graphic** link-preview image (the pitch page makes its own) |
 | Numbers-heavy (results, QBR, metrics) | **Deck** with charts | **Graphic** with the 1–3 numbers that matter |
 | A number too big (or small) to feel: budgets, debt, market size, time spans, growth rates | **Scale animation** (MP4 for social, interactive for teaching) | **Stills** of each stop as slides, or a **graphic** of the payoff stop |
+| Formulas, proofs, or quantitative derivations to explain | **Math animation** (MP4 for video and social, GIF to embed) | **PDF** with the full derivation, or typeset equations on the **deck** or **guide** that carries it |
+| A paper, problem set, or formal derivation | **LaTeX PDF** | **Math animation** of the one step that's hard to see on paper |
 
 When stakeholder groups differ a lot, tailor rather than add formats. For example, execs get the deck and the working team gets the PDF with the appendix.
 
@@ -56,6 +58,9 @@ Use the matching skill for each format. Load it with the Skill tool (it may have
 | Graphic, banner, social image, thumbnail, card | `ai-graphic` |
 | Looping animation | `ai-gif` |
 | Scale of a number (stacks, time back, doubling) | `ai-scale` |
+| Animated math explainer (proof, formula, derivation) | `ai-math` (Manim route) |
+| Equations inside a deck, PDF, or guide | `ai-math` (`typeset.mjs` route) |
+| Paper, problem set, or LaTeX document | `ai-math` (LaTeX → PDF route) |
 | Interactive click-through guide | `ai-interactive-guide` |
 | Narrated video | `ai-video` (if installed) |
 | One-person pitch page | `ai-pitch-page` (if installed) |
@@ -68,6 +73,7 @@ Package rules:
 - **One folder.** Put everything in `<short-slug>/` in the current project (or where the person asked), with the spine, each source HTML, and each rendered file.
 - **Portable.** Every deliverable must open for someone with no Claude and no special software. That means self-contained HTML, PDF, PNG, GIF, or MP4. Many email systems block `.html` attachments, so when an HTML deliverable is meant to be sent, also render its PDF, GIF, or PNG fallback.
 - **Clean in every frame.** No overlapping or clipped text or icons in any format or frame: crowded things fade out or move aside. Positions stay stable during motion, and anything showing magnitude uses an honest linear scale. Each skill's verify step checks this, so don't skip it.
+- **Math is typeset, never faked.** Any equation in any format goes through `ai-math`: `typeset.mjs` for HTML pieces, Manim for motion. A Manim `--clip` is a transparent layer that can be composited into an `ai-video` or `ai-gif` piece, so a video or GIF can carry a math beat without switching style.
 - **Don't invent facts.** Use only the numbers, names, and dates from the source material. If something important is missing, put a clearly marked placeholder in and list it at the end.
 
 ## 5. Hand off
