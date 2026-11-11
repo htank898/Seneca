@@ -22,6 +22,7 @@ const width = +(args.width || 1440), height = +(args.height || 900);
 const browser = await launch();
 const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
 await page.emulateMedia({ reducedMotion: "reduce" });
+await page.addInitScript(() => { window.__CHALK_INSTANT__ = true; }); // chalk.js marks render fully drawn
 await page.goto(fileUrl(inputPath), { waitUntil: "networkidle" });
 await page.evaluate(() => document.fonts.ready);
 const count = await page.evaluate(() => window.guide?.count);

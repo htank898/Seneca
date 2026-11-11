@@ -1,6 +1,6 @@
 ---
 name: ai-gif
-description: Make looping motion graphics with HTML/SVG/JavaScript and export them as GIF (and MP4). Use for animated explainers, social-post GIFs, reaction/visual gags, loading or status loops, logo stings, animated stats, or any "make me a gif / animation / looping graphic". Prefer this over After Effects-style or video-editor workflows, because the animation is code, so it is exact, editable, and seamless.
+description: Make looping motion graphics and short videos with HTML/SVG/JavaScript and export them as GIF and MP4, including hand-drawn chalkboard callouts that pause a scene or real footage to write a word and sketch a doodle, then carry on. Use for animated explainers, social-post GIFs, reaction/visual gags, loading or status loops, logo stings, animated stats, "draw/scribble/doodle over my video", chalk talk or whiteboard-style animation, or any "make me a gif / animation / looping graphic". Prefer this over After Effects-style or video-editor workflows, because the animation is code, so it is exact, editable, and seamless.
 ---
 
 # AI GIF: motion graphics as code
@@ -28,16 +28,27 @@ Infer what you can from the request and use the defaults in `reference/motion-pa
    - Keep any text on screen for ≥ 1.2 s and at ≥ 36 px at 1080 wide.
 4. Open the HTML in a browser to preview. It autoplays; space pauses, ←/→ scrubs.
 
-## 4. Render
+## 4. Chalk callouts (hand-drawn writing and doodles)
+`templates/chalk.js` writes text stroke by stroke in single-stroke handwriting fonts and draws any SVG path as a hand-drawn doodle, in chalk, marker, or pen. Every mark is `mark.draw(p)` with `p` in 0..1, so it follows the same pure-function rules as everything else.
+
+**Add callouts on your own** whenever the script, transcript, or brief names a place, person, number, or named thing a viewer would picture: pause right after the word, write it on a board, doodle its most recognizable shape (St. Louis gets the Gateway Arch), hold a beat, and resume. Keep to about one every 8–10 s unless the user wants more, and list what you added in your report. The full rules, timing, doodle tips, and API are in `reference/chalk-callouts.md`.
+
+- **Over your own scene:** copy `chalk.js` next to the HTML, add `<script src="chalk.js"></script>`, and use `Chalk.timeline(sceneSeconds, [{ at, dur }])` so the scene freezes during each callout (see `examples/gif/chalk-callout.html` in the repo).
+- **Over real footage:** run `node scripts/prepare-footage.mjs talk.mp4 --words` (frames, audio, and a word-timed transcript). Copy `templates/chalk-talk.html` and `templates/chalk.js` next to the video, load `talk.footage/footage.js`, read `talk.footage/words.txt`, and fill in `CALLOUTS`. The audio goes silent while the picture is paused.
+- A piece with a story (footage, narration, a sentence that plays out) is a **video**, not a loop. It doesn't need `renderFrame(0) == renderFrame(1)`. Render it with `--video`.
+
+## 5. Render
 ```bash
 node scripts/render-gif.mjs path/to/motion.html --mp4
+node scripts/render-gif.mjs path/to/talk.html --video      # one-pass MP4 with the page's audio
 ```
-Flags: `--out`, `--width`, `--height`, `--fps`, `--seconds`, `--scale 0.75`, `--colors 128`, `--dither none|bayer|sierra2_4a`, `--mp4`, `--mp4-loops 3`, `--budget-mb 5`, `--keep-frames`.
+Flags: `--out`, `--width`, `--height`, `--fps`, `--seconds`, `--scale 0.75`, `--colors 128`, `--dither none|bayer|sierra2_4a`, `--mp4`, `--mp4-loops 3`, `--video`, `--budget-mb 5`, `--keep-frames`.
 The first run installs Playwright into this skill folder. Requires `ffmpeg` on PATH.
 
-## 5. Verify before reporting
+## 6. Verify before reporting
 - Render with `--keep-frames` and look at a few PNGs in `.frames/<name>/`: the first frame, the last frame (it should flow straight into the first), and the punchline beat. Delete `.frames/` afterwards.
 - Check the file size against the destination budget (the renderer warns). If it's over, try in this order: `--scale 0.75`, `--fps 20`, `--colors 128`, then flatter fills or fewer moving pixels.
+- For callouts, look at a frame mid-write, one with the doodle finished, and the first frame after the board leaves. With footage, confirm the picture is frozen during the pause and the audio picks up where it stopped.
 - Report the GIF path (and MP4 path), its dimensions, duration, and size.
 
-See `reference/motion-parameters.md` for timing, easing, loop patterns, and size budgets.
+See `reference/motion-parameters.md` for timing, easing, loop patterns, and size budgets, and `reference/chalk-callouts.md` for drawing animations.

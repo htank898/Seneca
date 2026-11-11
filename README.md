@@ -12,7 +12,7 @@ This repo has four [Claude Code](https://claude.com/claude-code) skills that bui
 |---|---|---|
 | **ai-slide-deck** | Presentations with transitions, builds, speaker notes, and an overview grid | One `.html` file + a one-slide-per-page `.pdf` |
 | **ai-pdf** | Letters, invitations, itineraries, and one-pagers on custom-designed stationery | Print-accurate `.pdf` |
-| **ai-gif** | Looping motion graphics for explainers, social posts, and visual gags | `.gif` + optional `.mp4` |
+| **ai-gif** | Looping motion graphics for explainers, social posts, and visual gags, plus chalkboard callouts that pause a scene or real footage to hand-write a word and doodle it | `.gif` + optional `.mp4` (with audio for footage) |
 | **ai-interactive-guide** | Click-through software walkthroughs: a rebuilt replica of the app with a spotlight and step-by-step coach marks | One `.html` file + optional walkthrough `.gif` |
 
 Each skill pairs with Anthropic's `frontend-design` skill for the design pass, and gives Claude a reference sheet of the parameters a professional would think about: form factors, safe areas, type scales, paper sizes, loop timing, file-size budgets.
@@ -27,6 +27,10 @@ Every file in [`examples/`](examples) was made with these skills, from a single 
 | [HTML deck](examples/deck/build-the-disc.html) · [PDF](examples/deck/build-the-disc.pdf) | [PDF](examples/pdf/merida-letter.pdf) · [source](examples/pdf/merida-letter.html) |
 
 The GIF at the top is [`examples/gif/any-format.html`](examples/gif/any-format.html), rendered by `ai-gif`. There's also [`disc-not-butler.gif`](examples/gif/disc-not-butler.gif): a humanoid robot pushing a vacuum keeps bonking into a couch while a robot-vacuum disc glides underneath it.
+
+**Chalk callouts:** the video pauses right after "St. Louis, Missouri," a chalkboard slides in, writes the name by hand, sketches the Gateway Arch, and the video picks up where it left off. The source is [`examples/gif/chalk-callout.html`](examples/gif/chalk-callout.html) ([MP4](examples/gif/chalk-callout.mp4)). The same thing works over real footage: `prepare-footage.mjs` transcribes it with word timings, Claude adds a callout wherever a place, name, or number is mentioned, and the audio pauses with the picture.
+
+![A talking-head scene pauses after "I'm from St. Louis, Missouri." A chalkboard slides in, writes St. Louis, Missouri in script, draws the Gateway Arch, then slides away and the scene resumes.](examples/gif/chalk-callout.gif)
 
 **Interactive guide:** [a tour of the LinkedIn home screen](examples/guide/linkedin-home-tour.html). Open it in a browser and it tells you what each part does and what to click, and reacts when you click it. It's a practice replica rebuilt from scratch and isn't affiliated with LinkedIn.
 
@@ -48,7 +52,7 @@ git clone https://github.com/htank898/Seneca.git
 cp -r Seneca/skills/* ~/.claude/skills/
 ```
 
-**Requirements:** Node 18+ and `ffmpeg` (for GIFs; on macOS run `brew install ffmpeg`). Each skill installs its own copy of Playwright the first time it renders. If a Chromium download is needed, that happens once too.
+**Requirements:** Node 18+ and `ffmpeg` (for GIFs; on macOS run `brew install ffmpeg`). Transcribing footage for chalk callouts also needs [`uv`](https://docs.astral.sh/uv/) (`brew install uv`); it runs faster-whisper locally. Each skill installs its own copy of Playwright the first time it renders. If a Chromium download is needed, that happens once too.
 
 ## Usage
 
@@ -58,6 +62,7 @@ Just ask:
 - *"Write a letter to my team announcing the offsite, on stationery that feels like a vintage national-park poster."*
 - *"Make a 4-second looping GIF of a progress bar that gets to 99% and then starts over, for a Slack joke."*
 - *"Build an interactive guide that walks new reps through converting a lead in our CRM."*
+- *"Here's my intro video. Whenever I mention a place, pause it and chalk the name and a doodle of it."*
 
 Claude picks the skill, does a design pass, builds the HTML, renders it, checks its own output, and hands you the files.
 
@@ -67,6 +72,8 @@ You can also run the renderers yourself on any HTML that follows the templates' 
 node skills/ai-slide-deck/scripts/render-deck-pdf.mjs deck.html --png
 node skills/ai-pdf/scripts/render-pdf.mjs letter.html --preview
 node skills/ai-gif/scripts/render-gif.mjs motion.html --mp4
+node skills/ai-gif/scripts/prepare-footage.mjs talk.mp4 --words
+node skills/ai-gif/scripts/render-gif.mjs talk.html --video
 node skills/ai-interactive-guide/scripts/render-steps.mjs guide.html --gif
 node skills/ai-interactive-guide/scripts/capture-ui-map.mjs https://app.example.com --headed --profile ./.guide-profile --wait
 ```
@@ -77,6 +84,7 @@ node skills/ai-interactive-guide/scripts/capture-ui-map.mjs https://app.example.
 - **PDFs:** pages are laid out at real paper dimensions with CSS `@page`. Stationery art is a background layer of SVG and CSS, and Chromium's print engine writes the PDF.
 - **Guides:** the replica is ordinary HTML/CSS. A small engine spotlights the element each step points at, positions the coach card, and only advances click steps when the learner clicks the right thing. An optional capture script records a real app's layout (positions and labels, not its code) so the replica is accurate.
 - **GIFs:** the animation is a pure function `renderFrame(t)`. Playwright steps through every frame and screenshots it, then ffmpeg builds an optimized palette and encodes a seamless loop.
+- **Chalk callouts:** `chalk.js` writes with single-stroke handwriting fonts (EMS Allure and EMS Readability, SIL OFL), so text is drawn the way a hand writes it rather than traced as an outline. Doodles are SVG paths with a hand wobble. A timeline maps output time to scene time, so the scene (or footage, and its audio) freezes while the board draws. Decks and guides use the same kit live: `Chalk.auto()` draws marks when their slide or step appears.
 
 ## License
 

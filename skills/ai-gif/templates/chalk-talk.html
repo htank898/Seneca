@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chalk Talk</title>
+<!--
+  A scene that pauses on cue so a chalkboard can write and doodle, then carries on.
+  The scene is either footage (made by scripts/prepare-footage.mjs) or your own
+  animation in renderScene(sec). Callouts freeze it, so the drawing never fights the motion.
+  Put this file, chalk.js, and the .footage folder side by side.
+-->
+<style>
+  :root { --bg: #e8e0d2; --ink: #1c2026; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #111; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); background: var(--bg); overflow: hidden; transform-origin: 0 0; }
+  svg { display: block; font-family: system-ui, sans-serif; }
+  #hud { position: fixed; right: 12px; bottom: 12px; z-index: 10; font: 12px/1.4 ui-monospace, monospace; color: #ccc; background: rgba(0,0,0,.6); padding: 6px 10px; border-radius: 6px; }
+  .capture #hud { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="scene" width="100%" height="100%">
+    <image id="footage" x="0" y="0" width="100%" height="100%" preserveAspectRatio="xMidYMid slice"/>
+    <g id="art"><!-- SCENE: your own animated scene, if there is no footage --></g>
+    <rect id="dim" x="0" y="0" width="100%" height="100%" fill="#0d1014" opacity="0"/>
+    <g id="boards"></g>
+  </svg>
+</div>
+<div id="hud">space pause · ←/→ scrub · <span id="tc">0.000</span></div>
+
+<script src="chalk.js"></script>
+<!-- Footage: uncomment and point at the folder prepare-footage.mjs made. -->
+<!-- <script src="talk.footage/footage.js"></script> -->
+<script>
+/* ---------- callouts: where to pause and what to draw ----------
+  at:     scene second to freeze on (with footage, the end of the word in words.txt)
+  dur:    how long the pause lasts (4-6 s reads well: write, doodle, a beat to look)
+  write:  handwritten text ("\n" for a second line)
+  font:   "script" (cursive) or "print"
+  doodle: path data in a 400 x 260 box, or an array of paths; each absolute M is one stroke
+  place:  "right" | "left" | "center" (which part of the frame the board covers)
+  extra:  "underline" | "circle" | null (a flourish on the text after the doodle)
+*/
+// The Gateway Arch is a weighted catenary: w = half-width, h = height, in the 400 x 260 box.
+const arch = (w, h, base = 250, cx = 200) => "M " + Array.from({ length: 41 }, (_, i) => {
+  const u = -1 + i / 20, a = 2.2;
+  return `${(cx + u * w).toFixed(1)} ${(base - h * (Math.cosh(a) - Math.cosh(a * u)) / (Math.cosh(a) - 1)).toFixed(1)}`;
+}).join(" L ");
+const CALLOUTS = [
+  {
+    at: 3.4, dur: 5.2, write: "St. Louis,\nMissouri", font: "script", place: "right", extra: null,
+    doodle: [arch(95, 230), arch(68, 195), "M 30 254 Q 200 246 370 256"],
+  },
+];
+
+const F = window.FOOTAGE || null;
+const W = F ? F.width : 1280, H = F ? F.height : 720;
+const SCENE_SECONDS = F ? F.duration : 8;
+const TL = Chalk.timeline(SCENE_SECONDS, CALLOUTS.map((c, i) => ({ at: c.at, dur: c.dur, name: i })));
+window.MOTION = {
+  width: W, height: H, fps: F ? F.fps : 24, seconds: +TL.seconds.toFixed(3),
+  // Holds are silent: the audio pauses with the picture.
+  audio: F && F.audio ? { src: F.audio, segments: TL.audioSegments() } : null,
+};
+
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const ease = {
+  inOutCubic: (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  outCubic: (x) => 1 - Math.pow(1 - x, 3),
+  inCubic: (x) => x * x * x,
+};
+const $ = (s) => document.querySelector(s);
+$("#scene").setAttribute("viewBox", `0 0 ${W} ${H}`);
+const footage = F ? Chalk.footage($("#footage"), F) : null;
+if (!F) $("#footage").remove();
+
+/* ---------- build each callout's board once ---------- */
+const BOARDS = CALLOUTS.map((c, i) => {
+  const layer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  $("#boards").appendChild(layer);
+  const m = Math.round(H * 0.08);
+  const bw = c.place === "center" ? W * 0.62 : W * 0.42, bh = H - m * 2.6;
+  const bx = c.place === "left" ? m : c.place === "center" ? (W - bw) / 2 : W - bw - m, by = m;
+  const board = Chalk.board($("#scene"), { parent: layer, seed: 11 + i });
+  board.panel(bx, by, bw, bh, { frame: Math.round(H * 0.028) });
+  const lines = c.write.split("\n").length, size = H * 0.2;
+  const text = board.write(c.write, {
+    x: bx + bw / 2, y: by + bh * 0.2, size, maxWidth: bw * 0.84, anchor: "middle", font: c.font || "script", lineHeight: 0.8,
+  });
+  // The doodle box fills the lower part of the board.
+  const top = by + bh * (lines > 1 ? 0.5 : 0.36), k = Math.min((bw * 0.8) / 400, (by + bh * 0.95 - top) / 260);
+  const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  g.setAttribute("transform", `translate(${bx + bw / 2 - 200 * k} ${top}) scale(${k})`);
+  board.el.appendChild(g);
+  const doodle = c.doodle ? board.doodle(c.doodle, { parent: g, width: 6 / k, rough: 1.5 / k }) : null;
+  const extra = c.extra === "underline" ? board.underline(text) : c.extra === "circle" ? board.circle(text) : null;
+  return { c, layer, text, doodle, extra, from: c.place === "left" ? -(bx + bw + 60) : W - bx + 60 };
+});
+
+/* ---------- your own scene, if there is no footage (scene seconds, not t) ---------- */
+function renderScene(sec) {
+  // Draw into #art. It freezes automatically during callouts.
+}
+
+/* ---------- the animation: a pure function of t ---------- */
+window.renderFrame = function (t) {
+  const sec = t * MOTION.seconds;
+  const { scene, hold, p } = TL.at(sec);
+  renderScene(scene);
+  let dim = 0;
+  BOARDS.forEach((b, i) => {
+    const on = hold === i, hs = on ? p * b.c.dur : -1, D = b.c.dur;
+    const into = on ? ease.outCubic(seg(hs, 0.1, 0.75)) : 0;
+    const out = on ? ease.inCubic(seg(hs, D - 0.55, D)) : 0;
+    b.layer.setAttribute("transform", `translate(${((1 - into + out) * b.from).toFixed(1)} 0)`);
+    b.layer.style.visibility = on ? "visible" : "hidden";
+    const work = D - 0.85 - 0.55 - 0.5; // time to draw: after it lands, before a beat and the exit
+    const wEnd = 0.85 + work * 0.48, dEnd = wEnd + work * (b.extra ? 0.38 : 0.52);
+    b.text.draw(on ? seg(hs, 0.85, wEnd) : 0);
+    if (b.doodle) b.doodle.draw(on ? ease.inOutCubic(seg(hs, wEnd + 0.1, dEnd)) : 0);
+    if (b.extra) b.extra.draw(on ? seg(hs, dEnd + 0.05, 0.85 + work) : 0);
+    if (on) dim = 0.4 * (ease.outCubic(seg(hs, 0, 0.4)) - out);
+  });
+  $("#dim").setAttribute("opacity", dim.toFixed(3));
+  $("#tc").textContent = `${t.toFixed(3)}  ${sec.toFixed(2)}s`;
+  return footage ? footage.show(scene) : undefined;
+};
+
+/* ---------- harness: sizing + preview loop (do not edit) ---------- */
+(function () {
+  const { width, height, fps, seconds } = window.MOTION;
+  const stage = $("#stage");
+  document.documentElement.style.setProperty("--w", width + "px");
+  document.documentElement.style.setProperty("--h", height + "px");
+  if (window.__CAPTURE__) { document.documentElement.classList.add("capture"); window.renderFrame(0); return; }
+  const fit = () => {
+    const k = Math.min(innerWidth / width, innerHeight / height);
+    stage.style.transform = `translate(${(innerWidth - width * k) / 2}px, ${(innerHeight - height * k) / 2}px) scale(${k})`;
+  };
+  addEventListener("resize", fit); fit();
+  let playing = true, t = 0, last = performance.now();
+  const step = 1 / (fps * seconds);
+  addEventListener("keydown", (e) => {
+    if (e.code === "Space") { playing = !playing; e.preventDefault(); }
+    if (e.key === "ArrowRight") { t = (t + step) % 1; window.renderFrame(t); }
+    if (e.key === "ArrowLeft") { t = (t - step + 1) % 1; window.renderFrame(t); }
+  });
+  (function tick(now) {
+    if (playing) { t = (t + (now - last) / 1000 / seconds) % 1; window.renderFrame(t); }
+    last = now; requestAnimationFrame(tick);
+  })(last);
+})();
+</script>
+</body>
+</html>
