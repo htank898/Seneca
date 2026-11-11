@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Video overlays</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+  /* Palette: Seneca defaults. edit.json "brand" overrides any of these (paper, ink, ink2, steel, signal, led, font). */
+  :root {
+    --paper: #e6eae8; --ink: #16191d; --ink2: #2a2f36; --steel: #5e7a94; --signal: #f5c518; --led: #7CFFB2;
+    --font: "Archivo", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; overflow: hidden; }
+  /* --u is 1% of the frame's short side, so every template scales across 9:16, 3:4, 1:1 and 16:9 */
+  #stage { position: absolute; inset: 0; font-family: var(--font); color: var(--ink); }
+  /* Workaround (renderer): a fully opaque frame is saved as an RGB PNG, and ffmpeg's image2 input stops at the
+     pixel-format change, truncating the video. Clipping a 2px corner keeps every frame RGBA. */
+  #stage { clip-path: polygon(2px 0, 100% 0, 100% 100%, 0 100%, 0 2px); }
+  .layer { position: absolute; inset: 0; display: none; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* logo: full-screen sting */
+  .logo { background: var(--paper); align-items: center; justify-content: center; flex-direction: column; }
+  .logo svg { width: min(62%, calc(var(--u) * 62)); overflow: visible; }
+  .logo .word { font-weight: 900; font-stretch: 78%; font-size: calc(var(--u) * 14); line-height: 1; margin-top: calc(var(--u) * 4); display: flex; }
+  .logo .word span, .title span, .endcard .big span { display: inline-block; white-space: pre; }
+  .logo .tag { font-weight: 600; font-size: calc(var(--u) * 3.4); letter-spacing: .22em; text-transform: uppercase; color: var(--steel); margin-top: calc(var(--u) * 2.5); }
+
+  /* endcard: thank-you / sign-off slide */
+  .endcard { background: var(--ink); color: var(--paper); flex-direction: column; justify-content: center; padding: 0 calc(var(--u) * 9); }
+  .endcard .big { font-weight: 900; font-stretch: 80%; font-size: calc(var(--u) * 17); line-height: .92; color: var(--signal); display: flex; flex-wrap: wrap; }
+  .endcard .rule { height: calc(var(--u) * .8); background: var(--signal); margin: calc(var(--u) * 5) 0 calc(var(--u) * 4); transform-origin: left; }
+  .endcard .name { font-weight: 800; font-size: calc(var(--u) * 4.8); }
+  .endcard .line { font-weight: 500; font-size: calc(var(--u) * 3.2); color: #c9d1cd; margin-top: calc(var(--u) * 1.2); }
+  .endcard svg { position: absolute; left: 0; bottom: 9%; width: 38%; overflow: visible; }
+
+  /* title: full-screen section card */
+  .title { background: var(--ink); color: var(--paper); flex-direction: column; justify-content: center; padding: 0 calc(var(--u) * 9); }
+  .title .kick { font-weight: 700; font-size: calc(var(--u) * 3.4); letter-spacing: .18em; text-transform: uppercase; color: var(--signal); margin-bottom: calc(var(--u) * 3); }
+  .title .head { font-weight: 900; font-stretch: 82%; font-size: calc(var(--u) * 12); line-height: .95; display: flex; flex-wrap: wrap; }
+
+  /* lowerthird: name tag */
+  .lowerthird { align-items: flex-end; padding: 0 0 calc(var(--u) * 26) calc(var(--u) * 6); }
+  .lowerthird .tagbox { background: var(--ink); color: var(--paper); padding: calc(var(--u) * 2.2) calc(var(--u) * 4) calc(var(--u) * 2.4) calc(var(--u) * 3.4);
+                        border-left: calc(var(--u) * 1.4) solid var(--signal); border-radius: calc(var(--u) * 1); }
+  .lowerthird .who { font-weight: 800; font-size: calc(var(--u) * 5.2); line-height: 1.05; }
+  .lowerthird .role { font-weight: 500; font-size: calc(var(--u) * 3.2); color: #c9d1cd; margin-top: calc(var(--u) * .8); }
+
+  /* callout: big stat / keyword pop */
+  .callout { justify-content: center; padding: 0 calc(var(--u) * 6); }
+  .callout .pill { align-self: var(--pos, flex-start); margin-top: calc(var(--u) * 10); background: var(--signal); color: var(--ink);
+                   border-radius: calc(var(--u) * 2.4); padding: calc(var(--u) * 2.4) calc(var(--u) * 4.5); text-align: center;
+                   box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 4) rgba(0,0,0,.25); }
+  .callout .big { font-weight: 900; font-stretch: 85%; font-size: calc(var(--u) * 13); line-height: 1; }
+  .callout .sub { font-weight: 600; font-size: calc(var(--u) * 3.6); margin-top: calc(var(--u) * 1); }
+
+  /* bullets: points that appear as they're said */
+  .bullets { align-items: flex-end; padding: 0 calc(var(--u) * 5) calc(var(--u) * 7); }
+  .bullets .card { width: 100%; background: rgba(22,25,29,.92); color: var(--paper); border-radius: calc(var(--u) * 2.4); padding: calc(var(--u) * 4) calc(var(--u) * 5); }
+  .bullets h3 { font-weight: 800; font-size: calc(var(--u) * 4); color: var(--signal); margin-bottom: calc(var(--u) * 2); letter-spacing: .02em; }
+  .bullets li { list-style: none; display: flex; gap: calc(var(--u) * 2.4); align-items: baseline; font-weight: 700; font-size: calc(var(--u) * 4.6);
+                line-height: 1.2; padding: calc(var(--u) * 1.1) 0; }
+  .bullets li b { flex: none; width: calc(var(--u) * 5.6); height: calc(var(--u) * 5.6); border-radius: 50%; background: var(--signal); color: var(--ink);
+                  display: grid; place-items: center; font-size: calc(var(--u) * 3.2); transform: translateY(calc(var(--u) * .6)); }
+
+  /* quote: line items + total that counts up */
+  .quote { align-items: flex-end; padding: 0 calc(var(--u) * 5) calc(var(--u) * 6); }
+  .quote.full { align-items: center; background: rgba(22,25,29,.55); }
+  .quote .card { width: 100%; background: var(--paper); border-radius: calc(var(--u) * 2.6); padding: calc(var(--u) * 4.4) calc(var(--u) * 5.4); box-shadow: 0 calc(var(--u) * 1.5) calc(var(--u) * 6) rgba(0,0,0,.35); }
+  .quote .top { display: flex; justify-content: space-between; align-items: baseline; border-bottom: calc(var(--u) * .5) solid var(--ink); padding-bottom: calc(var(--u) * 2); }
+  .quote .top .h { font-weight: 900; font-stretch: 85%; font-size: calc(var(--u) * 7); line-height: 1; }
+  .quote .top .for { font-weight: 600; font-size: calc(var(--u) * 3); color: var(--steel); text-align: right; }
+  .quote .row { display: flex; justify-content: space-between; font-size: calc(var(--u) * 4.2); font-weight: 600; padding: calc(var(--u) * 1.6) 0;
+                border-bottom: calc(var(--u) * .2) solid #c3cbc7; }
+  .quote .row .amt { font-weight: 700; }
+  .quote .tot { display: flex; justify-content: space-between; align-items: baseline; margin-top: calc(var(--u) * 2.6); }
+  .quote .tot .lab { font-weight: 800; font-size: calc(var(--u) * 4.2); text-transform: uppercase; letter-spacing: .08em; }
+  .quote .tot .amt { font-weight: 900; font-stretch: 85%; font-size: calc(var(--u) * 10); line-height: 1; background: var(--signal); padding: 0 calc(var(--u) * 1.6); border-radius: calc(var(--u) * 1); }
+  .quote .note { font-size: calc(var(--u) * 2.8); color: var(--steel); margin-top: calc(var(--u) * 2); font-weight: 500; }
+
+  /* cta: call to action */
+  .cta { align-items: flex-end; justify-content: center; padding-bottom: calc(var(--u) * 12); }
+  .cta .btn { background: var(--signal); color: var(--ink); border-radius: 999px; padding: calc(var(--u) * 2.8) calc(var(--u) * 7); text-align: center;
+              box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 5) rgba(0,0,0,.3); }
+  .cta .btn .t { font-weight: 900; font-size: calc(var(--u) * 6); line-height: 1.05; }
+  .cta .btn .s { font-weight: 600; font-size: calc(var(--u) * 3.2); margin-top: calc(var(--u) * .6); }
+
+  /* captions: word-by-word, current word highlighted */
+  .captions { align-items: flex-end; justify-content: center; padding: 0 calc(var(--u) * 6) calc(var(--u) * 9); }
+  .captions .cap { font-weight: 900; font-size: calc(var(--u) * 6.4); line-height: 1.15; text-align: center; color: #fff;
+                   text-shadow: 0 calc(var(--u) * .4) calc(var(--u) * 1.6) rgba(0,0,0,.65), 0 0 calc(var(--u) * .5) rgba(0,0,0,.8); }
+  .captions .cap span { display: inline-block; margin: 0 .12em; }
+  .captions .cap span.on { color: var(--signal); transform: scale(1.06); }
+
+  /* ---------------- take2 gag kit ---------------- */
+  :root { --red: #e0412f; }
+  .scrib { position: absolute; left: -6%; top: 28%; width: 112%; height: 50%; overflow: visible; pointer-events: none; }
+  .scrib path { fill: none; vector-effect: non-scaling-stroke; stroke: var(--red); stroke-width: calc(var(--u) * .5); stroke-linecap: round; stroke-linejoin: round; }
+  .txt { position: relative; display: inline-block; }
+  .logo .tag { position: relative; }
+  .logo .tag .gag { position: absolute; left: 50%; top: 100%; margin-top: calc(var(--u) * 1.4); transform: translateX(-50%); white-space: nowrap; }
+  .logo .tag .gag .fix { display: inline-block; color: var(--red); }
+  .captions .cap .bleep { font-style: normal; color: var(--red); }
+  .quote.side { align-items: flex-start; padding: calc(var(--u) * 5) calc(var(--u) * 4); }
+  .quote.side.right { justify-content: flex-end; }
+  .quote.side .card { width: auto; min-width: 30%; padding: calc(var(--u) * 3.4) calc(var(--u) * 4); }
+  .quote.side .top { gap: calc(var(--u) * 4); white-space: nowrap; }
+  .quote.side .top .h { font-size: calc(var(--u) * 6); }
+  .quote.side .row { white-space: nowrap; font-size: calc(var(--u) * 3.2); padding: calc(var(--u) * 1.3) 0; gap: calc(var(--u) * 4); }
+  .quote.side .tot { gap: calc(var(--u) * 3); }
+  .quote.side .tot .lab { font-size: calc(var(--u) * 3.2); white-space: nowrap; }
+  .quote.side .note { font-size: calc(var(--u) * 2.6); }
+  .quote.side .tot .amt { font-size: calc(var(--u) * 8); }
+
+  /* correction: sticky editor's note; wrong takes get scribbled out, the final one gets highlighted */
+  .correction { align-items: flex-start; padding: calc(var(--u) * 5) calc(var(--u) * 4); }
+  .correction.right { justify-content: flex-end; }
+  .correction .note { max-width: 31%; background: var(--paper); border-radius: calc(var(--u) * 1.4); padding: calc(var(--u) * 2.4) calc(var(--u) * 3.2) calc(var(--u) * 2.8);
+                      box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 4) rgba(0,0,0,.3); border-top: calc(var(--u) * 1) solid var(--signal); }
+  .correction .lab { font-weight: 700; font-size: calc(var(--u) * 2.3); letter-spacing: .2em; text-transform: uppercase; color: var(--steel); margin-bottom: calc(var(--u) * 1); }
+  .correction .ln { font-weight: 900; font-stretch: 82%; font-size: calc(var(--u) * 6); line-height: 1.02; margin: calc(var(--u) * .7) 0; }
+  .correction .ln.final .txt { background: linear-gradient(transparent 58%, var(--signal) 58%, var(--signal) 92%, transparent 92%) no-repeat 0 0 / 0% 100%; }
+  .correction .mini { display: inline-block; margin-top: calc(var(--u) * 1.4); }
+
+  /* stamp: rubber-stamp slam (also used inside other gags) */
+  .stamp { display: block; }
+  .stamp .ink, .mini { border: calc(var(--u) * .6) solid var(--c, var(--red)); color: var(--c, var(--red)); border-radius: calc(var(--u) * 1);
+                       font-weight: 900; font-stretch: 85%; text-transform: uppercase; letter-spacing: .04em; text-align: center; filter: url(#grunge); }
+  .stamp .ink { position: absolute; transform-origin: center; padding: calc(var(--u) * 1) calc(var(--u) * 2.4); font-size: calc(var(--u) * 5.2); line-height: 1;
+                background: rgba(230,234,232,.7); white-space: nowrap; }
+  .stamp .ink small { display: block; font-size: .36em; letter-spacing: .14em; margin-top: calc(var(--u) * .6); font-weight: 800; }
+  .mini { font-size: calc(var(--u) * 2.9); padding: calc(var(--u) * .4) calc(var(--u) * 1.4); }
+
+  /* thinking: small "loading thought..." pill */
+  .thinking { align-items: flex-start; padding: calc(var(--u) * 6) calc(var(--u) * 5); }
+  .thinking .pill { display: flex; align-items: center; gap: calc(var(--u) * 1.6); background: var(--ink); color: var(--paper); border-radius: 999px;
+                    padding: calc(var(--u) * 1.5) calc(var(--u) * 3.2) calc(var(--u) * 1.5) calc(var(--u) * 2); font-weight: 700; font-size: calc(var(--u) * 3.6);
+                    box-shadow: 0 calc(var(--u) * .8) calc(var(--u) * 3) rgba(0,0,0,.3); }
+  .thinking .spin { width: calc(var(--u) * 4); height: calc(var(--u) * 4); border-radius: 50%; border: calc(var(--u) * .7) solid rgba(230,234,232,.25); border-top-color: var(--signal); }
+  .thinking .bar { height: calc(var(--u) * .7); background: rgba(230,234,232,.2); border-radius: 9px; margin-top: calc(var(--u) * .8); overflow: hidden; }
+  .thinking .bar i { display: block; height: 100%; background: var(--signal); }
+
+  /* meter: waffle-o-meter gauge that ticks up on every filler word */
+  .meter { align-items: flex-start; padding: calc(var(--u) * 5) calc(var(--u) * 4); }
+  .meter .card { width: calc(var(--u) * 38); background: var(--ink); color: var(--paper); border-radius: calc(var(--u) * 2); padding: calc(var(--u) * 2.4) calc(var(--u) * 3) calc(var(--u) * 2.6);
+                 box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 4) rgba(0,0,0,.35); text-align: center; position: relative; }
+  .meter .lab { font-weight: 800; font-size: calc(var(--u) * 2.6); letter-spacing: .2em; text-transform: uppercase; color: var(--signal); }
+  .meter svg { width: 100%; display: block; margin: calc(var(--u) * 1) 0 0; overflow: visible; }
+  .meter .read { display: flex; justify-content: space-between; align-items: baseline; margin-top: calc(var(--u) * .6); }
+  .meter .cnt { font-weight: 900; font-stretch: 85%; font-size: calc(var(--u) * 6); line-height: 1; }
+  .meter .lvl { font-weight: 800; font-size: calc(var(--u) * 2.8); text-transform: uppercase; letter-spacing: .08em; }
+  .meter .chip { position: absolute; right: calc(var(--u) * -3); top: calc(var(--u) * -2.5); background: var(--signal); color: var(--ink); font-weight: 900;
+                 font-size: calc(var(--u) * 3.4); padding: calc(var(--u) * .6) calc(var(--u) * 1.8); border-radius: 999px; white-space: nowrap; }
+
+  /* scratchout: full-screen card - a name gets scratched out, then BOOM, the new one */
+  .scratchout { background: var(--ink); color: var(--paper); flex-direction: column; justify-content: center; align-items: flex-start; padding: 0 calc(var(--u) * 12); }
+  .scratchout .kick { font-weight: 700; font-size: calc(var(--u) * 3.2); letter-spacing: .2em; text-transform: uppercase; color: var(--steel); margin-bottom: calc(var(--u) * 3); }
+  .scratchout .big { font-weight: 900; font-stretch: 80%; font-size: calc(var(--u) * 13); line-height: 1; }
+  .scratchout .big .scrib path { stroke-width: calc(var(--u) * 1.4); }
+  .scratchout .new { color: var(--signal); margin-top: calc(var(--u) * 3); position: relative; }
+  .scratchout .boom { position: absolute; left: 100%; top: -40%; width: calc(var(--u) * 34); margin-left: calc(var(--u) * 1); }
+  .scratchout .boom svg { width: 100%; overflow: visible; display: block; }
+
+  /* photo: floating polaroid placeholder for an image the speaker will supply */
+  .photo { align-items: flex-start; justify-content: flex-start; padding: calc(var(--u) * 5) calc(var(--u) * 4); }
+  .photo .pol { width: 30%; background: #fff; padding: calc(var(--u) * 1.6) calc(var(--u) * 1.6) 0; border-radius: calc(var(--u) * .6);
+                box-shadow: 0 calc(var(--u) * 1.5) calc(var(--u) * 5) rgba(0,0,0,.4); position: relative; }
+  .photo .pic { aspect-ratio: 16 / 10; background: linear-gradient(#9fb4c6, #e6eae8 70%, #c9d1cd 70%); position: relative; overflow: hidden; display: grid; place-items: end center; }
+  .photo .pic svg { width: 82%; margin-bottom: 6%; }
+  .photo .ph { position: absolute; left: 0; right: 0; top: 8%; text-align: center; font-weight: 700; font-size: calc(var(--u) * 2.4); letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); opacity: .7; }
+  .photo .cap { font-weight: 900; font-stretch: 85%; font-size: calc(var(--u) * 4.6); padding: calc(var(--u) * 1.4) calc(var(--u) * .6) calc(var(--u) * 1.8); display: flex; justify-content: space-between; align-items: baseline; }
+  .photo .cap small { font-weight: 600; font-stretch: 100%; font-size: calc(var(--u) * 2.4); color: var(--steel); }
+  .photo .mini { position: absolute; left: 50%; top: 38%; font-size: calc(var(--u) * 8); padding: calc(var(--u) * .6) calc(var(--u) * 2.4); background: rgba(255,255,255,.75); }
+  .photo .mini small { display: block; font-size: .3em; letter-spacing: .14em; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<svg width="0" height="0" style="position:absolute"><defs>
+  <filter id="grunge" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -2.6 0 0 0 2.25" result="m"/>
+    <feComposite in="SourceGraphic" in2="m" operator="in" result="c"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="2" result="w"/>
+    <feDisplacementMap in="c" in2="w" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter></defs></svg>
+
+<script>
+// ---------------------------------------------------------------- helpers
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const ease = {
+  outCubic: (x) => 1 - Math.pow(1 - x, 3),
+  inCubic: (x) => x * x * x,
+  inOutCubic: (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  outBack: (x) => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); },
+};
+const EDIT = window.EDIT || { width: 1080, height: 1440, fps: 30, duration: 10, words: [], overlays: [], brand: {} };
+const stage = document.getElementById("stage");
+stage.style.setProperty("--u", Math.min(EDIT.width, EDIT.height) / 100 + "px");
+for (const [k, v] of Object.entries(EDIT.brand || {})) document.documentElement.style.setProperty(`--${k}`, v);
+
+// in/out: a standard 0..1 visibility curve for overlays that sit over the speaker
+const inOut = (k, inDur = 0.45, outDur = 0.35) => ease.outCubic(seg(k.t, 0, inDur)) * (1 - ease.inCubic(seg(k.left, outDur, 0)));
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const letters = (s) => [...String(s)].map((c) => `<span>${c === " " ? "&nbsp;" : esc(c)}</span>`).join("");
+const money = (n, cur = "USD", digits = 0) => new Intl.NumberFormat("en-US", { style: "currency", currency: cur, maximumFractionDigits: digits, minimumFractionDigits: digits }).format(n);
+const stagger = (el, sel, t0, step, dur = 0.45, rise = 40) => el.querySelectorAll(sel).forEach((s, i) => {
+  const q = ease.outBack(seg(el.__t, t0 + i * step, t0 + i * step + dur));
+  s.style.transform = `translateY(${((1 - q) * rise).toFixed(1)}%)`;
+  s.style.opacity = seg(el.__t, t0 + i * step, t0 + i * step + dur * 0.5);
+});
+
+// Seneca's mark: the robot-vacuum disc ("build the disc, not the butler").
+const DISC = `<svg viewBox="-160 -60 320 120">
+  <ellipse cx="0" cy="22" rx="150" ry="30" fill="#16191d" opacity=".16"/>
+  <ellipse cx="0" cy="8" rx="150" ry="38" fill="#16191d"/>
+  <ellipse cx="0" cy="-2" rx="150" ry="38" fill="#2a2f36"/>
+  <ellipse class="lens" cx="0" cy="-4" rx="56" ry="14" fill="var(--signal)"/>
+  <circle class="led" cx="96" cy="-6" r="6" fill="var(--led)"/></svg>`;
+const blink = (el, t) => { const l = el.querySelector(".led"); if (l) l.style.opacity = Math.floor(t * 2.5) % 2 ? 0.35 : 1; };
+
+
+// Hand-drawn red scribble laid over a .txt span; drawScribble(span, 0..1) draws it in.
+const SCRIBBLE = `<svg class="scrib" viewBox="0 0 100 20" preserveAspectRatio="none"><path
+  d="M1,11 C25,8 50,13 99,8 C70,11 30,10 3,14 C35,12 70,15 98,12"/></svg>`;
+// one scribble per word (so it survives line wrapping); the strike sweeps across the words in order
+const drawScribble = (box, q) => { const ws = box.querySelectorAll(".scrib"), n = ws.length;
+  ws.forEach((svg, i) => { const qi = clamp(q * n - i); svg.style.clipPath = `inset(-50% ${((1 - qi) * 100).toFixed(1)}% -50% 0)`; svg.style.opacity = qi > 0 ? 1 : 0; }); };
+const struck = (text) => String(text).split(/\s+/).map((w) => `<span class="txt">${esc(w)}${SCRIBBLE}</span>`).join(" ");
+// rubber-stamp slam: 0..1 scale/opacity curve with a tiny landing bounce
+const slam = (t) => { const a = seg(t, 0, 0.16); const land = t > 0.16 ? Math.exp(-(t - 0.16) * 14) * Math.sin((t - 0.16) * 40) * 0.05 : 0;
+  return { s: 2.3 - 1.3 * ease.inCubic(a) + land, o: seg(t, 0, 0.06) }; };
+const TRUCK = `<svg viewBox="0 0 200 92"><g fill="var(--ink)">
+  <rect x="8" y="40" width="98" height="30" rx="3"/>
+  <path d="M104 70 L104 24 Q105 16 113 16 L148 16 Q155 16 159 23 L170 40 L188 43 Q196 45 196 53 L196 70 Z"/>
+  <path d="M114 22 L146 22 Q151 22 153 26 L160 40 L114 40 Z" fill="#9fb4c6"/>
+  <rect x="2" y="60" width="10" height="8" rx="2"/><rect x="186" y="62" width="12" height="7" rx="2"/></g>
+  <g><circle cx="44" cy="72" r="15" fill="var(--ink)"/><circle cx="44" cy="72" r="6" fill="var(--steel)"/>
+  <circle cx="162" cy="72" r="15" fill="var(--ink)"/><circle cx="162" cy="72" r="6" fill="var(--steel)"/></g>
+  <rect x="180" y="47" width="10" height="5" rx="2" fill="var(--signal)"/></svg>`;
+const starPts = (n, r1, r2) => Array.from({ length: n * 2 }, (_, i) => { const a = (i / (n * 2)) * Math.PI * 2 - Math.PI / 2, r = i % 2 ? r2 : r1;
+  return `${(Math.cos(a) * r).toFixed(1)},${(Math.sin(a) * r).toFixed(1)}`; }).join(" ");
+
+// ---------------------------------------------------------------- templates
+// build(el, o) runs once; draw(el, k, o) every frame and must depend only on k.
+// k = { t: s since start, left: s until end, dur, p: 0..1, abs: output time }. Prop times ("at") are absolute.
+const TEMPLATES = {
+  logo: {
+    build(el, o) {
+      el.className = "layer logo";
+      const g = o.props.tagGag;   // { text, at, strikeAt, fix }: an add-on to the tag that gets struck and corrected
+      el.innerHTML = `${DISC}<div class="word">${letters(o.props.word || "Seneca")}</div><div class="tag">${esc(o.props.tag || "")}` +
+        (g ? `<span class="gag"><span class="w">${struck(g.text)}</span> <span class="fix">${esc(g.fix || "")}</span></span>` : "") + `</div>`;
+    },
+    draw(el, k, o) {
+      const g = o.props.tagGag;
+      if (g) {
+        const a = g.at - o.from, s = (g.strikeAt ?? g.at + 0.6) - o.from;
+        const w = el.querySelector(".gag .w");
+        w.style.opacity = seg(k.t, a, a + 0.15) * (1 - 0.45 * seg(k.t, s + 0.2, s + 0.4));
+        drawScribble(w, seg(k.t, s, s + 0.3));
+        const fx = el.querySelector(".gag .fix"), q = ease.outBack(seg(k.t, s + 0.35, s + 0.7));
+        fx.style.opacity = seg(k.t, s + 0.35, s + 0.45);
+        fx.style.transform = `translateY(${((1 - q) * -60).toFixed(1)}%) rotate(-3deg)`;
+      }
+      const open = ease.outCubic(seg(k.t, 0, 0.5)) * (1 - ease.inCubic(seg(k.left, 0.45, 0)));
+      el.style.clipPath = `circle(${(open * 120).toFixed(2)}% at 50% 44%)`;
+      const svg = el.querySelector("svg"), drop = ease.outBack(seg(k.t, 0.15, 0.85));
+      svg.style.transform = `translateY(${((1 - drop) * -60).toFixed(1)}%) scale(${(0.7 + 0.3 * drop).toFixed(3)})`;
+      svg.style.opacity = seg(k.t, 0.15, 0.4);
+      el.querySelector(".lens").setAttribute("rx", (56 * (0.6 + 0.4 * ease.outBack(seg(k.t, 0.6, 1.1)))).toFixed(1));
+      blink(el, k.t);
+      stagger(el, ".word span", 0.55, 0.06, 0.4, 60);
+      el.querySelector(".tag").style.opacity = seg(k.t, 1.3, 1.7);
+    },
+  },
+
+  endcard: {
+    build(el, o) {
+      el.className = "layer endcard";
+      el.innerHTML = `<div class="big">${letters(o.props.title || "Thank you")}</div><div class="rule"></div>
+        <div class="name">${esc(o.props.name)}</div><div class="line">${esc(o.props.line)}</div>${o.props.disc === false ? "" : DISC}`;
+    },
+    draw(el, k) {
+      el.style.transform = `translateY(${((1 - ease.outCubic(seg(k.t, 0, 0.6))) * 100).toFixed(2)}%)`;
+      el.querySelectorAll(".big span").forEach((s, i) => {
+        const q = ease.outBack(seg(k.t, 0.35 + i * 0.05, 0.8 + i * 0.05));
+        s.style.transform = `translateY(${((1 - q) * 40).toFixed(1)}%) scale(${(0.6 + 0.4 * q).toFixed(3)})`;
+        s.style.opacity = seg(k.t, 0.35 + i * 0.05, 0.55 + i * 0.05);
+      });
+      el.querySelector(".rule").style.transform = `scaleX(${ease.inOutCubic(seg(k.t, 0.9, 1.5)).toFixed(3)})`;
+      el.querySelector(".name").style.opacity = seg(k.t, 1.3, 1.7);
+      el.querySelector(".line").style.opacity = seg(k.t, 1.5, 1.9);
+      const svg = el.querySelector("svg");
+      if (svg) svg.style.transform = `translateX(${(-110 + ease.outCubic(seg(k.t, 0.8, 2.2)) * 200).toFixed(1)}%)`;
+      blink(el, k.t);
+    },
+  },
+
+  title: {
+    build(el, o) {
+      el.className = "layer title";
+      el.innerHTML = `${o.props.kicker ? `<div class="kick">${esc(o.props.kicker)}</div>` : ""}<div class="head">${letters(o.props.text || "")}</div>`;
+    },
+    draw(el, k) {
+      const open = ease.outCubic(seg(k.t, 0, 0.45)) * (1 - ease.inCubic(seg(k.left, 0.4, 0)));
+      el.style.clipPath = `inset(0 ${((1 - open) * 100).toFixed(2)}% 0 0)`;
+      const kick = el.querySelector(".kick");
+      if (kick) kick.style.opacity = seg(k.t, 0.25, 0.6);
+      stagger(el, ".head span", 0.3, 0.03, 0.4, 50);
+    },
+  },
+
+  lowerthird: {
+    build(el, o) {
+      el.className = "layer lowerthird";
+      el.innerHTML = `<div class="tagbox"><div class="who">${esc(o.props.name)}</div>${o.props.title ? `<div class="role">${esc(o.props.title)}</div>` : ""}</div>`;
+    },
+    draw(el, k) {
+      const v = inOut(k, 0.5, 0.4), box = el.querySelector(".tagbox");
+      box.style.transform = `translateX(${((1 - v) * -115).toFixed(1)}%)`;
+      box.style.opacity = clamp(v * 3);
+      const role = el.querySelector(".role");
+      if (role) role.style.opacity = seg(k.t, 0.35, 0.7) * clamp(v * 3);
+    },
+  },
+
+  callout: {
+    build(el, o) {
+      el.className = "layer callout";
+      el.style.alignItems = { top: "flex-start", middle: "center", bottom: "flex-end" }[o.props.position || "top"];
+      el.style.paddingBottom = o.props.position === "bottom" ? "calc(var(--u) * 16)" : "";
+      el.innerHTML = `<div class="pill"><div class="big">${esc(o.props.text)}</div>${o.props.sub ? `<div class="sub">${esc(o.props.sub)}</div>` : ""}</div>`;
+    },
+    draw(el, k) {
+      const pill = el.querySelector(".pill"), pop = ease.outBack(seg(k.t, 0, 0.45));
+      const gone = ease.inCubic(seg(k.left, 0.3, 0));
+      pill.style.transform = `scale(${(0.4 + 0.6 * pop - 0.3 * gone).toFixed(3)}) rotate(${((1 - pop) * -6).toFixed(2)}deg)`;
+      pill.style.opacity = clamp(seg(k.t, 0, 0.15) - gone);
+    },
+  },
+
+  bullets: {
+    build(el, o) {
+      el.className = "layer bullets";
+      const items = o.props.items || [];
+      el.innerHTML = `<div class="card">${o.props.title ? `<h3>${esc(o.props.title)}</h3>` : ""}<ul>${items.map((it, i) =>
+        `<li><b>${i + 1}</b><span>${esc(typeof it === "string" ? it : it.text)}</span></li>`).join("")}</ul></div>`;
+    },
+    draw(el, k, o) {
+      const v = inOut(k, 0.45, 0.35), card = el.querySelector(".card");
+      card.style.transform = `translateY(${((1 - v) * 30).toFixed(1)}%)`;
+      card.style.opacity = clamp(v * 2);
+      (o.props.items || []).forEach((it, i) => {
+        const at = typeof it === "object" && typeof it.at === "number" ? it.at - o.from : 0.35 + i * 0.5;
+        const q = ease.outBack(seg(k.t, at, at + 0.4)), li = el.querySelectorAll("li")[i];
+        li.style.transform = `translateX(${((1 - q) * -12).toFixed(1)}%)`;
+        li.style.opacity = seg(k.t, at, at + 0.2);
+      });
+    },
+  },
+
+  quote: {
+    build(el, o) {
+      el.className = "layer quote" + (o.props.full ? " full" : "") + (o.props.side ? ` side ${o.props.side}` : "");
+      const p = o.props, cur = p.currency || "USD";
+      el.innerHTML = `<div class="card"><div class="top"><div class="h">${esc(p.title || "Your quote")}</div>
+        <div class="for">${esc(p.client || "")}${p.client && p.date ? "<br>" : ""}${esc(p.date || "")}</div></div>
+        ${(p.items || []).map((it) => `<div class="row"><span>${esc(it.label)}</span><span class="amt num">${money(it.amount, cur)}</span></div>`).join("")}
+        <div class="tot"><span class="lab">${esc(p.totalLabel || "Total")}</span><span class="amt num">${money(0, cur)}</span></div>
+        ${p.note ? `<div class="note">${esc(p.note)}</div>` : ""}</div>`;
+    },
+    draw(el, k, o) {
+      const p = o.props, cur = p.currency || "USD", v = inOut(k, 0.5, 0.4), card = el.querySelector(".card");
+      if (p.full) el.style.opacity = v;
+      card.style.transform = `translateY(${((1 - v) * 40).toFixed(1)}%)`;
+      card.style.opacity = clamp(v * 2);
+      const items = p.items || [];
+      let last = 0.4;
+      items.forEach((it, i) => {
+        const at = typeof it.at === "number" ? it.at - o.from : 0.5 + i * 0.45;
+        last = Math.max(last, at);
+        const row = el.querySelectorAll(".row")[i];
+        row.style.opacity = seg(k.t, at, at + 0.25);
+        if (p.side) row.style.display = k.t < at ? "none" : "";
+        row.style.transform = `translateX(${((1 - ease.outCubic(seg(k.t, at, at + 0.35))) * 8).toFixed(1)}%)`;
+      });
+      const totalAt = typeof p.totalAt === "number" ? p.totalAt - o.from : last + 0.5;
+      const total = p.total ?? items.reduce((s, it) => s + it.amount, 0);
+      const c = ease.outCubic(seg(k.t, totalAt, totalAt + 1.1));
+      el.querySelector(".tot").style.opacity = seg(k.t, totalAt, totalAt + 0.2);
+      if (p.side) el.querySelector(".tot").style.display = k.t < totalAt ? "none" : "";
+      el.querySelector(".tot .amt").textContent = money(Math.round(total * c), cur);
+      const note = el.querySelector(".note");
+      const noteAt = typeof p.noteAt === "number" ? p.noteAt - o.from : totalAt + 1.0;
+      if (note) { note.style.opacity = seg(k.t, noteAt, noteAt + 0.4); if (p.side) note.style.display = k.t < noteAt ? "none" : ""; }
+    },
+  },
+
+  cta: {
+    build(el, o) {
+      el.className = "layer cta";
+      el.innerHTML = `<div class="btn"><div class="t">${esc(o.props.text)}</div>${o.props.sub ? `<div class="s">${esc(o.props.sub)}</div>` : ""}</div>`;
+    },
+    draw(el, k) {
+      const v = inOut(k, 0.45, 0.35), btn = el.querySelector(".btn");
+      const pulse = 1 + 0.035 * Math.max(0, Math.sin((k.t - 0.6) * Math.PI * 1.4)) * seg(k.t, 0.6, 0.8);
+      btn.style.transform = `translateY(${((1 - v) * 60).toFixed(1)}%) scale(${(pulse * (0.85 + 0.15 * v)).toFixed(3)})`;
+      btn.style.opacity = clamp(v * 2);
+    },
+  },
+
+  // Burned-in captions from the transcript: short phrases, the spoken word highlighted.
+  captions: {
+    build(el, o) {
+      el.className = "layer captions";
+      el.innerHTML = `<div class="cap"></div>`;
+      const max = o.props.maxWords || 4, ws = [];
+      for (const w of EDIT.words.filter((w) => w.end > o.from && w.start < o.to)) {
+        if (ws.length && /^[,.%-]/.test(w.word.trim()) && !/[.?!]$/.test(ws[ws.length - 1].word.trim()))
+          ws[ws.length - 1] = { ...ws[ws.length - 1], word: ws[ws.length - 1].word.trim() + w.word.trim(), end: w.end };
+        else ws.push({ ...w });
+      }
+      const groups = [];
+      let cur = [];
+      ws.forEach((w, i) => {
+        const gap = i && w.start - ws[i - 1].end > 0.6;
+        if (cur.length && (cur.length >= max || gap)) { groups.push(cur); cur = []; }
+        cur.push(w);
+        if (/[.?!,]$/.test(w.word.trim())) { groups.push(cur); cur = []; }
+      });
+      if (cur.length) groups.push(cur);
+      el.__groups = groups.map((g) => ({ words: g, start: g[0].start, end: g[g.length - 1].end }));
+    },
+    draw(el, k, o) {
+      const t = k.abs, cap = el.querySelector(".cap");
+      const g = el.__groups.find((x) => t >= x.start - 0.05 && t < x.end + 0.25);
+      if (!g) { cap.innerHTML = ""; return; }
+      // props.bleep: { word: replacement } (matched ignoring case/punctuation; trailing punctuation kept)
+      const bleep = (s) => { const m = s.match(/^(.*?)([.,!?]*)$/), r = (o.props.bleep || {})[m[1].toLowerCase()]; return r ? `<i class="bleep">${esc(r)}</i>${m[2]}` : esc(s); };
+      if (cap.__g !== g) { cap.innerHTML = g.words.map((w) => `<span>${bleep(w.word.trim())}</span>`).join(" "); cap.__g = g; }
+      cap.querySelectorAll("span").forEach((s, i) => s.classList.toggle("on", t >= g.words[i].start && t < g.words[i].end + 0.05));
+      cap.style.opacity = seg(t, g.start - 0.05, g.start + 0.05);
+    },
+  },
+};
+
+
+// ---------------------------------------------------------------- take2 gag templates
+const abs2k = (o, t) => (typeof t === "number" ? t - o.from : null);
+Object.assign(TEMPLATES, {
+  // Strike-and-replace note. props: { side: "left"|"right", label, lines: [{ text, at, strikeAt?, final? }], stamp?: { text, at, color? } }
+  correction: {
+    build(el, o) {
+      el.className = "layer correction " + (o.props.side || "left");
+      const p = o.props;
+      el.innerHTML = `<div class="note">${p.label ? `<div class="lab">${esc(p.label)}</div>` : ""}${(p.lines || []).map((l) =>
+        `<div class="ln${l.final ? " final" : ""}">${l.strikeAt != null ? `<span class="w">${struck(l.text)}</span>` : `<span class="txt">${esc(l.text)}</span>`}</div>`).join("")}
+        ${p.stamp ? `<div><span class="mini" style="--c:${p.stamp.color || "var(--red)"}">${esc(p.stamp.text)}</span></div>` : ""}</div>`;
+    },
+    draw(el, k, o) {
+      const p = o.props, v = inOut(k, 0.35, 0.3), note = el.querySelector(".note");
+      note.style.transform = `translateY(${((1 - v) * -40).toFixed(1)}%) rotate(${(o.props.side === "right" ? 2 : -2)}deg)`;
+      note.style.opacity = clamp(v * 2);
+      el.querySelectorAll(".ln").forEach((ln, i) => {
+        const l = p.lines[i], a = abs2k(o, l.at) ?? 0, txt = ln.querySelector(".w") || ln.querySelector(".txt");
+        const q = ease.outBack(seg(k.t, a, a + 0.35));
+        ln.style.opacity = seg(k.t, a, a + 0.12);
+        ln.style.transform = `translateX(${((1 - q) * -10).toFixed(1)}%)`;
+        ln.style.display = k.t < a - 0.01 ? "none" : "";
+        if (l.strikeAt != null) {
+          const s = l.strikeAt - o.from;
+          drawScribble(txt, ease.outCubic(seg(k.t, s, s + 0.4)));
+          txt.style.opacity = 1 - 0.5 * seg(k.t, s + 0.2, s + 0.45);
+        }
+        if (l.final) txt.style.backgroundSize = `${(ease.inOutCubic(seg(k.t, a + 0.2, a + 0.6)) * 100).toFixed(1)}% 100%`;
+      });
+      const st = el.querySelector(".mini");
+      if (st) { const a = p.stamp.at - o.from, m = slam(k.t - a);
+        st.style.display = k.t < a ? "none" : ""; st.style.opacity = m.o; st.style.transform = `scale(${m.s.toFixed(3)}) rotate(-6deg)`; }
+    },
+  },
+
+  // Rubber stamp slammed onto the frame. props: { text, sub?, x: %, y: %, rotate: deg, color? }
+  stamp: {
+    build(el, o) {
+      el.className = "layer stamp";
+      const p = o.props;
+      el.innerHTML = `<div class="ink" style="left:${p.x ?? 50}%;top:${p.y ?? 50}%;--c:${p.color || "var(--red)"}">${esc(p.text)}${p.sub ? `<small>${esc(p.sub)}</small>` : ""}</div>`;
+    },
+    draw(el, k, o) {
+      const m = slam(k.t), ink = el.querySelector(".ink"), gone = seg(k.left, 0.25, 0);
+      ink.style.opacity = m.o * (1 - gone);
+      ink.style.transform = `translate(-50%,-50%) scale(${(m.s + gone * 0.15).toFixed(3)}) rotate(${o.props.rotate ?? -8}deg)`;
+    },
+  },
+
+  // "loading thought..." pill for a long pause. props: { text, side? }
+  thinking: {
+    build(el, o) {
+      el.className = "layer thinking";
+      el.style.justifyContent = o.props.side === "right" ? "flex-end" : "flex-start";
+      el.innerHTML = `<div class="pill"><div class="spin"></div><div><div class="t"></div><div class="bar"><i></i></div></div></div>`;
+    },
+    draw(el, k, o) {
+      const v = inOut(k, 0.25, 0.25), pill = el.querySelector(".pill");
+      pill.style.opacity = v; pill.style.transform = `scale(${(0.85 + 0.15 * ease.outBack(seg(k.t, 0, 0.3))).toFixed(3)})`;
+      el.querySelector(".spin").style.transform = `rotate(${(k.t * 540).toFixed(0)}deg)`;
+      el.querySelector(".t").textContent = (o.props.text || "loading thought") + ".".repeat(1 + (Math.floor(k.t * 3) % 3));
+      // progress bar that gets to 90% and stalls, like every progress bar
+      el.querySelector(".bar i").style.width = (92 * (1 - Math.exp(-k.t * 2.2))).toFixed(1) + "%";
+    },
+  },
+
+  // Waffle-o-meter: counts filler words (from the transcript) said while it's up. props: { label, max, fillers?: [...] }
+  meter: {
+    build(el, o) {
+      el.className = "layer meter";
+      el.style.justifyContent = o.props.side === "right" ? "flex-end" : "flex-start";
+      const fill = new Set(o.props.fillers || ["um", "uh", "like", "know"]);
+      const ws = EDIT.words.filter((w) => w.start >= o.from - 0.05 && w.start < o.to);
+      el.__hits = ws.map((w, i) => ({ w: w.word.trim().toLowerCase().replace(/[^a-z']/g, ""), t: w.start, prev: (ws[i - 1]?.word || "").trim().toLowerCase().replace(/[^a-z']/g, "") }))
+        .filter((h) => fill.has(h.w) && (h.w !== "know" || h.prev === "you"))
+        .map((h) => ({ t: h.t, label: h.w === "know" ? "you know" : h.w }));
+      const arc = (a0, a1, col) => { const P = (a) => `${(Math.cos(a) * 90).toFixed(1)},${(Math.sin(a) * 90).toFixed(1)}`;
+        return `<path d="M${P(a0)} A90,90 0 0 1 ${P(a1)}" stroke="${col}" stroke-width="18" fill="none"/>`; };
+      const A = (f) => Math.PI + f * Math.PI;
+      el.innerHTML = `<div class="card"><div class="lab">${esc(o.props.label || "Waffle-o-meter")}</div>
+        <svg viewBox="-112 -104 224 116">${arc(A(0), A(0.45), "var(--steel)")}${arc(A(0.47), A(0.75), "var(--signal)")}${arc(A(0.77), A(1), "var(--red)")}
+          <g class="needle"><line x1="0" y1="0" x2="78" y2="0" stroke="var(--paper)" stroke-width="7" stroke-linecap="round"/></g><circle r="10" fill="var(--paper)"/></svg>
+        <div class="read"><span class="cnt num">0</span><span class="lvl">calm</span></div><div class="chip"></div></div>`;
+    },
+    draw(el, k, o) {
+      const v = inOut(k, 0.35, 0.3), card = el.querySelector(".card"), hits = el.__hits, max = o.props.max || hits.length || 1;
+      card.style.opacity = clamp(v * 2); card.style.transform = `translateY(${((1 - v) * -30).toFixed(1)}%)`;
+      let n = 0; while (n < hits.length && hits[n].t <= k.abs) n++;
+      const prev = Math.max(0, n - 1) / max, cur = n / max, th = n ? hits[n - 1].t : o.from;
+      let f = Math.min(1.04, prev + (cur - prev) * ease.outBack(seg(k.abs, th, th + 0.3)));
+      if (n === 0) f = 0;
+      if (n >= max) f = 1.02 + 0.03 * Math.sin(k.t * 45);               // pinned and rattling
+      el.querySelector(".needle").setAttribute("transform", `rotate(${(180 + 180 * f).toFixed(2)})`);
+      el.querySelector(".cnt").textContent = `×${n}`;
+      const lvl = el.querySelector(".lvl");
+      lvl.textContent = n >= max ? "max waffle" : cur > 0.7 ? "severe" : cur > 0.4 ? "moderate" : n ? "mild" : "calm";
+      lvl.style.color = n >= max ? "var(--red)" : cur > 0.4 ? "var(--signal)" : "var(--paper)";
+      const chip = el.querySelector(".chip");
+      if (n) { const q = ease.outBack(seg(k.abs, th, th + 0.25)); chip.textContent = `“${hits[n - 1].label}”`;
+        chip.style.opacity = seg(k.abs, th, th + 0.08); chip.style.transform = `scale(${(0.5 + 0.5 * q).toFixed(3)}) rotate(6deg)`; }
+      else chip.style.opacity = 0;
+    },
+  },
+
+  // Full-screen: old name, scratched out, BOOM, new name. props: { kicker, from, to, strikeAt, boomAt, boom }
+  scratchout: {
+    build(el, o) {
+      el.className = "layer scratchout";
+      const p = o.props;
+      el.innerHTML = `${p.kicker ? `<div class="kick">${esc(p.kicker)}</div>` : ""}
+        <div class="big old"><span class="w">${struck(p.from)}</span></div>
+        <div class="big new"><span class="txt">${esc(p.to)}</span><div class="boom"><svg viewBox="-110 -110 220 220">
+          <polygon points="${starPts(12, 105, 70)}" fill="var(--red)"/><polygon points="${starPts(12, 86, 58)}" fill="var(--signal)"/>
+          <text x="0" y="14" text-anchor="middle" font-family="Archivo" font-weight="900" font-size="46" fill="var(--ink)" transform="rotate(-10)">${esc(p.boom || "BOOM!")}</text></svg></div></div>`;
+    },
+    draw(el, k, o) {
+      const p = o.props, s = p.strikeAt - o.from, b = p.boomAt - o.from;
+      el.style.opacity = seg(k.t, 0, 0.12) * (1 - seg(k.left, 0.1, 0));
+      const old = el.querySelector(".old .w");
+      drawScribble(old, ease.outCubic(seg(k.t, s, s + 0.45)));
+      old.style.opacity = 1 - 0.55 * seg(k.t, s + 0.3, s + 0.6);
+      const shake = k.t > s && k.t < s + 0.5 ? Math.sin(k.t * 90) * 0.6 : 0;
+      old.style.display = "inline-block"; old.style.transform = `translateX(${shake.toFixed(2)}%)`;
+      const nw = el.querySelector(".new .txt"), m = slam(k.t - b);
+      nw.style.opacity = k.t < b ? 0 : m.o; nw.style.display = "inline-block";
+      nw.style.transform = `scale(${(k.t < b ? 2.3 : m.s).toFixed(3)})`; nw.style.transformOrigin = "left center";
+      const boom = el.querySelector(".boom"), q = ease.outBack(seg(k.t, b + 0.08, b + 0.35));
+      boom.style.opacity = seg(k.t, b + 0.08, b + 0.14);
+      boom.style.transform = `scale(${(q * (1 + 0.04 * Math.sin(k.t * 12))).toFixed(3)}) rotate(${(k.t * 20).toFixed(1)}deg)`;
+    },
+  },
+
+  // Floating polaroid placeholder. props: { caption, note, placeholder, stamp?: { text, sub, at } }; snaps away at the end.
+  photo: {
+    build(el, o) {
+      el.className = "layer photo";
+      const p = o.props;
+      el.innerHTML = `<div class="pol"><div class="pic"><div class="ph">${esc(p.placeholder || "photo goes here")}</div>${TRUCK}</div>
+        <div class="cap"><span>${esc(p.caption || "")}</span><small>${esc(p.note || "")}</small></div>
+        ${p.stamp ? `<div class="mini">${esc(p.stamp.text)}${p.stamp.sub ? `<small>${esc(p.stamp.sub)}</small>` : ""}</div>` : ""}</div>`;
+    },
+    draw(el, k, o) {
+      const pol = el.querySelector(".pol"), fin = ease.outCubic(seg(k.t, 0, 1.1)), snap = ease.inCubic(seg(k.left, 0.2, 0));
+      const bob = Math.sin(k.t * 1.7) * 1.2, rot = -3 + Math.sin(k.t * 1.1) * 1.5;
+      pol.style.opacity = clamp(fin * 2) * (1 - snap);
+      pol.style.transform = `translate(${((1 - fin) * -40 - snap * 30).toFixed(1)}%, ${((1 - fin) * 25 + bob).toFixed(2)}%) rotate(${(rot * (1 - snap) - (1 - fin) * 10).toFixed(2)}deg) scale(${(1 - 0.8 * snap).toFixed(3)})`;
+      const st = el.querySelector(".mini");
+      if (st) { const a = o.props.stamp.at - o.from, m = slam(k.t - a);
+        st.style.display = k.t < a ? "none" : ""; st.style.opacity = m.o; st.style.transform = `translate(-50%,-50%) scale(${m.s.toFixed(3)}) rotate(-12deg)`; }
+    },
+  },
+});
+
+// ---------------------------------------------------------------- frame loop
+const layers = EDIT.overlays.map((o) => {
+  const tpl = TEMPLATES[o.type];
+  if (!tpl) throw new Error(`no template "${o.type}" (have: ${Object.keys(TEMPLATES).join(", ")})`);
+  const el = document.createElement("div");
+  stage.appendChild(el);
+  tpl.build(el, o);
+  return { o, tpl, el };
+});
+
+window.renderFrame = (t) => {
+  for (const { o, tpl, el } of layers) {
+    const on = t >= o.from && t < o.to;
+    el.style.display = on ? "flex" : "none";
+    if (!on) continue;
+    el.__t = t - o.from;
+    tpl.draw(el, { t: t - o.from, left: o.to - t, dur: o.to - o.from, p: (t - o.from) / (o.to - o.from), abs: t }, o);
+  }
+};
+renderFrame(-1);
+
+// Opened directly in a browser: plays in real time over a checkerboard. Space pauses, arrows scrub.
+if (!window.__CAPTURE__) {
+  document.body.style.background = "repeating-conic-gradient(#ccc 0 25%, #eee 0 50%) 0 0 / 40px 40px";
+  Object.assign(stage.style, { width: EDIT.width + "px", height: EDIT.height + "px" });
+  let t0 = performance.now(), paused = false, at = 0;
+  const loop = (now) => { if (!paused) at = ((now - t0) / 1000) % EDIT.duration; renderFrame(at); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+  addEventListener("keydown", (e) => {
+    if (e.key === " ") { paused = !paused; t0 = performance.now() - at * 1000; }
+    if (e.key === "ArrowRight") at = Math.min(EDIT.duration, at + 0.5);
+    if (e.key === "ArrowLeft") at = Math.max(0, at - 0.5);
+  });
+}
+</script>
+</body>
+</html>

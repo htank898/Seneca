@@ -38,6 +38,8 @@ node scripts/render-gif.mjs path/to/motion.html --mp4
 Flags: `--out`, `--width`, `--height`, `--fps`, `--seconds`, `--scale 0.75`, `--colors 128`, `--dither none|bayer|sierra2_4a`, `--mp4`, `--mp4-loops 3`, `--budget-mb 5`, `--keep-frames`.
 The first run installs Playwright into this skill folder. Requires `ffmpeg` on PATH.
 
+**Math:** for static equations in the page, typeset it first with `node ../ai-math/scripts/typeset.mjs motion.src.html --out motion.html`. For animated math (terms moving, proofs, graphs), render a Manim clip with ai-math (`render-math.mjs … --clip`) and draw it from `renderFrame(t)` with its `clip-player.js`.
+
 ## 5. Verify before reporting
 - **Check every frame for overlaps**, not just the keyframes: render with `--keep-frames` and step through the transitions, which is where collisions happen. If the page publishes `window.__boxes` (name, box, opacity per element, as ai-scale does), use an automated pass like `ai-scale/scripts/check-overlaps.mjs`.
 - Render with `--keep-frames` and look at a few PNGs in `.frames/<name>/`: the first frame, the last frame (it should flow straight into the first), and the punchline beat. Delete `.frames/` afterwards.
