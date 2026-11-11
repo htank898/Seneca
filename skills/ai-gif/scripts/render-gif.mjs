@@ -6,11 +6,13 @@
 // CLI flags override MOTION:
 //   node render-gif.mjs motion.html [--out motion.gif] [--width 1080] [--height 1080]
 //     [--fps 24] [--seconds 6] [--scale 1] [--colors 256] [--dither sierra2_4a]
-//     [--mp4] [--mp4-loops 3] [--keep-frames] [--budget-mb 5]
+//     [--mp4] [--mp4-loops 3] [--no-audio] [--keep-frames] [--budget-mb 5]
+// If the page defines window.SOUND cues, the MP4 gets a soundtrack synthesized offline
+// with the Web Audio API (works headless; no audio device or sound files needed).
 import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, rmdirSync, statSync, existsSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, rmdirSync, statSync, existsSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
-import { launch, parseArgs, fileUrl } from "./_browser.mjs";
+import { launch, parseArgs, fileUrl, SKILL_DIR } from "./_browser.mjs";
 
 const args = parseArgs(process.argv.slice(2));
 const input = args._[0];
@@ -58,6 +60,24 @@ for (let i = 0; i < total; i++) {
   if (i % 24 === 0) process.stderr.write(`\r[gif] frame ${i + 1}/${total}`);
 }
 process.stderr.write(`\r[gif] captured ${total} frames      \n`);
+
+const loops = +(args["mp4-loops"] || 3);
+const audioPath = join(framesDir, "audio.wav");
+let hasAudio = false;
+if (args.mp4 && !args["no-audio"]) {
+  const cues = await page.evaluate(() => (window.SOUND && window.SOUND.cues && window.SOUND.cues.length) || 0);
+  if (cues) {
+    // Pages made before the sound engine existed can still declare SOUND; borrow the template's engine.
+    if (!(await page.evaluate(() => !!window.SFX))) {
+      const shell = readFileSync(join(SKILL_DIR, "templates", "motion-shell.html"), "utf8");
+      await page.addScriptTag({ content: shell.match(/<script id="sfx-engine">([\s\S]*?)<\/script>/)[1] });
+    }
+    const b64 = await page.evaluate((o) => window.SFX.render(o), { seconds, loops });
+    writeFileSync(audioPath, Buffer.from(b64, "base64"));
+    hasAudio = true;
+    console.error(`[gif] rendered soundtrack: ${cues} cues x ${loops} loops`);
+  }
+}
 await browser.close();
 
 const outW = Math.round(width * scale);
@@ -76,15 +96,17 @@ if (statSync(out).size > budget * 1048576) {
 }
 
 if (args.mp4) {
-  const loops = +(args["mp4-loops"] || 3);
   const mp4 = out.replace(/\.gif$/i, ".mp4");
+  const audio = hasAudio
+    ? ["-i", audioPath, "-map", "0:v", "-map", "1:a", "-c:a", "aac", "-b:a", "192k", "-shortest"]
+    : [];
   execFileSync("ffmpeg", [
     "-y", "-loglevel", "error", "-stream_loop", String(loops - 1),
-    "-framerate", String(fps), "-i", pattern,
+    "-framerate", String(fps), "-i", pattern, ...audio,
     "-vf", `scale=${outW - (outW % 2)}:-2:flags=lanczos`,
     "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "18", "-movflags", "+faststart", mp4,
   ], { stdio: "inherit" });
-  console.log(`mp4: ${mp4} (${mb(mp4)} MB, ${loops} loops)`);
+  console.log(`mp4: ${mp4} (${mb(mp4)} MB, ${loops} loops${hasAudio ? ", with sound" : ""})`);
 }
 
 if (!args["keep-frames"]) {

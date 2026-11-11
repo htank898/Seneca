@@ -1,6 +1,6 @@
 ---
 name: ai-gif
-description: Make looping motion graphics with HTML/SVG/JavaScript and export them as GIF (and MP4). Use for animated explainers, social-post GIFs, reaction/visual gags, loading or status loops, logo stings, animated stats, or any "make me a gif / animation / looping graphic". Prefer this over After Effects-style or video-editor workflows, because the animation is code, so it is exact, editable, and seamless.
+description: Make looping motion graphics with HTML/SVG/JavaScript and export them as GIF (and MP4, optionally with synthesized sound effects). Use for animated explainers, social-post GIFs, reaction/visual gags, loading or status loops, logo stings, animated stats, or any "make me a gif / animation / looping graphic". Prefer this over After Effects-style or video-editor workflows, because the animation is code, so it is exact, editable, and seamless.
 ---
 
 # AI GIF: motion graphics as code
@@ -26,18 +26,21 @@ Infer what you can from the request and use the defaults in `reference/motion-pa
    - The loop must be seamless: `renderFrame(0)` and `renderFrame(1)` must look identical. Use the helpers (`wave`, `pingpong`, integer cycle counts) or end each sequence back at its starting pose.
    - Plan the loop as **beats** with `seg(t, a, b)` windows (for example intro 0–0.15, action 0.15–0.7, punchline 0.7–0.9, reset 0.9–1).
    - Keep any text on screen for ≥ 1.2 s and at ≥ 36 px at 1080 wide.
-4. Open the HTML in a browser to preview. It autoplays; space pauses, ←/→ scrubs.
+4. **Sound (MP4 only).** If the MP4 is the deliverable, or the user asks for sound, add cues to `window.SOUND`, timed to the same beat boundaries as your `seg()` windows. The template's engine synthesizes them with the Web Audio API, so there are no audio files or downloads. For a GIF-only piece, set `cues: []`. See `reference/sound-design.md` for presets, options, and taste rules.
+5. Open the HTML in a browser to preview. It autoplays; space pauses, ←/→ scrubs, M turns sound on.
 
 ## 4. Render
 ```bash
 node scripts/render-gif.mjs path/to/motion.html --mp4
 ```
-Flags: `--out`, `--width`, `--height`, `--fps`, `--seconds`, `--scale 0.75`, `--colors 128`, `--dither none|bayer|sierra2_4a`, `--mp4`, `--mp4-loops 3`, `--budget-mb 5`, `--keep-frames`.
+Flags: `--out`, `--width`, `--height`, `--fps`, `--seconds`, `--scale 0.75`, `--colors 128`, `--dither none|bayer|sierra2_4a`, `--mp4`, `--mp4-loops 3`, `--no-audio`, `--budget-mb 5`, `--keep-frames`.
+If the page has `SOUND` cues, the MP4 gets a soundtrack rendered offline in the headless browser and merged in by ffmpeg.
 The first run installs Playwright into this skill folder. Requires `ffmpeg` on PATH.
 
 ## 5. Verify before reporting
 - Render with `--keep-frames` and look at a few PNGs in `.frames/<name>/`: the first frame, the last frame (it should flow straight into the first), and the punchline beat. Delete `.frames/` afterwards.
 - Check the file size against the destination budget (the renderer warns). If it's over, try in this order: `--scale 0.75`, `--fps 20`, `--colors 128`, then flatter fills or fewer moving pixels.
-- Report the GIF path (and MP4 path), its dimensions, duration, and size.
+- If there's sound, check that the cues land where you meant: `ffmpeg -i out.mp4 -af silencedetect=n=-45dB:d=0.1 -f null - 2>&1 | grep silence_end` lists where each sound starts. Compare that against `t × seconds`.
+- Report the GIF path (and MP4 path), its dimensions, duration, and size, and whether the MP4 has sound.
 
-See `reference/motion-parameters.md` for timing, easing, loop patterns, and size budgets.
+See `reference/motion-parameters.md` for timing, easing, loop patterns, and size budgets, and `reference/sound-design.md` for sound effects.
