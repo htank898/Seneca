@@ -1,0 +1,138 @@
+{
+  "kind": "timeline",
+  "size": [
+    1080,
+    1350
+  ],
+  "fps": 30,
+  "title": "Earn $1 every second. When did you start?",
+  "note": "1 year = 365.25 days. Dates approximate.",
+  "hud": {
+    "prefix": "$",
+    "suffix": "",
+    "interp": "geo"
+  },
+  "steps": [
+    {
+      "value": 100000,
+      "seconds": 100000,
+      "headline": "$100,000",
+      "sub": "100 thousand seconds ago: 28 hours",
+      "caption": "October 22, 2026."
+    },
+    {
+      "value": 1000000,
+      "seconds": 1000000,
+      "headline": "$1,000,000",
+      "sub": "1 million seconds ago: 11.6 days",
+      "caption": "October 12, 2026."
+    },
+    {
+      "value": 10000000,
+      "seconds": 10000000,
+      "headline": "$10,000,000",
+      "sub": "10 million seconds ago: 3.8 months",
+      "caption": "June 29, 2026."
+    },
+    {
+      "value": 100000000,
+      "seconds": 100000000,
+      "headline": "$100,000,000",
+      "sub": "100 million seconds ago: 3 years",
+      "caption": "Around 2023."
+    },
+    {
+      "value": 1000000000,
+      "seconds": 1000000000,
+      "headline": "$1,000,000,000",
+      "sub": "1 billion seconds ago: 32 years",
+      "caption": "Around 1994. Before the first iPhone. After the Moon landing."
+    },
+    {
+      "value": 10000000000,
+      "seconds": 10000000000,
+      "headline": "$10,000,000,000",
+      "sub": "10 billion seconds ago: 317 years",
+      "caption": "Around 1709. Before the Declaration of Independence. After Columbus crossed the Atlantic."
+    },
+    {
+      "value": 100000000000,
+      "seconds": 100000000000,
+      "headline": "$100,000,000,000",
+      "sub": "100 billion seconds ago: 3,170 years",
+      "caption": "Around 1,144 BC. Before the fall of Rome. After the Great Pyramid was built."
+    },
+    {
+      "value": 1000000000000,
+      "seconds": 1000000000000,
+      "headline": "$1,000,000,000,000",
+      "sub": "1 trillion seconds ago: 31,700 years",
+      "caption": "Before the peak of the last Ice Age. After the first Homo sapiens."
+    },
+    {
+      "value": 2100000000000000,
+      "seconds": 2100000000000000,
+      "headline": "$2,100,000,000,000,000",
+      "sub": "2.1 quadrillion seconds ago: 66.5 million years",
+      "caption": "Before the dinosaurs died out. After the first dinosaurs."
+    }
+  ],
+  "now": "2026-10-23",
+  "events": [
+    {
+      "name": "The first iPhone",
+      "ya": 19.809624967329682,
+      "icon": "phone"
+    },
+    {
+      "name": "The Moon landing",
+      "ya": 57.80962496732968,
+      "icon": "rocket"
+    },
+    {
+      "name": "The Declaration of Independence",
+      "ya": 250.80962496732968,
+      "icon": "scroll"
+    },
+    {
+      "name": "Columbus crosses the Atlantic",
+      "ya": 534.8096249673297,
+      "icon": "ship"
+    },
+    {
+      "name": "The fall of Rome",
+      "ya": 1550.8096249673297,
+      "icon": "columns"
+    },
+    {
+      "name": "The Great Pyramid is built",
+      "ya": 4585.80962496733,
+      "icon": "pyramid"
+    },
+    {
+      "name": "The Lascaux cave paintings",
+      "ya": 17000,
+      "icon": "mammoth"
+    },
+    {
+      "name": "The peak of the last Ice Age",
+      "ya": 20000,
+      "icon": "mammoth"
+    },
+    {
+      "name": "The first Homo sapiens",
+      "ya": 300000,
+      "icon": "person"
+    },
+    {
+      "name": "The dinosaurs die out",
+      "ya": 66000000,
+      "icon": "dinosaur"
+    },
+    {
+      "name": "The first dinosaurs",
+      "ya": 230000000,
+      "icon": "dinosaur"
+    }
+  ]
+}

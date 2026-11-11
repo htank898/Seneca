@@ -1,16 +1,16 @@
 {
-  "name": "ai-first-comms",
+  "name": "seneca",
   "owner": {
     "name": "Harrison Tankersley"
   },
   "metadata": {
-    "description": "Claude Code skills for AI-first business communication: HTML slide decks, custom-stationery PDFs, looping GIFs, and interactive guides."
+    "description": "Claude Code skills for AI-first business communication: HTML slide decks, custom-stationery PDFs, looping GIFs, interactive guides, and banners/graphics."
   },
   "plugins": [
     {
-      "name": "ai-first-comms",
+      "name": "seneca",
       "source": "./",
-      "description": "AI-first business communication: HTML slide decks, custom-stationery PDFs, looping motion-graphic GIFs, and interactive software guides."
+      "description": "AI-first communication: describe the audience and the moment, and Seneca builds the right mix of HTML slide decks, stationery PDFs, graphics, GIFs, and interactive guides."
     }
   ]
 }

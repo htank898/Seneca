@@ -1,0 +1,490 @@
+/* ai-scale engine: renders a SCENE (from scripts/scale.mjs) as a pure function of t.
+   Contract (shared with ai-gif): window.MOTION = { width, height, fps, seconds } and window.renderFrame(t), t in [0,1).
+   Kinds: "tower" (quantity → height, log camera zoom) and "timeline" (seconds → how far back, log time axis).
+   Not capturing → interactive explorer (step buttons, scrubber, keyboard). Do not edit per scene; edit the scene JSON. */
+(function () {
+  const S = window.SCENE;
+  const [W, H] = S.size;
+  const C = Object.assign({ bg: "#e6eae8", ink: "#16191d", muted: "#5e7a94", accent: "#f5c518", surface: "#f3f5f4", rule: "#c3cbc7", font: "Archivo, system-ui, sans-serif" }, S.theme || {});
+  const YEAR = 365.25 * 86400;
+
+  /* ---------- math + format ---------- */
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const geo = (a, b, k) => (a > 0 && b > 0 ? a * Math.pow(b / a, k) : lerp(a, b, k));
+  const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const smooth = (a, b, x) => { const k = clamp((x - a) / (b - a)); return k * k * (3 - 2 * k); };
+  const sig = (x, n = 3) => Number(x.toPrecision(n));
+  const commas = (x) => Math.round(x).toLocaleString("en-US");
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  function len(m) {
+    if (m < 0.01) return `${sig(m * 1000, 2)} mm`;
+    if (m < 1) return `${sig(m * 100, 2)} cm`;
+    if (m < 1000) return `${sig(m, 3)} m`;
+    const km = m / 1000;
+    return km >= 1e6 ? `${sig(km / 1e6, 3)} million km` : `${sig(km, 3).toLocaleString("en-US")} km`;
+  }
+  function wrap(text, max) {
+    const out = []; let line = "";
+    for (const w of String(text).split(" ")) { if ((line + " " + w).trim().length > max && line) { out.push(line); line = w; } else line = (line + " " + w).trim(); }
+    if (line) out.push(line);
+    return out;
+  }
+  const T = (x, y, str, o = {}) => `<text x="${x}" y="${y}" font-family="${C.font}" font-size="${o.size || 24}" font-weight="${o.weight || 600}" fill="${o.fill || C.ink}" text-anchor="${o.anchor || "start"}" ${o.stretch ? `font-stretch="${o.stretch}"` : ""} opacity="${o.op ?? 1}" ${o.ls ? `letter-spacing="${o.ls}"` : ""}>${esc(str)}</text>`;
+
+  /* ---------- icons: drawn in a box 100 tall, bottom at y=100; w = box width ---------- */
+  const st = `stroke="${C.ink}" stroke-width="3" vector-effect="non-scaling-stroke" stroke-linejoin="round"`;
+  const ICONS = {
+    giraffe: { w: 70, d: `<rect x="14" y="62" width="6" height="38" fill="#e7b24a" ${st}/><rect x="40" y="62" width="6" height="38" fill="#e7b24a" ${st}/><rect x="8" y="48" width="46" height="20" rx="9" fill="#e7b24a" ${st}/><path d="M44 54 L56 8 L64 10 L54 56 Z" fill="#e7b24a" ${st}/><ellipse cx="62" cy="8" rx="9" ry="6" fill="#e7b24a" ${st}/>` },
+    house: { w: 100, d: `<rect x="12" y="42" width="76" height="58" fill="${C.surface}" ${st}/><path d="M2 44 L50 6 L98 44 Z" fill="#c4604b" ${st}/><rect x="24" y="54" width="16" height="14" fill="#9fd3ff" ${st}/><rect x="60" y="54" width="16" height="14" fill="#9fd3ff" ${st}/><rect x="42" y="74" width="16" height="26" fill="${C.ink}"/>` },
+    statue: { w: 36, d: `<rect x="4" y="56" width="28" height="44" fill="#c9c2b0" ${st}/><path d="M11 56 L25 56 L21 20 L15 20 Z" fill="#7fb5a3" ${st}/><circle cx="18" cy="15" r="5" fill="#7fb5a3" ${st}/><path d="M21 22 L28 4" stroke="#7fb5a3" stroke-width="5" vector-effect="non-scaling-stroke"/><circle cx="29" cy="3" r="3.5" fill="${C.accent}"/>` },
+    pyramid: { w: 160, d: `<path d="M0 100 L80 0 L160 100 Z" fill="#e3c27a" ${st}/><path d="M80 0 L160 100 L100 100 Z" fill="#c9a35b"/>` },
+    eiffel: { w: 62, d: `<path d="M0 100 L22 46 L28 12 L31 0 L34 12 L40 46 L62 100 L48 100 Q31 64 14 100 Z" fill="#8c7b6b" ${st}/><path d="M18 46 H44 M24 22 H38" ${st}/>` },
+    building: { w: 30, d: `<rect x="2" y="30" width="26" height="70" fill="${C.surface}" ${st}/><rect x="7" y="14" width="16" height="16" fill="${C.surface}" ${st}/><rect x="11" y="5" width="8" height="9" fill="${C.surface}" ${st}/><path d="M15 0 V5" ${st}/>` },
+    spire: { w: 22, d: `<path d="M0 100 L4 62 L7 32 L10 9 L11 0 L12 9 L15 32 L18 62 L22 100 Z" fill="#b8c7d6" ${st}/>` },
+    mountain: { w: 230, d: `<path d="M0 100 L84 30 L115 0 L156 40 L230 100 Z" fill="#9aa7b0" ${st}/><path d="M97 17 L115 0 L134 19 L124 16 L115 23 L105 15 Z" fill="#ffffff"/>` },
+    person: { w: 40, d: `<circle cx="20" cy="11" r="10" fill="#f1c7a3" ${st}/><rect x="8" y="24" width="24" height="40" rx="10" fill="${C.accent}" ${st}/><path d="M14 62 L12 100 M26 62 L28 100" ${st}/>` },
+    mammoth: { w: 120, d: `<rect x="40" y="70" width="12" height="30" fill="#8a6a52" ${st}/><rect x="88" y="70" width="12" height="30" fill="#8a6a52" ${st}/><ellipse cx="70" cy="54" rx="42" ry="30" fill="#8a6a52" ${st}/><circle cx="30" cy="42" r="20" fill="#8a6a52" ${st}/><path d="M14 48 C4 66 6 86 16 96" fill="none" stroke="#8a6a52" stroke-width="9" vector-effect="non-scaling-stroke" stroke-linecap="round"/><path d="M24 60 C30 82 48 86 54 72" fill="none" stroke="#f3f0e6" stroke-width="5" vector-effect="non-scaling-stroke" stroke-linecap="round"/><circle cx="26" cy="36" r="2.5" fill="${C.ink}"/>` },
+    dinosaur: { w: 170, d: `<rect x="58" y="74" width="11" height="26" fill="#6f9e6a" ${st}/><rect x="98" y="74" width="11" height="26" fill="#6f9e6a" ${st}/><path d="M44 66 C22 66 10 76 0 90" fill="none" stroke="#6f9e6a" stroke-width="10" vector-effect="non-scaling-stroke" stroke-linecap="round"/><path d="M112 56 C130 36 132 18 148 10" fill="none" stroke="#6f9e6a" stroke-width="14" vector-effect="non-scaling-stroke" stroke-linecap="round"/><ellipse cx="84" cy="64" rx="44" ry="22" fill="#6f9e6a" ${st}/><ellipse cx="153" cy="9" rx="11" ry="7" fill="#6f9e6a" ${st}/><circle cx="157" cy="7" r="1.8" fill="${C.ink}"/>` },
+    rocket: { w: 44, d: `<path d="M22 0 C36 16 36 60 32 80 L12 80 C8 60 8 16 22 0 Z" fill="${C.surface}" ${st}/><circle cx="22" cy="32" r="6" fill="#9fd3ff" ${st}/><path d="M12 62 L2 84 L12 80 Z M32 62 L42 84 L32 80 Z" fill="#c4604b" ${st}/><path d="M15 82 L22 100 L29 82 Z" fill="${C.accent}"/>` },
+    ship: { w: 110, d: `<path d="M4 70 L106 70 L92 96 L18 96 Z" fill="#8a6a52" ${st}/><path d="M40 70 V8 M72 70 V18" ${st}/><rect x="26" y="14" width="28" height="30" fill="${C.surface}" ${st}/><rect x="60" y="24" width="24" height="26" fill="${C.surface}" ${st}/>` },
+    scroll: { w: 70, d: `<rect x="10" y="16" width="50" height="68" fill="#f1e3c2" ${st}/><rect x="4" y="8" width="62" height="12" rx="6" fill="#e2cf9f" ${st}/><rect x="4" y="80" width="62" height="12" rx="6" fill="#e2cf9f" ${st}/><path d="M18 34 H52 M18 46 H52 M18 58 H44" stroke="${C.muted}" stroke-width="2" vector-effect="non-scaling-stroke"/>` },
+    columns: { w: 110, d: `<path d="M5 30 L55 6 L105 30 Z" fill="${C.surface}" ${st}/><rect x="5" y="30" width="100" height="10" fill="${C.surface}" ${st}/><rect x="14" y="40" width="12" height="50" fill="${C.surface}" ${st}/><rect x="38" y="40" width="12" height="50" fill="${C.surface}" ${st}/><rect x="61" y="40" width="12" height="50" fill="${C.surface}" ${st}/><rect x="84" y="40" width="12" height="50" fill="${C.surface}" ${st}/><rect x="0" y="90" width="110" height="10" fill="${C.surface}" ${st}/>` },
+    phone: { w: 52, d: `<rect x="6" y="0" width="40" height="100" rx="8" fill="${C.ink}"/><rect x="11" y="10" width="30" height="76" rx="2" fill="#9fd3ff"/>` },
+    planet: { w: 100, d: `<circle cx="50" cy="50" r="48" fill="#4f86c6" ${st}/><path d="M20 30 C34 22 44 34 38 46 C30 56 18 48 20 30 Z M58 58 C72 50 86 60 80 76 C70 86 56 74 58 58 Z" fill="#6f9e6a"/>` },
+    plane: { w: 100, d: `<path d="M4 54 L96 46 C100 46 100 54 96 54 L4 58 Z" fill="${C.surface}" ${st}/><path d="M44 52 L30 80 L40 80 L62 52 Z M10 54 L4 40 L12 40 L22 54 Z" fill="${C.surface}" ${st}/>` },
+    satellite: { w: 100, d: `<rect x="40" y="38" width="20" height="24" fill="${C.surface}" ${st}/><rect x="0" y="42" width="34" height="16" fill="#4f86c6" ${st}/><rect x="66" y="42" width="34" height="16" fill="#4f86c6" ${st}/><path d="M34 50 H40 M60 50 H66" ${st}/>` },
+    moon: { w: 100, d: `<circle cx="50" cy="50" r="48" fill="#d9d6cf" ${st}/><circle cx="34" cy="38" r="9" fill="#c4c0b6"/><circle cx="62" cy="64" r="12" fill="#c4c0b6"/><circle cx="66" cy="30" r="6" fill="#c4c0b6"/>` },
+    sun: { w: 100, d: `<circle cx="50" cy="50" r="46" fill="${C.accent}" ${st}/>` },
+  };
+  function icon(name, cx, bottom, hPx, op = 1, flip = false, maxW = Infinity) {
+    const ic = ICONS[name] || ICONS.building;
+    const k = hPx / 100, kx = Math.min(k, maxW / ic.w), w = ic.w * kx;
+    const tr = flip ? `translate(${cx + w / 2} ${bottom - hPx}) scale(${-kx} ${k})` : `translate(${cx - w / 2} ${bottom - hPx}) scale(${kx} ${k})`;
+    return `<g transform="${tr}" opacity="${op}">${ic.d}</g>`;
+  }
+  function walker(cx, bottom, hPx, phase, moving, flip) {
+    const k = hPx / 100, sw = moving ? Math.sin(phase) * 9 : 0;
+    const legs = `<path d="M14 62 L${12 + sw} 100 M26 62 L${28 - sw} 100" ${st}/>`;
+    const body = `<circle cx="20" cy="11" r="10" fill="#f1c7a3" ${st}/><rect x="8" y="24" width="24" height="40" rx="10" fill="${C.accent}" ${st}/>`;
+    const tr = flip ? `translate(${cx + 20 * k} ${bottom - hPx}) scale(${-k} ${k})` : `translate(${cx - 20 * k} ${bottom - hPx}) scale(${k})`;
+    return `<g transform="${tr}">${legs}${body}</g>`;
+  }
+
+  /* ---------- timeline pace: the traveler runs at a set pace (sim-seconds per video-second), so a longer leg takes
+     longer to watch — you feel the time. Each leg starts at the previous leg's pace; when that would take too long
+     it visibly speeds up. Leg run time grows (first × growth^n, capped at max) so bigger gaps mean longer waits. ---------- */
+  const PACE = Object.assign({ first: 2.5, growth: 1.45, max: 9, zoom: 1.0, old: 1.4 }, S.pace || {});
+  const LEGS = [];
+  if (S.kind === "timeline") {
+    const N = 400, sm = (x) => { const k = clamp(x); return k * k * (3 - 2 * k); };
+    let prevRate = 0;
+    S.steps.forEach((st, i) => {
+      if (i === 0) return;
+      const L = st.seconds - S.steps[i - 1].seconds;
+      let D = st.run ?? Math.min(PACE.max, PACE.first * Math.pow(PACE.growth, i - 1));
+      let r0 = prevRate || L / D, t1 = D, tr = 0, r1 = r0;
+      if (prevRate && L / r0 <= D) { D = Math.max(1.2, L / r0); t1 = D; } // the old pace is enough: no speed-up
+      else if (prevRate) {
+        t1 = Math.min(PACE.old, D * 0.3); tr = D * 0.3;
+        const dist = (lr1) => { let d = 0; for (let j = 0; j < N; j++) { const tau = (j + 0.5) * D / N; d += (tau < t1 ? r0 : r0 * Math.exp((lr1 - Math.log(r0)) * sm((tau - t1) / tr))) * D / N; } return d; };
+        let lo = Math.log(r0) - 30, hi = Math.log(r0) + 40;
+        for (let it = 0; it < 80; it++) { const mid = (lo + hi) / 2; if (dist(mid) < L) lo = mid; else hi = mid; }
+        r1 = Math.exp((lo + hi) / 2);
+      }
+      const rate = (tau) => (tau < t1 || tr === 0 ? r0 : r0 * Math.pow(r1 / r0, sm((tau - t1) / tr)));
+      const cum = [0]; for (let j = 0; j < N; j++) cum.push(cum[j] + rate((j + 0.5) * D / N) * D / N);
+      const scaleFix = L / cum[N]; // exact arrival despite numeric integration
+      LEGS[i] = { L, D, r0, r1, t1, tr, rate, at: (tau) => { const x = clamp(tau / D) * N, j = Math.floor(x); return (j >= N ? cum[N] : lerp(cum[j], cum[j + 1], x - j)) * scaleFix; }, total: PACE.zoom + D };
+      prevRate = r1;
+    });
+  }
+
+  /* ---------- timing: intro hold, then (move, hold) per step, then a reset move for a seamless loop ---------- */
+  const segs = []; let TOTAL = 0;
+  S.steps.forEach((s, i) => {
+    if (i > 0) { const d = s.move ?? (S.kind === "timeline" ? LEGS[i].total : 1.3); segs.push({ type: "move", a: i - 1, b: i, t0: TOTAL, d }); TOTAL += d; }
+    const h = s.hold ?? (i === 0 ? 1.8 : 2.1);
+    if (h > 0) { segs.push({ type: "hold", a: i, b: i, t0: TOTAL, d: h }); TOTAL += h; }
+  });
+  segs.push({ type: "move", a: S.steps.length - 1, b: 0, t0: TOTAL, d: S.reset ?? 1.2, reset: true }); TOTAL += S.reset ?? 1.2;
+  window.MOTION = { width: W, height: H, fps: S.fps || 30, seconds: +TOTAL.toFixed(3) };
+  const STOPS = segs.filter((g) => g.type === "hold").map((g) => ({ i: g.a, t: (g.t0 + Math.min(g.d * 0.6, g.d - 0.05)) / TOTAL }));
+  window.SCENE_STOPS = STOPS;
+
+  function stateAt(t) {
+    const sec = (((t % 1) + 1) % 1) * TOTAL;
+    const g = segs.find((s) => sec >= s.t0 && sec < s.t0 + s.d) || segs[segs.length - 1];
+    const local = clamp((sec - g.t0) / g.d);
+    return g.type === "hold" ? { a: g.a, b: g.b, k: 1, raw: 1, moving: false, holdK: local, sec } : { a: g.a, b: g.b, k: ease(local), raw: local, el: sec - g.t0, moving: true, holdK: 0, sec, reset: !!g.reset };
+  }
+
+  /* ---------- shared HUD ---------- */
+  function hud(s) {
+    const A = S.steps[s.a], B = S.steps[s.b];
+    const pad = W * 0.07;
+    let out = T(pad, pad + 10, (S.title || "").toUpperCase(), { size: Math.round(W * 0.022), weight: 700, fill: C.muted, ls: "2" });
+    let head;
+    if (S.hud && S.hud.count !== false && typeof A.value === "number" && typeof B.value === "number" && s.moving && !s.reset) {
+      const ck = s.countK ?? s.k;
+      const v = s.countK !== undefined ? sig(lerp(A.value, B.value, ck), 3) : S.hud.interp === "linear" ? Math.round(lerp(A.value, B.value, ck)) : sig(geo(A.value, B.value, ck), 3);
+      head = `${S.hud.prefix || ""}${commas(v)}${S.hud.suffix || ""}`;
+    } else head = ((s.countK ?? s.k) < 0.5 ? A : B).headline;
+    const hs = Math.min(W * 0.088, (W - pad * 2) / Math.max(6, head.length * 0.62));
+    out += T(pad, pad + 26 + hs, head, { size: Math.round(hs), weight: 850, stretch: "112%" });
+    const sk = s.countK ?? s.k, subOp = s.moving ? Math.abs(sk - 0.5) * 2 : 1;
+    out += T(pad, pad + 40 + hs + W * 0.04, (sk < 0.5 ? A : B).sub || "", { size: Math.round(W * 0.03), weight: 600, op: subOp });
+    const capOp = s.moving ? 0 : smooth(0, 0.12, s.holdK);
+    const cap = B.caption || "";
+    if (cap && capOp > 0) {
+      const lines = wrap(cap, Math.round(W / 26));
+      const cy = pad + 52 + hs + W * 0.085, cs = Math.round(W * 0.031);
+      lines.forEach((l, i) => {
+        const y = cy + i * cs * 1.3;
+        out += `<rect x="${pad - 8}" y="${y - cs * 0.95}" width="${l.length * cs * 0.52 + 16}" height="${cs * 1.25}" fill="${C.accent}" opacity="${capOp}"/>`;
+        out += T(pad, y, l, { size: cs, weight: 700, op: capOp });
+      });
+    }
+    // step dots
+    const n = STOPS.length, cur = STOPS.findIndex((p) => p.i === s.b);
+    for (let i = 0; i < n; i++) out += `<circle cx="${W - pad - (n - 1 - i) * 22}" cy="${pad}" r="6" fill="${i <= cur ? C.ink : "none"}" stroke="${C.ink}" stroke-width="2"/>`;
+    return out;
+  }
+  const footer = (y) => (S.note ? T(W * 0.07, y, S.note, { size: Math.round(W * 0.016), weight: 500, fill: C.muted }) : "");
+
+  /* ---------- layout guard: nothing may overlap. Positions are fixed per element (never reflowed per frame);
+     anything that would collide with an already-placed, higher-priority element fades out instead. ---------- */
+  const tw = (str, size) => String(str).length * size * 0.56;
+  function Layout() {
+    const placed = [], boxes = [];
+    const pad = W * 0.014; // start fading before contact, so the fade finishes before anything actually touches
+    const ratio = (b0) => {
+      const b = [b0[0] - pad, b0[1] - pad, b0[2] + pad, b0[3] + pad];
+      let w = 0;
+      for (const p of placed) {
+        const ix = Math.min(b[2], p[2]) - Math.max(b[0], p[0]), iy = Math.min(b[3], p[3]) - Math.max(b[1], p[1]);
+        // measured against the smaller box, so a big icon barely touching a small label still counts
+        if (ix > 0 && iy > 0) w = Math.max(w, (ix * iy) / Math.max(1, Math.min((b[2] - b[0]) * (b[3] - b[1]), (p[2] - p[0]) * (p[3] - p[1]))));
+      }
+      return w;
+    };
+    return {
+      fade: (b) => 1 - smooth(0, 0.12, ratio(b)),
+      add(name, b, op) { if (op > 0.2) placed.push(b); boxes.push({ name, box: b.map(Math.round), op: +op.toFixed(2) }); },
+      boxes,
+    };
+  }
+
+  /* ---------- tower ---------- */
+  function drawTower(s) {
+    const A = S.steps[s.a], B = S.steps[s.b];
+    const h = geo(A.h, B.h, s.k);
+    const view = (st) => Math.max(S.anchor.h * 1.45, st.h * 1.5);
+    const V = geo(view(A), view(B), s.k);
+    const top = H * 0.34, ground = H * 0.9, usable = ground - top;
+    const sc = usable / V;
+    const L = Layout();
+    const fsL = Math.round(W * 0.017);
+
+    // geometry first (so the layout guard knows what's already there), drawing after
+    const u = S.unit || { width_m: 0, color: C.accent, band: 0, thickness_m: 1 };
+    const sx = W * 0.4, sw = clamp(u.width_m * sc, W * 0.024, W * 0.16), shp = Math.max(h * sc, 3);
+    const sy = Math.max(ground - shp, top - 80), stackFs = Math.round(W * 0.026);
+    L.add("stack", [sx - sw / 2 - 6, sy - 6, sx + sw / 2 + 6, ground], 1);
+    L.add("stack label", [sx + sw / 2 + 4, sy - stackFs, sx + sw / 2 + 44 + tw(len(h), stackFs), sy + 14], 1);
+    const ppx = S.anchor.h * sc, yx = W * 0.2, youFs = Math.round(W * 0.02);
+    const youTop = ppx >= 16 ? ground - ppx - 12 - youFs : ground - 54 - youFs;
+    L.add("you", [yx - Math.max(ppx * 0.2, 24) - 4, youTop, yx + Math.max(ppx * 0.2, 24) + 4, ground], 1);
+
+    let sky = "";
+    // ruler
+    const rx = W * 0.06;
+    for (let p = Math.pow(10, Math.floor(Math.log10(V * 0.004))); p <= V * 1.2; p *= 10) {
+      const y = ground - p * sc;
+      if (y < top - 40 || ground - y < 22) continue;
+      sky += `<line x1="${rx - 10}" x2="${W * 0.94}" y1="${y}" y2="${y}" stroke="${C.rule}" stroke-width="1.5"/>`;
+      sky += T(rx - 4, y - 8, len(p), { size: Math.round(W * 0.016), weight: 600, fill: C.muted });
+    }
+    // landmarks: only the ones in this stop's comparison (the nearest below and above the stack) are shown,
+    // crossfading between stops; they alternate between two fixed lanes so neighbors never share one
+    const lms = S.landmarks.filter((l) => l.kind !== "anchor").sort((a, b) => a.h - b.h);
+    const lane = new Map(lms.filter((l) => l.kind !== "marker").map((l, i) => [l.name, i % 2]));
+    const featured = (st) => {
+      const near = lms.filter((l) => Math.abs(st.h / l.h - 1) < 0.12);
+      if (near.length) return new Set(near.slice(-1).map((l) => l.name));
+      const below = [...lms].reverse().find((l) => l.h < st.h), above = lms.find((l) => l.h > st.h);
+      return new Set([below, above].filter(Boolean).map((l) => l.name));
+    };
+    const fA = featured(A), fB = featured(B);
+    const weight = (l) => (fA.has(l.name) && fB.has(l.name) ? 1 : fB.has(l.name) ? s.k : fA.has(l.name) ? 1 - s.k : 0);
+    const order = lms.filter((l) => weight(l) > 0.01).sort((a, b) => weight(b) - weight(a) || b.h - a.h);
+    for (const l of order) {
+      const px = l.h * sc;
+      if (l.kind === "marker") {
+        const y = ground - px;
+        if (y < top - 40 || px < 10) continue;
+        const base = smooth(10, 40, px) * weight(l);
+        if (l.icon === "line") {
+          const lb = [W * 0.95 - tw(l.name, Math.round(W * 0.02)), y - 10 - W * 0.02, W * 0.95, y - 4];
+          const lo = base * L.fade(lb);
+          sky += `<line x1="${W * 0.08}" x2="${W * 0.96}" y1="${y}" y2="${y}" stroke="${C.muted}" stroke-width="3" stroke-dasharray="10 10" opacity="${base}"/>`;
+          if (lo > 0.01) sky += T(W * 0.95, y - 10, l.name, { size: Math.round(W * 0.02), weight: 700, fill: C.muted, anchor: "end", op: lo });
+          L.add(l.name, lb, lo);
+        } else {
+          const x = W * 0.86, sz = W * 0.06, label = `${l.name} · ${len(l.h)}`, ly = y + sz / 2 + W * 0.026;
+          const ib = [x - sz / 2, y - sz / 2, x + sz / 2, y + sz / 2];
+          const lb = [x - tw(label, fsL) / 2, ly - fsL, x + tw(label, fsL) / 2, ly + 4];
+          const io = base * L.fade(ib), lo = io * L.fade(lb); // a label is never blocked by its own icon
+          L.add(l.name, ib, io); L.add(l.name + " label", lb, lo);
+          if (io > 0.01) sky += icon(l.icon, x, y + sz / 2, sz, io);
+          if (lo > 0.01) sky += T(x, ly, label, { size: fsL, weight: 700, fill: C.muted, anchor: "middle", op: lo });
+        }
+        continue;
+      }
+      if (px < 5 || px > usable * 1.12) continue;
+      const maxW = l.icon === "mountain" ? W * 0.4 : W * 0.17;
+      const ic = ICONS[l.icon] || ICONS.building, iw = Math.min(ic.w * (px / 100), maxW);
+      const want = l.icon === "mountain" ? W * 0.76 : W * (0.64 + 0.2 * lane.get(l.name));
+      const x = Math.min(want, W * 0.97 - iw / 2); // keep wide icons inside the frame
+      const base = smooth(5, 26, px) * (1 - smooth(usable * 0.98, usable * 1.12, px)) * weight(l);
+      const ib = [x - iw / 2, ground - px, x + iw / 2, ground];
+      const io = base * L.fade(ib);
+      const label = `${l.name} · ${len(l.h)}`, ly = ground - px - 12;
+      const lx = clamp(x, W * 0.03 + tw(label, fsL) / 2, W * 0.97 - tw(label, fsL) / 2);
+      const lb = [lx - tw(label, fsL) / 2, ly - fsL, lx + tw(label, fsL) / 2, ly + 4];
+      // the label sits above its landmark; near the top of the frame it fades rather than sliding onto the icon
+      const lo = px > 24 ? io * smooth(24, 60, px) * smooth(top - 40, top, ly) * L.fade(lb) : 0;
+      L.add(l.name, ib, io); L.add(l.name + " label", lb, lo);
+      if (io > 0.01) sky += icon(l.icon, x, ground, px, io, false, maxW);
+      if (lo > 0.01) sky += T(lx, ly, label, { size: fsL, weight: 700, fill: C.muted, anchor: "middle", op: lo });
+    }
+    window.__boxes = L.boxes;
+
+    let out = `<rect width="${W}" height="${H}" fill="${C.bg}"/>`;
+    out += `<defs><clipPath id="sky"><rect x="0" y="${top - 60}" width="${W}" height="${ground - top + 60}"/></clipPath></defs><g clip-path="url(#sky)">${sky}</g>`;
+    out += `<rect x="0" y="${ground}" width="${W}" height="${H - ground}" fill="${C.surface}"/><line x1="0" x2="${W}" y1="${ground}" y2="${ground}" stroke="${C.ink}" stroke-width="4"/>`;
+    if (ppx >= 16) {
+      out += icon("person", yx, ground, ppx);
+      out += T(yx, ground - ppx - 12, "You", { size: youFs, weight: 800, anchor: "middle" });
+    } else {
+      out += `<circle cx="${yx}" cy="${ground - 6}" r="6" fill="${C.accent}" stroke="${C.ink}" stroke-width="2"/><line x1="${yx}" x2="${yx}" y1="${ground - 14}" y2="${ground - 46}" stroke="${C.ink}" stroke-width="2"/>`;
+      out += T(yx, ground - 54, "You", { size: youFs, weight: 800, anchor: "middle" });
+    }
+    out += `<rect x="${sx - sw / 2}" y="${sy}" width="${sw}" height="${ground - sy}" fill="${u.color}" stroke="${C.ink}" stroke-width="3"/>`;
+    const per = (u.band || 1) * u.thickness_m * sc, count = h / ((u.band || 1) * u.thickness_m);
+    if (per >= 5 && count <= 160) for (let j = 1; j < count; j++) {
+      const y = ground - j * per;
+      if (y < sy) break;
+      out += u.band > 1 ? `<rect x="${sx - sw / 2}" y="${y - 2}" width="${sw}" height="4" fill="#e9d9a6"/>` : `<line x1="${sx - sw / 2}" x2="${sx + sw / 2}" y1="${y}" y2="${y}" stroke="${C.rule}" stroke-width="1.5"/>`;
+    }
+    out += `<line x1="${sx + sw / 2 + 6}" x2="${sx + sw / 2 + 30}" y1="${sy}" y2="${sy}" stroke="${C.ink}" stroke-width="3"/>`;
+    out += T(sx + sw / 2 + 38, sy + 9, len(h), { size: stackFs, weight: 800 });
+    out += footer(H - (H - ground) / 2 + 6);
+    return out;
+  }
+
+  /* ---------- timeline: a LINEAR time axis, "now" pinned at the right ----------
+     Each leg is two beats: the camera zooms out (the last leg shrinks to a sliver next to "now"),
+     then the traveler runs the new leg at that scale, so a 10x longer trip really is 10x farther. */
+  const LEVELS = [[3600, "hour"], [6 * 3600, "hour"], [86400, "day"], [7 * 86400, "day"], [30 * 86400, "day"], [100 * 86400, "day"]];
+  for (let e = 0; e <= 9; e++) for (const m of [1, 2, 5]) LEVELS.push([m * Math.pow(10, e) * YEAR, "year"]);
+  function agoLabel(sec, unit) {
+    if (unit === "hour") return `${Math.round(sec / 3600)} hours ago`;
+    if (unit === "day") return `${commas(sec / 86400)} days ago`;
+    const y = sec / YEAR;
+    if (y >= 1e9) return `${sig(y / 1e9, 3)} billion years ago`;
+    if (y >= 1e6) return `${sig(y / 1e6, 3)} million years ago`;
+    return `${commas(y)} years ago`;
+  }
+  function span(sec) {
+    const y = sec / YEAR;
+    if (sec < 86400 * 2) return `${sig(sec / 3600, 2)} hours`;
+    if (y < 1) return `${sig(sec / 86400, 2)} days`;
+    if (y < 1e6) return `${commas(sig(y, 3))} years`;
+    if (y < 1e9) return `${sig(y / 1e6, 3)} million years`;
+    return `${sig(y / 1e9, 3)} billion years`;
+  }
+  const shortNum = (v) => { for (const [n, w] of [[1e15, "Q"], [1e12, "T"], [1e9, "B"], [1e6, "M"], [1e3, "K"]]) if (v >= n) return `${sig(v / n, 3)}${w}`; return String(v); };
+  function timelineCamera(s) {
+    const A = S.steps[s.a], B = S.steps[s.b];
+    const view = (st) => st.seconds * 1.2;
+    if (!s.moving) { const leg = LEGS[s.b]; return { V: view(B), cur: B.seconds, run: 1, rate: leg ? leg.r1 : 0, phase: "hold" }; }
+    if (s.reset) return { V: geo(view(A), view(B), s.k), cur: lerp(A.seconds, B.seconds, ease(clamp(s.raw / 0.8))), run: s.k, rate: 0, phase: "reset" };
+    const leg = LEGS[s.b];
+    if (s.el < PACE.zoom) return { V: geo(view(A), view(B), ease(s.el / PACE.zoom)), cur: A.seconds, run: 0, rate: leg.r0, phase: "zoom", leg };
+    const tau = s.el - PACE.zoom, cur = A.seconds + leg.at(tau);
+    const phase = leg.tr === 0 ? "run" : tau < leg.t1 ? "old" : tau < leg.t1 + leg.tr ? "ramp" : "run";
+    return { V: view(B), cur, run: (cur - A.seconds) / (B.seconds - A.seconds), rate: leg.rate(tau), phase, leg };
+  }
+  function waitText(videoSec) {
+    if (videoSec < 90) return `${Math.round(videoSec)} seconds`;
+    if (videoSec < 5400) return `${sig(videoSec / 60, 2)} minutes`;
+    if (videoSec < 172800) return `${sig(videoSec / 3600, 2)} hours`;
+    if (videoSec < YEAR * 2) return `${commas(videoSec / 86400)} days`;
+    return span(videoSec);
+  }
+  function drawTimeline(s) {
+    const A = S.steps[s.a], B = S.steps[s.b];
+    const { V, cur, run, rate, phase, leg } = timelineCamera(s);
+    s.countK = run;
+    const left = W * 0.05, right = W * 0.92, axis = H * 0.76, spanPx = right - left;
+    const pos = (x) => right - (x / V) * spanPx;
+    let out = `<rect width="${W}" height="${H}" fill="${C.bg}"/>`;
+    out += `<rect x="0" y="${axis}" width="${W}" height="${H - axis}" fill="${C.surface}"/>`;
+    // ticks: every level whose spacing is readable, faded by spacing so zooming never pops
+    const labeled = [];
+    for (let li = LEVELS.length - 1; li >= 0; li--) {
+      const [p, unit] = LEVELS[li];
+      const gap = (p / V) * spanPx;
+      if (gap < 14 || V / p > 60) continue;
+      const tOp = smooth(14, 60, gap), lOp = smooth(115, 170, gap);
+      for (let x = p; x < V * 1.05; x += p) {
+        const px = pos(x);
+        if (px < left - 10) break;
+        out += `<line x1="${px}" x2="${px}" y1="${axis}" y2="${axis + (lOp > 0 ? 16 : 9)}" stroke="${C.ink}" stroke-width="${lOp > 0 ? 3 : 2}" opacity="${tOp}"/>`;
+        if (lOp > 0.02 && px > left + 40 && px < right - 60 && !labeled.some((q) => Math.abs(q - px) < 150)) {
+          labeled.push(px);
+          out += T(px, axis + 46, agoLabel(x, unit), { size: Math.round(W * 0.018), weight: 600, fill: C.muted, anchor: "middle", op: lOp });
+        }
+      }
+    }
+    // axis + the distance already traveled
+    const tx = pos(cur);
+    out += `<line x1="0" x2="${right}" y1="${axis}" y2="${axis}" stroke="${C.ink}" stroke-width="4"/>`;
+    out += `<line x1="${tx}" x2="${right}" y1="${axis}" y2="${axis}" stroke="${C.accent}" stroke-width="10"/>`;
+    out += `<path d="M${right} ${axis} V${axis - 70}" stroke="${C.ink}" stroke-width="4"/><path d="M${right} ${axis - 70} l-34 12 l34 12 Z" fill="${C.ink}"/>`;
+    out += T(right + 8, axis - 52, "Now", { size: Math.round(W * 0.02), weight: 800 });
+    // stop flags: where each earlier leg ended (they bunch up next to "now" as the camera zooms out)
+    let lastFlag = -1e9;
+    S.steps.forEach((st, j) => {
+      if (j > Math.max(s.a, s.b) || st.seconds > V * 1.05) return;
+      const fx = pos(st.seconds);
+      out += `<path d="M${fx} ${axis + 2} l-7 14 h14 Z" fill="${C.ink}"/>`;
+      if (Math.abs(fx - lastFlag) > 80 || j === s.b) {
+        out += T(fx, axis + 104, `${S.hud.prefix || ""}${shortNum(st.value)}`, { size: Math.round(W * 0.017), weight: 800, anchor: "middle", op: j === s.b ? 1 : 0.7 });
+        lastFlag = fx;
+      }
+    });
+    // this leg vs the last one
+    if (!s.reset && s.b > 0) {
+      const from = pos(A.seconds === B.seconds ? S.steps[s.b - 1].seconds : A.seconds), to = tx;
+      const by = axis + 140, op = s.moving && phase === "zoom" ? 0 : 1;
+      const legSec = cur - (A.seconds === B.seconds ? S.steps[s.b - 1].seconds : A.seconds);
+      if (from - to > 8) {
+        out += `<path d="M${to} ${by - 10} V${by} H${from} V${by - 10}" fill="none" stroke="${C.ink}" stroke-width="3" opacity="${op}"/>`;
+        out += T(clamp((from + to) / 2, W * 0.16, W * 0.82), by + 30, `This leg: ${span(legSec)}`, { size: Math.round(W * 0.019), weight: 700, anchor: "middle", op });
+      }
+    }
+    // events: fixed row per event (no jumping), faded when crowded or near the edges
+    const evs = (S.events || []).slice().sort((a, b) => b.ya - a.ya);
+    const ih = H * 0.095, minGap = W * 0.2, lastX = [-1e9, -1e9];
+    const L = Layout(), evFs = Math.round(W * 0.019);
+    L.add("now", [right - 40, axis - 80, Math.min(W, right + 8 + tw("Now", Math.round(W * 0.02))), axis], 1);
+    evs.forEach((e, idx) => {
+      const sec = e.ya * YEAR;
+      if (sec > V * 1.02) return;
+      const x = pos(sec), r = idx % 2;
+      const crowd = smooth(minGap * 0.55, minGap, x - lastX[r]);
+      const edge = smooth(left - 20, left + W * 0.05, x) * (1 - smooth(right - W * 0.13, right - W * 0.04, x));
+      const base = axis - 8 - r * (ih + 96);
+      const ic = ICONS[e.icon] || ICONS.building, iw = ic.w * (ih / 100);
+      const lines = wrap(e.name, 18), lx = clamp(x, W * 0.1, W * 0.86);
+      const lw = Math.max(...lines.map((l) => tw(l, evFs)));
+      const box = [Math.min(x - iw / 2, lx - lw / 2), base - ih - 12 - lines.length * 24, Math.max(x + iw / 2, lx + lw / 2), base];
+      const op = crowd * edge * L.fade(box);
+      L.add(e.name, box, op);
+      if (op < 0.02) return;
+      if (crowd > 0.5) lastX[r] = x;
+      const reached = cur >= sec * 0.995;
+      const o = op * (reached ? 1 : 0.4);
+      if (r > 0) out += `<line x1="${x}" x2="${x}" y1="${base}" y2="${axis}" stroke="${C.rule}" stroke-width="2" opacity="${o}"/>`;
+      out += icon(e.icon, x, base, ih, o);
+      lines.forEach((l, i, arr) => { out += T(lx, base - ih - 12 - (arr.length - 1 - i) * 24, l, { size: Math.round(W * 0.019), weight: 700, fill: reached ? C.ink : C.muted, anchor: "middle", op: o }); });
+    });
+    // the traveler is an actor: it moves in front of the scenery on purpose, so it is reported but never blocks
+    L.boxes.push({ name: "actor:traveler", box: [tx - H * 0.03, axis - H * 0.085 - 4, tx + H * 0.03, axis].map(Math.round), op: 1 });
+    window.__boxes = L.boxes;
+    // the traveler runs (legs pump faster mid-run)
+    // pace readout: the speed you're watching time pass at, and what waiting at the old pace would cost
+    const py = axis + 214, pfs = Math.round(W * 0.022);
+    if (rate > 0) out += T(W * 0.05, py, `Pace: 1 second = ${span(rate)}`, { size: pfs, weight: 800 });
+    if (phase === "old" || phase === "zoom") {
+      if (leg && leg.tr > 0) out += T(W * 0.05, py + pfs * 1.5, `At this pace, this leg would take ${waitText(leg.L / leg.r0)}.`, { size: pfs, weight: 600, fill: C.muted });
+    } else if (phase === "ramp") {
+      const tx2 = `Speeding up ×${commas(sig(leg.r1 / leg.r0, 2))}`;
+      out += `<rect x="${W * 0.05 - 8}" y="${py + pfs * 1.5 - pfs}" width="${tw(tx2, pfs) + 16}" height="${pfs * 1.3}" fill="${C.accent}"/>`;
+      out += T(W * 0.05, py + pfs * 1.5, tx2, { size: pfs, weight: 800 });
+    }
+    const running = s.moving && run > 0.001 && run < 0.999;
+    out += walker(tx, axis, H * 0.085, s.sec * (phase === "ramp" || phase === "run" ? 20 : 12), running, !s.reset);
+    out += footer(H - 18);
+    return out;
+  }
+
+  /* ---------- frame ---------- */
+  const draw = S.kind === "timeline" ? drawTimeline : drawTower;
+  let stage;
+  window.renderFrame = function (t) {
+    const s = stateAt(t);
+    stage.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${draw(s)}${hud(s)}</svg>`;
+  };
+
+  /* ---------- harness: preview / interactive explorer ---------- */
+  document.addEventListener("DOMContentLoaded", init);
+  if (document.readyState !== "loading") init();
+  function init() {
+    if (stage) return;
+    stage = document.getElementById("stage");
+    stage.style.width = W + "px"; stage.style.height = H + "px";
+    if (window.__CAPTURE__) { document.documentElement.classList.add("capture"); window.renderFrame(0); return; }
+    const ui = document.getElementById("controls");
+    const fit = () => { const k = Math.min(innerWidth / W, (innerHeight - 64) / H); stage.style.transform = `translate(${(innerWidth - W * k) / 2}px, 8px) scale(${k})`; };
+    addEventListener("resize", fit); fit();
+    let playing = !matchMedia("(prefers-reduced-motion: reduce)").matches, t = 0, last = performance.now();
+    const slider = ui.querySelector("input"), playBtn = ui.querySelector("[data-act=play]");
+    const show = () => { window.renderFrame(t); slider.value = Math.round(t * 1000); playBtn.textContent = playing ? "Pause" : "Play"; };
+    const holds = segs.filter((g) => g.type === "hold");
+    let target = -1, anim = 0; // target stop while a jump animates, so rapid clicks each advance one stop
+    const stopAt = (sec) => {
+      const i = holds.findIndex((g) => sec >= g.t0 && sec < g.t0 + g.d);
+      if (i >= 0) return i;
+      const n = holds.findIndex((g) => g.t0 > sec);
+      return (n < 0 ? holds.length : n) - 0.5; // between stops
+    };
+    const jump = (dir) => {
+      playing = false;
+      const base = target >= 0 ? target : stopAt(t * TOTAL);
+      let idx = dir > 0 ? Math.floor(base) + 1 : Math.ceil(base) - 1;
+      idx = ((idx % holds.length) + holds.length) % holds.length;
+      target = idx;
+      const g = holds[idx], fromT = t, toT = (g.t0 + g.d * 0.5) / TOTAL;
+      const start = performance.now(), dur = dir > 0 && toT > fromT ? Math.min(1600, (toT - fromT) * TOTAL * 1000) : 0;
+      const id = ++anim;
+      const run = (now) => {
+        if (id !== anim) return;
+        const k = dur ? clamp((now - start) / dur) : 1;
+        t = lerp(fromT, toT, k); show();
+        if (k < 1) requestAnimationFrame(run); else target = -1;
+      };
+      requestAnimationFrame(run);
+    };
+    ui.addEventListener("click", (e) => {
+      const a = e.target.dataset.act;
+      if (a === "play") { playing = !playing; anim++; target = -1; last = performance.now(); show(); }
+      if (a === "next") jump(1);
+      if (a === "prev") jump(-1);
+    });
+    slider.addEventListener("input", () => { playing = false; anim++; target = -1; t = slider.value / 1000; show(); });
+    stage.addEventListener("click", () => jump(1));
+    addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") jump(1);
+      if (e.key === "ArrowLeft") jump(-1);
+      if (e.code === "Space") { playing = !playing; last = performance.now(); e.preventDefault(); show(); }
+    });
+    (function tick(now) {
+      if (playing) { t = (t + (now - last) / 1000 / TOTAL) % 1; show(); }
+      last = now; requestAnimationFrame(tick);
+    })(last);
+    show();
+  }
+})();
