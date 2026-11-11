@@ -4,13 +4,13 @@
     "name": "Harrison Tankersley"
   },
   "metadata": {
-    "description": "Claude Code skills for AI-first business communication: HTML slide decks, custom-stationery PDFs, looping GIFs, and interactive guides."
+    "description": "Claude Code skills for AI-first business communication: HTML slide decks, custom-stationery PDFs, looping GIFs, interactive guides, and math animation and typesetting."
   },
   "plugins": [
     {
       "name": "ai-first-comms",
       "source": "./",
-      "description": "AI-first business communication: HTML slide decks, custom-stationery PDFs, looping motion-graphic GIFs, and interactive software guides."
+      "description": "AI-first business communication: HTML slide decks, custom-stationery PDFs, looping motion-graphic GIFs, interactive software guides, and math (Manim, KaTeX, LaTeX)."
     }
   ]
 }

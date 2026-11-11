@@ -1,0 +1,4 @@
+# Animation environment for scripts/manim.py (installed into ./.venv by the script itself).
+# Manim Community (MIT). The [typst] extra adds Typst (Apache-2.0) for equations, so no TeX install is needed.
+manim[typst]==0.22.0
+typst==0.15.0

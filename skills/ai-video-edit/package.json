@@ -1,0 +1,8 @@
+{
+  "name": "ai-video-edit-scripts",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "playwright": "1.59.1"
+  }
+}

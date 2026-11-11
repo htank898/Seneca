@@ -3,3 +3,10 @@ node_modules/
 .DS_Store
 .guide-profile/
 ui-map.*
+.venv/
+.manim-media/
+media/
+.overlay-frames/
+# raw overlay footage (too large for git; kept locally)
+examples/overlay/take2/take2.mov
+examples/overlay/take2/take2.edited.mp4

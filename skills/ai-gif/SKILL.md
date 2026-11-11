@@ -35,6 +35,8 @@ node scripts/render-gif.mjs path/to/motion.html --mp4
 Flags: `--out`, `--width`, `--height`, `--fps`, `--seconds`, `--scale 0.75`, `--colors 128`, `--dither none|bayer|sierra2_4a`, `--mp4`, `--mp4-loops 3`, `--budget-mb 5`, `--keep-frames`.
 The first run installs Playwright into this skill folder. Requires `ffmpeg` on PATH.
 
+**Math:** for static equations in the page, typeset it first with `node ../ai-math/scripts/typeset.mjs motion.src.html --out motion.html`. For animated math (terms moving, proofs, graphs), render a Manim clip with ai-math (`render-math.mjs … --clip`) and draw it from `renderFrame(t)` with its `clip-player.js`.
+
 ## 5. Verify before reporting
 - Render with `--keep-frames` and look at a few PNGs in `.frames/<name>/`: the first frame, the last frame (it should flow straight into the first), and the punchline beat. Delete `.frames/` afterwards.
 - Check the file size against the destination budget (the renderer warns). If it's over, try in this order: `--scale 0.75`, `--fps 20`, `--colors 128`, then flatter fills or fewer moving pixels.

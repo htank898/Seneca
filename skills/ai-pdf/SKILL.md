@@ -34,6 +34,8 @@ node scripts/render-pdf.mjs path/to/doc.html --preview
 ```
 This writes `doc.pdf` and, with `--preview`, `doc.page-N.png` for each sheet. It prints the page count and paper size. The first run installs Playwright into this skill folder.
 
+**Math:** if the content has equations, write them as LaTeX (`$…$` inline, `$$…$$` display) and typeset first with `node ../ai-math/scripts/typeset.mjs doc.src.html --out doc.html`. This bakes KaTeX into the HTML: no scripts, only the fonts it uses. For a real LaTeX paper or problem set, use ai-math's LaTeX route instead.
+
 ## 5. Verify before reporting
 - Look at every preview PNG. Check for clipped text at the bottom of the live area, ornaments colliding with text, orphaned single lines, and contrast.
 - Confirm the reported page count and size match what you intended. An extra blank page usually means something overflowed `.page` or a stray `break-after` caused it.

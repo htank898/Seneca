@@ -41,6 +41,7 @@ This opens a visible browser. **The user signs in themselves** and navigates to 
 4. Model **states** (menus, modals, tabs) as CSS keyed on `#stage.s-<state>`, and turn them on per step with `states: [...]`.
 5. Write `GUIDE_STEPS`, following the step rules in the reference. Use `action: "click"` when the learner should physically click the target. That step only advances when they do.
    - Wording must match what the replica can actually do. For anything the replica doesn't respond to, write "This is where you'd…" or "In the real app…", never "Type here" or "Click this".
+6. **Math:** if steps or the replica show formulas, write them as LaTeX (`$…$`, `$$…$$`) and typeset the finished guide with `node ../ai-math/scripts/typeset.mjs guide.src.html --out guide.html` before rendering.
 
 ## 5. Verify before reporting
 ```bash
