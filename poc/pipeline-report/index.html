@@ -1,0 +1,383 @@
+<style>
+.pr { display: grid; gap: var(--cds-gap-lg); font-family: var(--font-anthropic-sans); font-variant-numeric: tabular-nums; }
+.pr-head { display: grid; gap: var(--cds-gap-xs); }
+.pr-head h1 { margin: 0; font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); text-wrap: balance; }
+.pr-meta { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.pr-chip { border: 1px solid var(--color-border-line); border-radius: 999px; padding: 0 var(--cds-pad-sm); }
+.pr-takeaway { margin: 0; max-width: 72ch; font-size: var(--cds-font-size-body); line-height: 1.55; }
+.pr .pr-takeaway b { font-weight: 600; }
+
+.pr-grid { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+.pr-grid-2 { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.pr-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; gap: var(--cds-gap-sm); align-content: start; min-width: 0; }
+.pr-card h2 { margin: 0; font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); }
+.pr-note { margin: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.pr-kpi-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--cds-gap-sm); }
+.pr-big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); line-height: 1.1; }
+.pr-delta { font-size: var(--cds-font-size-caption); }
+.pr-delta.good { color: var(--color-ok); } .pr-delta.bad { color: var(--color-bad); }
+.pr-pill { font-size: var(--cds-font-size-caption); border-radius: 999px; padding: 0 var(--cds-pad-sm); border: 1px solid currentColor; white-space: nowrap; }
+.pr-pill.ok { color: var(--color-ok); } .pr-pill.warn { color: var(--color-warn); } .pr-pill.bad { color: var(--color-bad); }
+.pr-spark { height: 40px; }
+
+.pr-chart { position: relative; min-height: 260px; }
+.pr-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); white-space: nowrap; }
+.pr-tip .d { color: var(--cds-text-secondary); }
+
+.pr-stages { display: grid; gap: var(--cds-gap-sm); min-height: 200px; align-content: start; }
+.pr-stage { display: grid; grid-template-columns: 7rem 1fr; gap: var(--cds-gap-sm); align-items: center; font-size: var(--cds-font-size-caption); }
+.pr-stage .bar { height: 22px; border-radius: 4px; background: var(--cds-chart-muted); }
+.pr-stage .bar.hi { background: var(--pr-accent); }
+.pr-stage .lab { color: var(--color-fg-muted); margin-top: 2px; }
+
+.pr-tablewrap { overflow-x: auto; max-height: 26rem; overflow-y: auto; }
+.pr table { width: 100%; border-collapse: collapse; font-size: var(--cds-font-size-caption); }
+.pr th, .pr td { text-align: left; padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.pr th { position: sticky; top: 0; background: var(--color-panel); font-weight: var(--cds-font-weight-medium); }
+.pr th button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.pr th button:focus-visible { outline: 2px solid var(--pr-accent); outline-offset: 2px; }
+.pr .num { text-align: right; }
+.pr-att { display: flex; align-items: center; gap: var(--cds-gap-xs); justify-content: flex-end; }
+.pr-att i { display: inline-block; height: 6px; border-radius: 3px; background: var(--pr-accent); }
+
+.pr [data-dash-source-state=empty] { color: transparent; }
+.pr [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+.pr-failed { display: flex; align-items: center; justify-content: center; gap: var(--cds-gap-xs); color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); min-height: inherit; }
+.pr-failed::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
+</style>
+
+<div class="pr">
+  <header class="pr-head" id="summary">
+    <h1>Weekly pipeline report</h1>
+    <div class="pr-meta">
+      <span>Week ending <span class="dash-skeleton" data-source="latest" data-field="week" data-row="0">—</span></span>
+      <span class="pr-chip">Sample data</span>
+    </div>
+    <p class="pr-takeaway" id="takeaway">
+      Pipeline is <b class="dash-skeleton" data-source="latest" data-field="pipeline" data-row="0">—</b>
+      against a <span class="dash-skeleton" data-source="latest" data-field="target" data-row="0">—</span> target
+      (<span class="dash-skeleton" data-source="latest" data-field="attainment" data-row="0">—</span> of target),
+      <span id="dir">—</span> <span class="dash-skeleton" data-source="latest" data-field="pipeline_delta_abs" data-row="0">—</span> from last week.
+      <span class="dash-skeleton" data-source="latest" data-field="slipped_count" data-row="0">—</span> deals worth
+      <b class="dash-skeleton" data-source="latest" data-field="slipped_amount" data-row="0">—</b> slipped this week, led by
+      <span class="dash-skeleton" data-source="slip_by_region" data-field="region" data-row="0">—</span>
+      (<span class="dash-skeleton" data-source="slip_by_region" data-field="amount" data-row="0">—</span>).
+    </p>
+  </header>
+
+  <section class="pr-grid" id="scorecard">
+    <article class="pr-card">
+      <div class="pr-kpi-top"><h2>Open pipeline</h2><span class="pr-pill" id="status">—</span></div>
+      <div class="pr-big dash-skeleton" data-source="latest" data-field="pipeline" data-row="0">—</div>
+      <div class="pr-delta" id="pipeDelta"><span data-source="latest" data-field="pipeline_delta" data-row="0">—</span> vs last week</div>
+      <div class="pr-spark" id="sparkPipe" data-source="weekly"></div>
+      <p class="pr-note">Open deal value. Target <span data-source="latest" data-field="target" data-row="0">—</span> for the quarter.</p>
+    </article>
+    <article class="pr-card">
+      <h2>Win rate</h2>
+      <div class="pr-big dash-skeleton" data-source="latest" data-field="win_rate" data-row="0">—</div>
+      <div class="pr-delta" id="winDelta"><span data-source="latest" data-field="win_rate_delta" data-row="0">—</span> pts vs last week</div>
+      <div class="pr-spark" id="sparkWin" data-source="weekly"></div>
+      <p class="pr-note">Deals won ÷ deals closed, trailing 90 days.</p>
+    </article>
+    <article class="pr-card">
+      <h2>Commit forecast</h2>
+      <div class="pr-big dash-skeleton" data-source="latest" data-field="forecast" data-row="0">—</div>
+      <div class="pr-delta" id="fcDelta"><span data-source="latest" data-field="forecast_delta" data-row="0">—</span> vs last week</div>
+      <div class="pr-spark" id="sparkFc" data-source="weekly"></div>
+      <p class="pr-note">Deals reps have committed to close this quarter.</p>
+    </article>
+    <article class="pr-card">
+      <h2>Slipped this week</h2>
+      <div class="pr-big dash-skeleton" data-source="latest" data-field="slipped_amount" data-row="0">—</div>
+      <div class="pr-delta"><span data-source="latest" data-field="slipped_count" data-row="0">—</span> deals pushed past their close date</div>
+      <div class="pr-spark" id="sparkSlip" data-source="weekly"></div>
+      <p class="pr-note">Value of deals whose close date moved out.</p>
+    </article>
+  </section>
+
+  <article class="pr-card" id="trend">
+    <h2>Pipeline against target</h2>
+    <p class="pr-note">Last 12 weeks. Dashed line is the quarter's target.</p>
+    <div class="pr-chart" id="trendChart" data-source="weekly"></div>
+  </article>
+
+  <section class="pr-grid-2">
+    <article class="pr-card" id="stages">
+      <h2>Pipeline by stage</h2>
+      <p class="pr-note">This week. Bar length is deal value.</p>
+      <div class="pr-stages" id="stageBars" data-source="stages"></div>
+    </article>
+    <article class="pr-card" id="regions">
+      <h2>Regions against target</h2>
+      <p class="pr-note">This week's open pipeline by region.</p>
+      <div class="pr-tablewrap">
+        <table data-source="regions" data-row-key="region">
+          <thead><tr>
+            <th data-field="region">Region</th>
+            <th class="num" data-field="pipeline">Pipeline</th>
+            <th class="num" data-field="target">Target</th>
+            <th class="num" data-source="region_att" data-field="attainment">Of target</th>
+          </tr></thead>
+          <tbody id="regionRows"></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <article class="pr-card" id="slipped">
+    <h2>Deals that slipped this week</h2>
+    <p class="pr-note">Close date moved out. Select a column to sort.</p>
+    <div class="pr-tablewrap">
+      <table data-source="slipped" data-row-key="deal_id" id="slipTable">
+        <thead><tr>
+          <th data-field="deal_id"><button type="button" data-k="deal_id">Deal</button></th>
+          <th data-field="account"><button type="button" data-k="account">Account</button></th>
+          <th data-field="owner"><button type="button" data-k="owner">Owner</button></th>
+          <th data-field="region"><button type="button" data-k="region">Region</button></th>
+          <th data-field="stage"><button type="button" data-k="stage">Stage</button></th>
+          <th class="num" data-field="amount" aria-sort="descending"><button type="button" data-k="amount">Amount</button></th>
+          <th data-field="close_was"><button type="button" data-k="close_was">Was closing</button></th>
+          <th data-field="close_now"><button type="button" data-k="close_now">Now closing</button></th>
+        </tr></thead>
+        <tbody id="slipRows"></tbody>
+      </table>
+    </div>
+  </article>
+</div>
+
+<script>
+const num = (x) => Number(x);
+
+dash.calc("latest", {
+  inputs: ["weekly", "slipped"],
+  title: "This week vs last week",
+  description: "Latest week's figures, their change from the week before, share of target, and the slipped deals counted.",
+  fn: (weekly, slipped) => {
+    const w = weekly.slice().sort((a, b) => (a.week < b.week ? -1 : 1));
+    const cur = w[w.length - 1], prev = w[w.length - 2];
+    const d = Number(cur.pipeline) - Number(prev.pipeline);
+    return [{
+      week: cur.week.slice(0, 10),
+      pipeline: Number(cur.pipeline),
+      pipeline_delta: d,
+      pipeline_delta_abs: Math.abs(d),
+      target: Number(cur.target),
+      attainment: Number(cur.pipeline) / Number(cur.target),
+      win_rate: Number(cur.win_rate),
+      win_rate_delta: (Number(cur.win_rate) - Number(prev.win_rate)) * 100,
+      forecast: Number(cur.forecast),
+      forecast_delta: Number(cur.forecast) - Number(prev.forecast),
+      slipped_amount: Number(cur.slipped_amount),
+      slipped_count: slipped.length,
+    }];
+  },
+});
+
+dash.calc("region_att", {
+  inputs: ["regions"],
+  title: "Region share of target",
+  description: "Each region's open pipeline divided by its target.",
+  fn: (regions) => regions.map((r) => ({ region: r.region, attainment: Number(r.pipeline) / Number(r.target) })),
+});
+
+dash.calc("slip_by_region", {
+  inputs: ["slipped"],
+  title: "Slipped value by region",
+  description: "This week's slipped deal value summed per region, largest first.",
+  fn: (slipped) => {
+    const m = new Map();
+    for (const s of slipped) m.set(s.region, (m.get(s.region) || 0) + Number(s.amount));
+    return [...m].map(([region, amount]) => ({ region, amount })).sort((a, b) => b.amount - a.amount);
+  },
+});
+
+(() => {
+  const money = (v) => "$" + new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }).format(v);
+  const moneyFull = d3.format("$,");
+  const pct = d3.format(".1%");
+  const signedMoney = (v) => (v >= 0 ? "+" : "−") + money(Math.abs(v));
+  const day = d3.utcFormat("%b %-d, %Y"), dayShort = d3.utcFormat("%b %-d");
+  const root = document.querySelector(".pr");
+  root.style.setProperty("--pr-accent", dash.colors[0]);
+
+  const fill = (sel, text) => root.querySelectorAll(sel).forEach((el) => { el.textContent = text; el.classList.remove("dash-skeleton"); });
+  const failed = (el) => { el.innerHTML = ""; const f = document.createElement("div"); f.className = "pr-failed"; f.textContent = "Failed to load"; el.appendChild(f); };
+  const mark = (src, field) => `[data-source="${src}"][data-field="${field}"]`;
+
+  function spark(el, values, opts = {}) {
+    el.innerHTML = "";
+    const w = el.clientWidth || 200, h = 40;
+    const x = d3.scaleLinear([0, values.length - 1], [2, w - 4]);
+    const [lo, hi] = d3.extent(values);
+    const y = d3.scaleLinear([lo - (hi - lo) * 0.15, hi + (hi - lo) * 0.15], [h - 3, 3]);
+    const svg = d3.select(el).append("svg").attr("width", "100%").attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+    if (opts.bars) {
+      const bw = Math.max(2, (w - 6) / values.length - 3);
+      const yb = d3.scaleLinear([0, hi], [h - 2, 2]);
+      svg.selectAll("rect").data(values).join("rect")
+        .attr("x", (d, i) => x(i) - bw / 2).attr("width", bw).attr("y", (d) => yb(d)).attr("height", (d) => h - 2 - yb(d)).attr("rx", 2)
+        .attr("fill", (d, i) => (i === values.length - 1 ? "var(--cds-chart-status-critical)" : "var(--cds-chart-muted)"));
+      return;
+    }
+    svg.append("path").attr("d", d3.line((d, i) => x(i), (d) => y(d))(values))
+      .attr("fill", "none").attr("stroke", dash.colors[0]).attr("stroke-width", 2).attr("stroke-linecap", "round").attr("stroke-linejoin", "round");
+    svg.append("circle").attr("cx", x(values.length - 1)).attr("cy", y(values[values.length - 1])).attr("r", 3).attr("fill", dash.colors[0]);
+  }
+
+  function trend(el, rows) {
+    el.innerHTML = "";
+    const w = el.clientWidth || 600, h = 260;
+    const pts = rows.map((r) => ({ d: new Date(r.week), p: num(r.pipeline), t: num(r.target) }));
+    const svg = d3.select(el).append("svg").attr("width", "100%").attr("height", h).attr("viewBox", `0 0 ${w} ${h}`);
+    const y = d3.scaleLinear([d3.min(pts, (d) => Math.min(d.p, d.t)) * 0.9, d3.max(pts, (d) => Math.max(d.p, d.t)) * 1.04], [h - 28, 12]).nice(4);
+    const yAxis = svg.append("g").call(d3.axisLeft(y).ticks(4).tickFormat(money).tickSize(0)).attr("font-size", null).attr("font-family", null);
+    yAxis.select(".domain").remove();
+    yAxis.selectAll("text").attr("fill", "var(--color-fg-muted)").style("font-size", "var(--cds-font-size-caption)");
+    let tw = 0; yAxis.selectAll("text").each(function () { tw = Math.max(tw, this.getComputedTextLength()); });
+    const endLabel = svg.append("text").text(money(pts[pts.length - 1].p)).style("font-size", "var(--cds-font-size-caption)");
+    const ew = endLabel.node().getComputedTextLength(); endLabel.remove();
+    const m = { l: tw + 14, r: ew + 14 };
+    yAxis.attr("transform", `translate(${tw + 6},0)`);
+    const x = d3.scaleUtc(d3.extent(pts, (d) => d.d), [m.l, w - m.r]);
+    svg.insert("g", ":first-child").selectAll("line").data(y.ticks(4)).join("line")
+      .attr("x1", m.l).attr("x2", w - m.r).attr("y1", (d) => y(d)).attr("y2", (d) => y(d)).attr("stroke", "var(--cds-chart-grid)");
+    const xAxis = svg.append("g").attr("transform", `translate(0,${h - 22})`)
+      .call(d3.axisBottom(x).ticks(Math.max(2, Math.min(6, Math.floor(w / 110)))).tickFormat(dayShort).tickSize(0))
+      .attr("font-size", null).attr("font-family", null);
+    xAxis.select(".domain").remove();
+    xAxis.selectAll("text").attr("fill", "var(--color-fg-muted)").style("font-size", "var(--cds-font-size-caption)");
+    svg.append("path").attr("d", d3.line((d) => x(d.d), (d) => y(d.t)).curve(d3.curveStepAfter)(pts))
+      .attr("fill", "none").attr("stroke", "var(--cds-chart-reference)").attr("stroke-width", 1.5).attr("stroke-dasharray", "5 4");
+    svg.append("path").attr("d", d3.line((d) => x(d.d), (d) => y(d.p))(pts))
+      .attr("fill", "none").attr("stroke", dash.colors[0]).attr("stroke-width", 2).attr("stroke-linecap", "round").attr("stroke-linejoin", "round");
+    const last = pts[pts.length - 1];
+    svg.append("circle").attr("cx", x(last.d)).attr("cy", y(last.p)).attr("r", 3.5).attr("fill", dash.colors[0]);
+    svg.append("text").attr("x", x(last.d) + 8).attr("y", y(last.p) + 4).text(money(last.p))
+      .attr("fill", "var(--color-fg)").style("font-size", "var(--cds-font-size-caption)");
+    // hover
+    const tip = document.createElement("div"); tip.className = "pr-tip"; tip.hidden = true; el.appendChild(tip);
+    const dot = svg.append("circle").attr("r", 4).attr("fill", dash.colors[0]).attr("visibility", "hidden");
+    svg.append("rect").attr("x", m.l).attr("y", 0).attr("width", w - m.l - m.r).attr("height", h).attr("fill", "transparent")
+      .on("pointermove", (ev) => {
+        const [mx] = d3.pointer(ev);
+        const i = d3.bisectCenter(pts.map((d) => +d.d), +x.invert(mx));
+        const p = pts[i];
+        dot.attr("cx", x(p.d)).attr("cy", y(p.p)).attr("visibility", "visible");
+        tip.replaceChildren();
+        const a = document.createElement("div"); a.className = "d"; a.textContent = "Week ending " + dayShort(p.d);
+        const b = document.createElement("div"); b.textContent = "Pipeline " + money(p.p);
+        const c = document.createElement("div"); c.textContent = "Target " + money(p.t);
+        tip.append(a, b, c); tip.hidden = false;
+        const left = Math.min(Math.max(0, x(p.d) * (el.clientWidth / w) + 12), el.clientWidth - tip.offsetWidth);
+        tip.style.left = left + "px"; tip.style.top = Math.max(0, y(p.p) - 40) + "px";
+      })
+      .on("pointerleave", () => { tip.hidden = true; dot.attr("visibility", "hidden"); });
+  }
+
+  let slipSort = { k: "amount", dir: -1 };
+  root.querySelectorAll("#slipTable th button").forEach((b) => b.addEventListener("click", () => {
+    const k = b.dataset.k;
+    slipSort = { k, dir: slipSort.k === k ? -slipSort.dir : (k === "amount" ? -1 : 1) };
+    root.querySelectorAll("#slipTable th").forEach((th) => th.removeAttribute("aria-sort"));
+    b.parentElement.setAttribute("aria-sort", slipSort.dir === 1 ? "ascending" : "descending");
+    draw();
+  }));
+
+  function draw() {
+    const L = dash.data("latest"), W = dash.data("weekly"), S = dash.data("stages"), R = dash.data("regions"),
+      RA = dash.data("region_att"), SL = dash.data("slipped"), SR = dash.data("slip_by_region");
+
+    if (L.status === "ok" && L.data.length) {
+      const l = L.data[0];
+      fill(mark("latest", "week"), day(new Date(l.week)));
+      fill(mark("latest", "pipeline"), money(l.pipeline));
+      fill(mark("latest", "target"), money(l.target));
+      fill(mark("latest", "attainment"), pct(l.attainment));
+      fill(mark("latest", "pipeline_delta_abs"), money(l.pipeline_delta_abs));
+      fill(mark("latest", "pipeline_delta"), signedMoney(l.pipeline_delta));
+      fill(mark("latest", "win_rate"), pct(l.win_rate));
+      fill(mark("latest", "win_rate_delta"), (l.win_rate_delta >= 0 ? "+" : "−") + d3.format(".1f")(Math.abs(l.win_rate_delta)));
+      fill(mark("latest", "forecast"), money(l.forecast));
+      fill(mark("latest", "forecast_delta"), signedMoney(l.forecast_delta));
+      fill(mark("latest", "slipped_amount"), money(l.slipped_amount));
+      fill(mark("latest", "slipped_count"), d3.format(",")(l.slipped_count));
+      root.querySelector("#dir").textContent = l.pipeline_delta >= 0 ? "up" : "down";
+      const cls = (v) => (v >= 0 ? "good" : "bad");
+      root.querySelector("#pipeDelta").className = "pr-delta " + cls(l.pipeline_delta);
+      root.querySelector("#winDelta").className = "pr-delta " + cls(l.win_rate_delta);
+      root.querySelector("#fcDelta").className = "pr-delta " + cls(l.forecast_delta);
+      const st = root.querySelector("#status");
+      const [label, c] = l.attainment >= 1 ? ["On track", "ok"] : l.attainment >= 0.9 ? ["At risk", "warn"] : ["Off track", "bad"];
+      st.textContent = label; st.className = "pr-pill " + c;
+    }
+
+    if (SR.status === "ok" && SR.data.length) {
+      fill(mark("slip_by_region", "region"), SR.data[0].region);
+      fill(mark("slip_by_region", "amount"), money(SR.data[0].amount));
+    }
+
+    const sparks = [["#sparkPipe", "pipeline"], ["#sparkWin", "win_rate"], ["#sparkFc", "forecast"], ["#sparkSlip", "slipped_amount", true]];
+    const trendEl = root.querySelector("#trendChart");
+    if (W.status === "ok") {
+      const rows = W.data.slice().sort((a, b) => (a.week < b.week ? -1 : 1));
+      sparks.forEach(([id, f, bars]) => spark(root.querySelector(id), rows.map((r) => num(r[f])), { bars }));
+      trend(trendEl, rows);
+    } else if (W.status === "error") { sparks.forEach(([id]) => failed(root.querySelector(id))); failed(trendEl); }
+
+    const stageEl = root.querySelector("#stageBars");
+    if (S.status === "ok") {
+      stageEl.innerHTML = "";
+      const rows = S.data.slice().sort((a, b) => num(a.stage_order) - num(b.stage_order));
+      const max = d3.max(rows, (r) => num(r.amount));
+      rows.forEach((r, i) => {
+        const row = document.createElement("div"); row.className = "pr-stage";
+        const name = document.createElement("div"); name.textContent = r.stage;
+        const right = document.createElement("div");
+        const bar = document.createElement("div"); bar.className = "bar" + (i === rows.length - 1 ? " hi" : "");
+        bar.style.width = Math.max(2, (num(r.amount) / max) * 100) + "%";
+        const lab = document.createElement("div"); lab.className = "lab";
+        lab.textContent = `${money(num(r.amount))} · ${d3.format(",")(num(r.deals))} deals`;
+        right.append(bar, lab); row.append(name, right); stageEl.appendChild(row);
+      });
+    } else if (S.status === "error") failed(stageEl);
+
+    const regBody = root.querySelector("#regionRows");
+    if (R.status === "ok") {
+      regBody.innerHTML = "";
+      const att = new Map((RA.status === "ok" ? RA.data : []).map((r) => [r.region, r.attainment]));
+      R.data.forEach((r) => {
+        const tr = document.createElement("tr");
+        const a = att.get(r.region);
+        const cells = [r.region, money(num(r.pipeline)), money(num(r.target))];
+        cells.forEach((t, i) => { const td = document.createElement("td"); td.textContent = t; if (i) td.className = "num"; tr.appendChild(td); });
+        const td = document.createElement("td"); td.className = "num";
+        const wrap = document.createElement("span"); wrap.className = "pr-att";
+        const bar = document.createElement("i"); bar.style.width = (a == null ? 0 : Math.min(1.2, a) * 48) + "px";
+        if (a != null && a < 0.9) bar.style.background = "var(--cds-chart-status-critical)";
+        const tx = document.createElement("span"); tx.textContent = a == null ? "" : pct(a);
+        wrap.append(bar, tx); td.appendChild(wrap); tr.appendChild(td);
+        regBody.appendChild(tr);
+      });
+    }
+
+    const slipBody = root.querySelector("#slipRows");
+    if (SL.status === "ok") {
+      slipBody.innerHTML = "";
+      const k = slipSort.k, dir = slipSort.dir;
+      const rows = SL.data.slice().sort((a, b) => {
+        const va = k === "amount" ? num(a[k]) : a[k], vb = k === "amount" ? num(b[k]) : b[k];
+        return va < vb ? -dir : va > vb ? dir : 0;
+      });
+      rows.forEach((r) => {
+        const tr = document.createElement("tr");
+        [r.deal_id, r.account, r.owner, r.region, r.stage, moneyFull(num(r.amount)), dayShort(new Date(r.close_was)), dayShort(new Date(r.close_now))]
+          .forEach((t, i) => { const td = document.createElement("td"); td.textContent = t; if (i === 5) td.className = "num"; tr.appendChild(td); });
+        slipBody.appendChild(tr);
+      });
+    }
+  }
+
+  dash.onData(draw);
+})();
+</script>

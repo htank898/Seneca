@@ -3,3 +3,8 @@ node_modules/
 .DS_Store
 .guide-profile/
 ui-map.*
+# ai-video: per-skill Python env, and narration audio (reproducible with tts.py; timings.json/.js are kept)
+.venv/
+__pycache__/
+**/voice/*.wav
+.sf/

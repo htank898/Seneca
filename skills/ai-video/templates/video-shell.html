@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video</title>
+<!-- Fonts: Google Fonts are fine (rendering is local); render-video waits for document.fonts.ready. -->
+<!-- Real narration timings for previews. tts.py writes this file; if it's missing, demo timings are used. -->
+<script src="voice/timings.js" onerror="void 0"></script>
+<style>
+  :root {
+    --bg: #eef1f4;
+    --ink: #1f2328;
+    --accent: #2f5bea;
+    --soft: #c8d0da;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #111; overflow: hidden; }
+  /* The stage is always exactly VIDEO.width x VIDEO.height. In preview it is scaled to fit. */
+  #stage {
+    position: absolute; left: 0; top: 0;
+    width: var(--w); height: var(--h);
+    background: var(--bg); color: var(--ink);
+    overflow: hidden; transform-origin: 0 0;
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  .kicker { position: absolute; left: 7.4%; top: 9%; font-size: 40px; font-weight: 600; color: var(--accent); }
+  .head { position: absolute; left: 7.4%; top: 14.5%; right: 7.4%; font-size: 92px; font-weight: 800; line-height: 1.02; letter-spacing: -1.5px; }
+  .body { position: absolute; left: 7.4%; right: 7.4%; top: 44%; display: flex; flex-wrap: wrap; gap: 24px; }
+  .chip { padding: 22px 34px; border: 4px solid var(--ink); border-radius: 999px; font-size: 40px; font-weight: 700; background: #fff; }
+  .chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #hud {
+    position: fixed; right: 12px; bottom: 12px; z-index: 10;
+    font: 12px/1.4 ui-monospace, monospace; color: #ccc;
+    background: rgba(0,0,0,.6); padding: 6px 10px; border-radius: 6px;
+  }
+  .capture #hud { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- SCENE: put SVG / DOM / <canvas> here. Everything is positioned by renderFrame(t). -->
+  <div class="kicker" id="kicker"></div>
+  <div class="head" id="head"></div>
+  <div class="body" id="body"></div>
+</div>
+<div id="hud"><span id="hint">space play/pause (with sound) · ←/→ frame · shift+←/→ scene</span> · <span id="tc">0.00s</span> · <span id="sc"></span></div>
+<audio id="narration" src="voice/narration.wav" preload="auto"></audio>
+
+<script>
+/* ---------- config (used for previews; the renderer injects the real window.VIDEO) ---------- */
+const CONFIG = { width: 1080, height: 1080, fps: 30 };
+// Fallback scenes for designing before any voice exists. Durations are estimated at ~150 wpm.
+const DEMO_SCENES = [
+  { id: "one", say: "This is the first scene, and it sets up the idea.", show: { kicker: "Scene one", head: "Set up the idea.", chips: ["A", "B", "C"] } },
+  { id: "two", say: "The second scene shows how it works, one step at a time.", show: { kicker: "Scene two", head: "Show how it works.", chips: ["Step 1", "Step 2"] } },
+  { id: "three", say: "And the last scene lands the point you want remembered.", show: { kicker: "Scene three", head: "Land the point.", chips: ["Remember this"] } },
+];
+
+/* ---------- timeline: window.VIDEO = { width, height, fps, duration, scenes:[{id,start,end,from,to,text,show}] } ---------- */
+window.VIDEO = window.VIDEO || (function () {
+  const T = window.VIDEO_TIMINGS;
+  if (T) return { ...CONFIG, duration: T.duration, scenes: T.scenes };
+  let t = 0.6; const gap = 0.35;
+  const scenes = DEMO_SCENES.map((s, i) => {
+    const d = s.say.split(/\s+/).length / 2.5;
+    const row = { id: s.id, index: i, start: t, end: t + d, text: s.say, show: s.show };
+    t += d + gap; return row;
+  });
+  scenes.forEach((s, i) => { s.from = i ? s.start - gap / 2 : 0; });
+  const duration = t - gap + 1.2;
+  scenes.forEach((s, i) => { s.to = i < scenes.length - 1 ? scenes[i + 1].from : duration; });
+  return { ...CONFIG, duration, scenes };
+})();
+const V = window.VIDEO;
+
+/* ---------- time helpers (all pure functions of t, in seconds) ---------- */
+const TAU = Math.PI * 2;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+// Local progress of t inside [a, b] seconds, clamped to 0..1.
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const ease = {
+  linear: (x) => x,
+  inOutCubic: (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  outCubic: (x) => 1 - Math.pow(1 - x, 3),
+  inCubic: (x) => x * x * x,
+  outBack: (x) => { const c = 1.70158, d = c + 1; return 1 + d * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); },
+};
+// The scene on screen at time t, plus local timing:
+//   s       the scene object (s.show holds whatever scenes.json put there)
+//   local   seconds since the scene appeared (since s.from)
+//   left    seconds until it leaves (until s.to)
+//   p       0..1 across the whole on-screen window
+//   speak   0..1 across the spoken line (s.start..s.end): key reveals to the words
+function sceneAt(t) {
+  let i = 0;
+  for (let k = 0; k < V.scenes.length; k++) if (t >= V.scenes[k].from) i = k;
+  const s = V.scenes[i];
+  return { s, i, local: t - s.from, left: s.to - t, p: seg(t, s.from, s.to), speak: seg(t, s.start, s.end) };
+}
+// Entrance 0->1 starting `delay` s after the scene appears; exit 1->0 over the last `dur` s.
+const enter = (sc, delay = 0, dur = 0.5, e = ease.outCubic) => e(clamp((sc.local - delay) / dur));
+const exit = (sc, dur = 0.35, e = ease.inCubic) => 1 - e(clamp(1 - sc.left / dur));
+// When (in seconds) a word or phrase in the scene's spoken line is said, estimated by its
+// character position in the line. Use it to land a visual on the word: enterAt(t, wordTime(s, "chart")).
+function wordTime(s, phrase, nth = 0) {
+  let at = -1;
+  for (let k = 0; k <= nth; k++) at = s.text.toLowerCase().indexOf(phrase.toLowerCase(), at + 1);
+  return at < 0 ? s.start : s.start + (s.end - s.start) * (at / s.text.length);
+}
+// 0->1 over `dur` seconds starting at absolute time `at`.
+const enterAt = (t, at, dur = 0.45, e = ease.outCubic) => e(clamp((t - at) / dur));
+const $ = (s) => document.querySelector(s);
+
+/* ---------- the animation: a pure function of t (seconds) ---------- */
+let built = -1;
+window.renderFrame = function (t, info) {
+  const sc = sceneAt(t);
+  const { s } = sc;
+  // Rebuild DOM only when the scene changes. This is still deterministic: it depends only on t.
+  if (built !== sc.i) {
+    built = sc.i;
+    $("#kicker").textContent = s.show.kicker || "";
+    $("#head").textContent = s.show.head || "";
+    $("#body").innerHTML = (s.show.chips || []).map((c) => `<div class="chip">${c}</div>`).join("");
+  }
+  const out = exit(sc);
+  const k = enter(sc, 0.0, 0.45), h = enter(sc, 0.1, 0.6);
+  $("#kicker").style.cssText = `opacity:${k * out}; transform: translateY(${(1 - k) * 16}px)`;
+  $("#head").style.cssText = `opacity:${h * out}; transform: translateY(${(1 - h) * 40 - (1 - out) * 30}px)`;
+  [...document.querySelectorAll(".chip")].forEach((el, j, all) => {
+    // Chips arrive in a stagger, and light up one by one as the line is spoken.
+    const a = enter(sc, 0.35 + j * 0.12, 0.5, ease.outBack);
+    el.style.opacity = clamp(a) * out;
+    el.style.transform = `translateY(${(1 - a) * 30}px) scale(${0.9 + 0.1 * a})`;
+    el.classList.toggle("on", sc.speak >= (j + 1) / (all.length + 1));
+  });
+  $("#tc").textContent = t.toFixed(2) + "s";
+  $("#sc").textContent = `${sc.i + 1}/${V.scenes.length} ${s.id}`;
+};
+
+/* ---------- harness: sizing + preview with sound (do not edit) ---------- */
+(function () {
+  const { width, height, fps, duration } = V;
+  const stage = $("#stage");
+  document.documentElement.style.setProperty("--w", width + "px");
+  document.documentElement.style.setProperty("--h", height + "px");
+  if (window.__CAPTURE__) { document.documentElement.classList.add("capture"); window.renderFrame(0, { frame: 0, fps, duration }); return; }
+  const fit = () => {
+    const k = Math.min(innerWidth / width, innerHeight / height);
+    stage.style.transform = `translate(${(innerWidth - width * k) / 2}px, ${(innerHeight - height * k) / 2}px) scale(${k})`;
+  };
+  addEventListener("resize", fit); fit();
+  // Preview: if voice/narration.wav exists (render-video --audio-only writes it), play it and follow its clock.
+  const audio = $("#narration");
+  let hasAudio = false, playing = false, t = 0, last = performance.now();
+  audio.addEventListener("canplaythrough", () => { hasAudio = true; });
+  audio.addEventListener("error", () => { hasAudio = false; $("#hint").textContent = "no voice/narration.wav (silent preview) · space play/pause · ←/→ frame · shift+←/→ scene"; });
+  const seek = (x) => { t = clamp(x, 0, duration - 1e-3); if (hasAudio) audio.currentTime = t; window.renderFrame(t, { fps, duration }); };
+  const toggle = () => {
+    playing = !playing;
+    if (hasAudio) { if (playing) { audio.currentTime = t; audio.play().catch(() => {}); } else audio.pause(); }
+  };
+  addEventListener("keydown", (e) => {
+    if (e.code === "Space") { toggle(); e.preventDefault(); }
+    const step = e.shiftKey ? null : 1 / fps;
+    if (e.key === "ArrowRight") { if (step) seek(t + step); else { const n = V.scenes.find((s) => s.from > t + 1e-3); seek(n ? n.from : duration); } }
+    if (e.key === "ArrowLeft") { if (step) seek(t - step); else { const p = [...V.scenes].reverse().find((s) => s.from < t - 0.05); seek(p ? p.from : 0); } }
+  });
+  stage.addEventListener("click", toggle);
+  (function tick(now) {
+    if (playing) {
+      t = hasAudio && !audio.paused ? audio.currentTime : t + (now - last) / 1000;
+      if (t >= duration) { t = 0; if (hasAudio) audio.currentTime = 0; }
+      window.renderFrame(t, { fps, duration });
+    }
+    last = now; requestAnimationFrame(tick);
+  })(last);
+  window.renderFrame(0, { fps, duration });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,858 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sen Says Hello</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<script src="voice/timings.js" onerror="void 0"></script>
+<script src="voice/visemes.js" onerror="void 0"></script>
+<style>
+  /* Patent-drawing identity from examples/gif/any-format.html, plus two character colors:
+     mailbox poppy (scarf, stamps) and a warm skin tone. Shading is done with hatching, like a patent plate. */
+  :root {
+    --paper: #e6eae8; --card: #f7f8f7; --ink: #16191d; --steel: #5e7a94; --signal: #f5c518; --mute: #c9d1cd;
+    --poppy: #e4473a; --skin: #f1c39c; --skin2: #dfa47c; --floor: #d6ddd9; --bag: #3f5466; --bag2: #33465a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #2a2e33; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); background: var(--paper); overflow: hidden; transform-origin: 0 0; }
+  svg { display: block; font-family: "Archivo", sans-serif; }
+  .lbl { font-weight: 650; font-size: 36px; fill: var(--steel); }
+  .big { font-weight: 900; font-stretch: 118%; fill: var(--ink); }
+  .t { font-weight: 750; fill: var(--ink); }
+  #hud { position: fixed; right: 12px; bottom: 12px; font: 12px/1.4 ui-monospace, monospace; color: #ccc; background: rgba(0,0,0,.6); padding: 6px 10px; border-radius: 6px; }
+  .capture #hud { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+<svg id="svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+  <defs>
+    <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="9" stroke="#16191d" stroke-width="2.2" stroke-opacity=".28"/>
+    </pattern>
+    <pattern id="hatchLight" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+      <line x1="0" y1="0" x2="0" y2="12" stroke="#5e7a94" stroke-width="2" stroke-opacity=".22"/>
+    </pattern>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#5e7a94" stroke-opacity=".13" stroke-width="2"/>
+    </pattern>
+    <linearGradient id="jacketShade" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#16191d" stop-opacity=".14"/>
+    </linearGradient>
+    <radialGradient id="faceShade" cx=".38" cy=".34" r=".75">
+      <stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="1" stop-color="#b9765a" stop-opacity=".30"/>
+    </radialGradient>
+    <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#c9d8e4"/><stop offset="1" stop-color="#eef2f1"/>
+    </linearGradient>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="10" dy="9" stdDeviation="5" flood-color="#16191d" flood-opacity=".20"/>
+    </filter>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 .09  0 0 0 0 .1  0 0 0 0 .11  0 0 0 .07 0"/>
+    </filter>
+    <clipPath id="torsoClip"><path id="torsoClipPath"/></clipPath>
+    <clipPath id="headClip"><ellipse cx="0" cy="-415" rx="118" ry="110"/></clipPath>
+    <clipPath id="eyeClipL"><ellipse cx="-44" cy="-410" rx="25" ry="31"/></clipPath>
+    <clipPath id="eyeClipR"><ellipse cx="44" cy="-410" rx="25" ry="31"/></clipPath>
+    <clipPath id="mouthClip"><path id="mouthClipPath"/></clipPath>
+    <clipPath id="winClip"><rect x="0" y="0" width="330" height="360" rx="6"/></clipPath>
+  </defs>
+
+  <!-- far layer: drafting grid -->
+  <g id="bgFar"><rect x="-80" y="-80" width="1240" height="1240" fill="url(#grid)"/></g>
+
+  <!-- mid layer: window and a mail-sorting rack -->
+  <g id="bgMid">
+    <g id="window" transform="translate(64,92)">
+      <rect x="-14" y="-14" width="358" height="388" rx="14" fill="var(--steel)" opacity=".18"/>
+      <g clip-path="url(#winClip)">
+        <rect width="330" height="360" fill="url(#sky)"/>
+        <g id="clouds"></g>
+        <rect width="330" height="360" fill="url(#hatchLight)"/>
+      </g>
+      <rect width="330" height="360" rx="6" fill="none" stroke="var(--steel)" stroke-width="10"/>
+      <line x1="165" y1="0" x2="165" y2="360" stroke="var(--steel)" stroke-width="8"/>
+      <line x1="0" y1="180" x2="330" y2="180" stroke="var(--steel)" stroke-width="8"/>
+      <rect x="-22" y="360" width="374" height="18" rx="6" fill="var(--steel)"/>
+    </g>
+    <g id="rack" transform="translate(650,706)"></g>
+  </g>
+
+  <!-- floor -->
+  <g id="floor">
+    <rect x="-40" y="872" width="1160" height="240" fill="var(--floor)"/>
+    <rect x="-40" y="872" width="1160" height="60" fill="url(#hatchLight)"/>
+    <line x1="-40" y1="872" x2="1120" y2="872" stroke="var(--ink)" stroke-width="4"/>
+  </g>
+
+  <!-- presentation cards -->
+  <g id="cards"></g>
+
+  <!-- the character -->
+  <g id="charRoot">
+    <ellipse id="floorShadow" cx="0" cy="2" rx="150" ry="18" fill="var(--ink)" opacity=".16"/>
+    <g id="charBody" filter="url(#soft)">
+      <!-- legs -->
+      <g id="legs">
+        <rect x="-54" y="-118" width="40" height="104" rx="16" fill="#2b3239" stroke="var(--ink)" stroke-width="5"/>
+        <rect x="14" y="-118" width="40" height="104" rx="16" fill="#2b3239" stroke="var(--ink)" stroke-width="5"/>
+        <rect x="30" y="-118" width="24" height="104" rx="12" fill="url(#hatch)"/>
+        <path d="M -70 -2 C -72 -26 -44 -32 -20 -24 C -8 -20 -6 -6 -10 -2 Z" fill="var(--ink)"/>
+        <path d="M 70 -2 C 72 -26 44 -32 20 -24 C 8 -20 6 -6 10 -2 Z" fill="var(--ink)"/>
+        <path d="M -60 -16 C -52 -24 -38 -24 -30 -20" stroke="#4b5560" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M 60 -16 C 52 -24 38 -24 30 -20" stroke="#4b5560" stroke-width="4" fill="none" stroke-linecap="round"/>
+      </g>
+      <g id="torso">
+        <!-- jacket (breathes) -->
+        <g id="breath">
+          <path id="jacket" fill="var(--signal)" stroke="var(--ink)" stroke-width="5" stroke-linejoin="round"/>
+          <g clip-path="url(#torsoClip)">
+            <rect x="-110" y="-320" width="220" height="240" fill="url(#jacketShade)"/>
+            <rect x="46" y="-320" width="70" height="240" fill="url(#hatch)"/>
+            <line x1="0" y1="-290" x2="0" y2="-92" stroke="var(--ink)" stroke-width="4"/>
+            <path d="M 16 -170 h 50 v 40 a 8 8 0 0 1 -8 8 h -34 a 8 8 0 0 1 -8 -8 Z" fill="none" stroke="var(--ink)" stroke-width="4"/>
+            <rect x="-100" y="-118" width="200" height="22" fill="var(--steel)" stroke="var(--ink)" stroke-width="4"/>
+          </g>
+        </g>
+        <!-- satchel strap + bag (bag swings) -->
+        <line id="strap" x1="62" y1="-286" x2="-80" y2="-150" stroke="var(--ink)" stroke-width="22" stroke-linecap="round"/>
+        <line id="strap2" x1="62" y1="-286" x2="-80" y2="-150" stroke="var(--bag2)" stroke-width="13" stroke-linecap="round"/>
+        <g id="satchel">
+          <rect x="-24" y="-30" width="34" height="48" rx="4" fill="#fbfbf8" stroke="var(--ink)" stroke-width="4" transform="rotate(-12)"/>
+          <rect x="-58" y="-26" width="34" height="44" rx="4" fill="#fbfbf8" stroke="var(--ink)" stroke-width="4" transform="rotate(8)"/>
+          <rect x="-74" y="-6" width="104" height="86" rx="16" fill="var(--bag)" stroke="var(--ink)" stroke-width="5"/>
+          <rect x="-20" y="-6" width="50" height="86" rx="14" fill="url(#hatch)"/>
+          <path d="M -74 4 Q -74 -8 -60 -8 L 16 -8 Q 30 -8 30 4 L 30 34 Q -22 52 -74 34 Z" fill="var(--bag2)" stroke="var(--ink)" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="-30" y="30" width="16" height="20" rx="3" fill="var(--signal)" stroke="var(--ink)" stroke-width="3.5"/>
+        </g>
+        <!-- scarf band -->
+        <rect x="-80" y="-322" width="160" height="36" rx="18" fill="var(--poppy)" stroke="var(--ink)" stroke-width="5"/>
+        <rect x="-80" y="-322" width="160" height="36" rx="18" fill="url(#hatch)" opacity=".7"/>
+        <!-- head -->
+        <g id="head">
+          <ellipse cx="-114" cy="-405" rx="20" ry="24" fill="var(--skin)" stroke="var(--ink)" stroke-width="5" id="earL"/>
+          <ellipse cx="114" cy="-405" rx="20" ry="24" fill="var(--skin)" stroke="var(--ink)" stroke-width="5" id="earR"/>
+          <ellipse cx="0" cy="-415" rx="118" ry="110" fill="var(--skin)" stroke="var(--ink)" stroke-width="5"/>
+          <g clip-path="url(#headClip)">
+            <ellipse cx="0" cy="-415" rx="118" ry="110" fill="url(#faceShade)"/>
+            <ellipse cx="96" cy="-400" rx="40" ry="120" fill="url(#hatch)" opacity=".6"/>
+          </g>
+          <g id="face">
+            <ellipse cx="-80" cy="-366" rx="19" ry="11" fill="var(--poppy)" opacity=".28"/>
+            <ellipse cx="80" cy="-366" rx="19" ry="11" fill="var(--poppy)" opacity=".28"/>
+            <!-- eyes -->
+            <g id="eyeL">
+              <ellipse cx="-44" cy="-410" rx="25" ry="31" fill="#fcfcf8" stroke="var(--ink)" stroke-width="4.5"/>
+              <g clip-path="url(#eyeClipL)">
+                <g class="pupil"><circle cx="-44" cy="-406" r="15" fill="var(--ink)"/><circle cx="-38" cy="-413" r="5" fill="#fff"/></g>
+                <rect class="lid" x="-72" y="-444" width="56" height="0" fill="var(--skin)"/>
+              </g>
+              <path class="lidline" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linecap="round"/>
+            </g>
+            <g id="eyeR">
+              <ellipse cx="44" cy="-410" rx="25" ry="31" fill="#fcfcf8" stroke="var(--ink)" stroke-width="4.5"/>
+              <g clip-path="url(#eyeClipR)">
+                <g class="pupil"><circle cx="44" cy="-406" r="15" fill="var(--ink)"/><circle cx="50" cy="-413" r="5" fill="#fff"/></g>
+                <rect class="lid" x="16" y="-444" width="56" height="0" fill="var(--skin)"/>
+              </g>
+              <path class="lidline" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linecap="round"/>
+            </g>
+            <path id="browL" d="M -20 0 Q 0 -9 20 0" fill="none" stroke="var(--ink)" stroke-width="8" stroke-linecap="round"/>
+            <path id="browR" d="M -20 0 Q 0 -9 20 0" fill="none" stroke="var(--ink)" stroke-width="8" stroke-linecap="round"/>
+            <ellipse cx="0" cy="-378" rx="10" ry="7.5" fill="var(--skin2)"/>
+            <!-- mouth -->
+            <g id="mouth" transform="translate(0,-346)">
+              <path id="mouthFill" fill="#4a1d22"/>
+              <g clip-path="url(#mouthClip)">
+                <ellipse id="tongue" cx="0" cy="10" rx="18" ry="10" fill="#e07c80"/>
+                <rect id="teeth" x="-50" y="-20" width="100" height="0" fill="#fdfdf9"/>
+                <rect id="teethLo" x="-50" y="20" width="100" height="0" fill="#fdfdf9"/>
+              </g>
+              <path id="bite" fill="none" stroke="#c9585c" stroke-width="7" stroke-linecap="round" opacity="0"/>
+              <path id="mouthLine" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+            </g>
+          </g>
+          <!-- courier cap -->
+          <g id="cap">
+            <path d="M -122 -446 C -126 -560 126 -560 122 -446 Q 0 -462 -122 -446 Z" fill="var(--steel)" stroke="var(--ink)" stroke-width="5" stroke-linejoin="round"/>
+            <path d="M 40 -548 C 100 -536 124 -500 122 -446 Q 90 -452 60 -455 Z" fill="url(#hatch)"/>
+            <path d="M -130 -448 Q 0 -470 150 -444 Q 168 -436 150 -428 Q 0 -446 -130 -430 Q -142 -440 -130 -448 Z" fill="#4c6479" stroke="var(--ink)" stroke-width="5" stroke-linejoin="round"/>
+            <circle cx="0" cy="-497" r="20" fill="var(--signal)" stroke="var(--ink)" stroke-width="4.5"/>
+            <rect x="-11" y="-504" width="22" height="15" rx="2" fill="#fbfbf8" stroke="var(--ink)" stroke-width="3"/>
+            <path d="M -11 -504 L 0 -496 L 11 -504" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+          </g>
+        </g>
+        <!-- scarf knot + tails (follow-through) -->
+        <g id="scarfTails">
+          <path id="tailA" fill="none" stroke="var(--ink)" stroke-width="32" stroke-linecap="round" stroke-linejoin="round"/>
+          <path id="tailAf" fill="none" stroke="var(--poppy)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+          <path id="tailB" fill="none" stroke="var(--ink)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+          <path id="tailBf" fill="none" stroke="#c93b30" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="40" cy="-300" r="19" fill="var(--poppy)" stroke="var(--ink)" stroke-width="5"/>
+          <path d="M 30 -306 Q 40 -296 50 -306" fill="none" stroke="var(--ink)" stroke-width="3" opacity=".5"/>
+        </g>
+        <!-- arms (one path each, so elbows can never separate) -->
+        <g id="armL"><path class="ink" fill="none" stroke="var(--ink)" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="fill" fill="none" stroke="var(--signal)" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="shade" fill="none" stroke="#16191d" stroke-opacity=".10" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+          <g class="hand"></g></g>
+        <g id="armR"><path class="ink" fill="none" stroke="var(--ink)" stroke-width="46" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="fill" fill="none" stroke="var(--signal)" stroke-width="35" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="shade" fill="none" stroke="#16191d" stroke-opacity=".10" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+          <g class="hand"></g></g>
+      </g>
+    </g>
+  </g>
+
+  <rect width="1080" height="1080" filter="url(#grain)" pointer-events="none"/>
+</svg>
+</div>
+<div id="hud">space play/pause · ←/→ frame · shift+←/→ scene · <span id="tc">0.00s</span> · <span id="sc"></span></div>
+<audio id="narration" src="voice/narration.wav" preload="auto"></audio>
+
+<script>
+const CONFIG = { width: 1080, height: 1080, fps: 30 };
+window.VIDEO = window.VIDEO || (window.VIDEO_TIMINGS ? { ...CONFIG, duration: window.VIDEO_TIMINGS.duration, scenes: window.VIDEO_TIMINGS.scenes } : null);
+if (!window.VIDEO) throw new Error("Run tts.py first: voice/timings.js not found");
+if (!window.VIDEO_VISEMES) throw new Error("Run visemes.py first: voice/visemes.js not found");
+const V = window.VIDEO;
+const VIS = {}; window.VIDEO_VISEMES.scenes.forEach((s) => { VIS[s.id] = s; });
+
+/* ---------- helpers (from templates/video-shell.html) ---------- */
+const TAU = Math.PI * 2, D2R = Math.PI / 180;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const smooth = (x) => { x = clamp(x); return x * x * (3 - 2 * x); };
+const ease = {
+  linear: (x) => x,
+  inOutCubic: (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  outCubic: (x) => 1 - Math.pow(1 - x, 3),
+  inCubic: (x) => x * x * x,
+  outBack: (x) => { const c = 1.70158, d = c + 1; return 1 + d * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); },
+  // anticipation (dips back first) + overshoot (passes the target, settles)
+  inOutBack: (x) => { const c = 1.25 * 1.525; return x < .5 ? (Math.pow(2 * x, 2) * ((c + 1) * 2 * x - c)) / 2 : (Math.pow(2 * x - 2, 2) * ((c + 1) * (x * 2 - 2) + c) + 2) / 2; },
+};
+function sceneAt(t) {
+  let i = 0;
+  for (let k = 0; k < V.scenes.length; k++) if (t >= V.scenes[k].from) i = k;
+  const s = V.scenes[i];
+  return { s, i, local: t - s.from, left: s.to - t, p: seg(t, s.from, s.to), speak: seg(t, s.start, s.end) };
+}
+const enterAt = (t, at, dur = 0.45, e = ease.outCubic) => e(clamp((t - at) / dur));
+const $ = (q) => document.querySelector(q);
+const SVGNS = "http://www.w3.org/2000/svg";
+const norm = (w) => w.toLowerCase().replace(/[^a-z0-9%+.]/g, "");
+// Exact word start (video time) from Kokoro's timestamps; nth occurrence.
+function wt(s, word, nth = 0) {
+  const vs = VIS[s.id], target = norm(word);
+  let n = 0;
+  for (const w of (vs && vs.words) || []) if (norm(w.text) === target && n++ === nth) return s.start + w.t0;
+  return s.start;
+}
+function wend(s, word, nth = 0) {
+  const vs = VIS[s.id], target = norm(word);
+  let n = 0;
+  for (const w of (vs && vs.words) || []) if (norm(w.text) === target && n++ === nth) return s.start + w.t1;
+  return s.end;
+}
+// Seeded PRNG (mulberry32): irregular but identical on every render.
+function rng(seed) { return () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let x = Math.imul(seed ^ (seed >>> 15), 1 | seed); x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x; return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
+const S = Object.fromEntries(V.scenes.map((s) => [s.id, s]));
+
+/* ---------- background dressing ---------- */
+(function buildSet() {
+  const c = $("#clouds");
+  [[40, 90, 1], [190, 150, .8], [110, 260, 1.15]].forEach(([x, y, k], i) => {
+    const g = document.createElementNS(SVGNS, "g");
+    g.setAttribute("data-x", x); g.setAttribute("data-y", y); g.setAttribute("data-k", k);
+    g.innerHTML = `<path d="M -50 0 a 26 26 0 0 1 30 -26 a 34 34 0 0 1 60 6 a 22 22 0 0 1 22 20 Z" fill="#fff" opacity=".85"/>`;
+    c.appendChild(g);
+  });
+  // A mail-sorting rack with envelopes waiting to go out.
+  const r = $("#rack");
+  let h = `<rect x="0" y="0" width="380" height="164" rx="10" fill="#cfd6d2" stroke="var(--ink)" stroke-width="4"/>`;
+  const colors = ["var(--poppy)", "var(--signal)", "var(--steel)", "var(--signal)", "var(--poppy)", "var(--steel)"];
+  for (let i = 0; i < 6; i++) {
+    const x = 14 + (i % 3) * 120, y = 14 + Math.floor(i / 3) * 74;
+    h += `<rect x="${x}" y="${y}" width="112" height="64" rx="5" fill="#b9c3bf" stroke="var(--ink)" stroke-width="3"/>`;
+    h += `<g transform="translate(${x + 56},${y + 34}) rotate(${[-6, 4, -2, 7, -4, 3][i]})"><rect x="-36" y="-26" width="72" height="44" rx="3" fill="#fbfbf8" stroke="var(--ink)" stroke-width="3"/><rect x="18" y="-21" width="13" height="15" fill="${colors[i]}" stroke="var(--ink)" stroke-width="2"/></g>`;
+  }
+  h += `<rect x="0" y="0" width="380" height="164" rx="10" fill="url(#hatchLight)"/>`;
+  r.innerHTML = h;
+})();
+
+/* ---------- presentation cards (one per scene, read from s.show) ---------- */
+const CX = 622, CY = 196, CW = 452, CH = 500;
+const frame = (w = CW, h = CH) => `<rect x="12" y="12" width="${w}" height="${h}" rx="22" fill="var(--ink)"/><rect width="${w}" height="${h}" rx="22" fill="var(--card)" stroke="var(--ink)" stroke-width="4.5"/>`;
+const esc = (x) => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const CARDS = {};
+function makeCard(s) {
+  const sh = s.show, g = document.createElementNS(SVGNS, "g");
+  g.setAttribute("id", "card-" + s.id);
+  let h = "";
+  if (sh.card === "nametag") {
+    // a luggage tag on a string
+    h = `<g class="swing"><line x1="226" y1="-120" x2="226" y2="34" stroke="var(--ink)" stroke-width="4"/>
+      <path d="M 12 72 L 72 12 H 452 V 412 H 12 Z" transform="translate(12,12)" fill="var(--ink)"/>
+      <path d="M 12 72 L 72 12 H 452 V 412 H 12 Z" fill="var(--card)" stroke="var(--ink)" stroke-width="4.5" stroke-linejoin="round"/>
+      <circle cx="226" cy="50" r="15" fill="var(--paper)" stroke="var(--ink)" stroke-width="4.5"/>
+      <rect x="12" y="330" width="440" height="82" fill="url(#hatchLight)"/>
+      <text class="lbl" x="56" y="140">Hello, I'm</text>
+      <text class="big" x="50" y="290" font-size="168" letter-spacing="-4">${esc(sh.name)}</text>
+      <text class="t" x="56" y="384" font-size="36">${esc(sh.role)}</text>
+      <g transform="translate(372,112) rotate(8)"><rect x="-38" y="-30" width="76" height="60" rx="4" fill="var(--poppy)" stroke="var(--ink)" stroke-width="4"/><path d="M -24 -16 h 48 v 32 h -48 Z" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="6 5"/></g></g>`;
+  } else if (sh.card === "audiences") {
+    const cols = ["var(--steel)", "var(--signal)", "var(--poppy)"];
+    const bub = [
+      `<text x="0" y="13" text-anchor="middle" font-size="36" font-weight="900" fill="var(--ink)">38</text>`,
+      `<path d="M -10 -16 L 16 0 L -10 16 Z" fill="var(--ink)"/>`,
+      `<path d="M -10 -18 L -10 14 L -2 6 L 5 20 L 11 17 L 4 3 L 15 3 Z" fill="var(--ink)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>`];
+    h = frame() + `<text class="big" x="40" y="94" font-size="46" style="font-stretch:96%">${esc(sh.head)}</text>`;
+    sh.people.forEach((p, i) => {
+      const x = 78 + i * 148;
+      h += `<g class="person" data-i="${i}" transform="translate(${x},0)">
+        <g class="bubble"><circle cx="0" cy="170" r="40" fill="#fff" stroke="var(--ink)" stroke-width="4"/><circle cx="-16" cy="222" r="8" fill="#fff" stroke="var(--ink)" stroke-width="3.5"/><g transform="translate(0,170)">${bub[i]}</g></g>
+        <path d="M -56 420 C -56 340 56 340 56 420 Z" fill="${cols[i]}" stroke="var(--ink)" stroke-width="4.5"/>
+        <circle cx="0" cy="300" r="38" fill="var(--skin)" stroke="var(--ink)" stroke-width="4.5"/>
+        <circle cx="-12" cy="298" r="4.5" fill="var(--ink)"/><circle cx="12" cy="298" r="4.5" fill="var(--ink)"/>
+        <path d="M -10 314 Q 0 322 10 314" fill="none" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round"/>
+        <text x="0" y="470" text-anchor="middle" font-size="36" font-weight="750" style="font-stretch:78%" fill="var(--ink)">${esc(p)}</text></g>`;
+    });
+  } else if (sh.card === "number") {
+    h = frame() + `<text class="lbl" x="40" y="88">${esc(sh.label)}</text>
+      <text class="big num" x="34" y="276" font-size="124" letter-spacing="-4">${esc(sh.value)}</text>
+      <path class="spark" d="M 44 430 L 120 404 L 190 418 L 262 370 L 330 382 L 410 318" fill="none" stroke="var(--ink)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="spark2" d="M 44 430 L 120 404 L 190 418 L 262 370 L 330 382 L 410 318" fill="none" stroke="var(--signal)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle class="sparkdot" cx="410" cy="318" r="14" fill="var(--signal)" stroke="var(--ink)" stroke-width="4.5"/>`;
+  } else if (sh.card === "motion") {
+    h = frame() + `<rect x="36" y="40" width="190" height="56" rx="28" fill="var(--signal)" stroke="var(--ink)" stroke-width="4"/>
+      <text x="131" y="80" text-anchor="middle" font-size="36" font-weight="800" fill="var(--ink)">${esc(sh.label.split(" ").pop())}</text>
+      <text class="lbl" x="246" y="80">loops</text>
+      <rect x="36" y="124" width="380" height="300" rx="16" fill="var(--ink)"/>
+      <g class="bars"></g>
+      <rect x="36" y="446" width="380" height="14" rx="7" fill="var(--mute)"/>
+      <rect class="loopbar" x="36" y="446" width="0" height="14" rx="7" fill="var(--steel)"/>`;
+  } else if (sh.card === "guide") {
+    h = frame() + `<circle cx="44" cy="44" r="9" fill="var(--poppy)"/><circle cx="72" cy="44" r="9" fill="var(--signal)"/><circle cx="100" cy="44" r="9" fill="var(--steel)"/>
+      <line x1="0" y1="82" x2="${CW}" y2="82" stroke="var(--ink)" stroke-width="4"/>
+      <text class="lbl step" x="40" y="146">${esc(sh.label)}</text>
+      <g class="dots">${[0, 1, 2, 3].map((i) => `<circle cx="${300 + i * 34}" cy="134" r="10" stroke="var(--ink)" stroke-width="3.5"/>`).join("")}</g>
+      <g class="btn"><rect x="40" y="196" width="300" height="96" rx="20" fill="var(--ink)" transform="translate(8,8)"/>
+        <rect class="btnface" x="40" y="196" width="300" height="96" rx="20" fill="var(--signal)" stroke="var(--ink)" stroke-width="4.5"/>
+        <text x="190" y="258" text-anchor="middle" font-size="40" font-weight="850" fill="var(--ink)">${esc(sh.button)}</text></g>
+      <circle class="ripple" cx="250" cy="250" r="0" fill="none" stroke="var(--steel)" stroke-width="6"/>
+      <g class="rows">${[0, 1, 2].map((i) => `<g class="row" transform="translate(40,${336 + i * 46})"><circle cx="14" cy="0" r="12" fill="var(--steel)"/><rect x="40" y="-9" width="${[300, 240, 270][i]}" height="18" rx="9" fill="var(--mute)"/></g>`).join("")}</g>
+      <path class="cursor" d="M 0 0 L 0 46 L 12 35 L 21 56 L 30 52 L 21 32 L 37 32 Z" fill="#fff" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>`;
+  } else if (sh.card === "formats") {
+    const glyph = [
+      `<rect x="-36" y="-26" width="72" height="48" rx="5" fill="var(--steel)" stroke="var(--ink)" stroke-width="4"/><rect x="-24" y="-14" width="34" height="8" rx="4" fill="#fff"/>`,
+      `<rect x="-30" y="0" width="14" height="22" fill="var(--steel)" stroke="var(--ink)" stroke-width="3.5"/><rect x="-7" y="-14" width="14" height="36" fill="var(--signal)" stroke="var(--ink)" stroke-width="3.5"/><rect x="16" y="-26" width="14" height="48" fill="var(--poppy)" stroke="var(--ink)" stroke-width="3.5"/>`,
+      `<rect x="-34" y="-26" width="68" height="50" rx="5" fill="#fff" stroke="var(--ink)" stroke-width="4"/><path d="M -12 -18 L -12 14 L -4 6 L 2 18 L 8 15 L 2 3 L 12 3 Z" fill="var(--ink)"/>`,
+      `<rect x="-36" y="-26" width="72" height="50" rx="8" fill="var(--ink)"/><path d="M -8 -12 L 12 -1 L -8 10 Z" fill="var(--signal)"/>`];
+    h = frame() + `<g class="env" transform="translate(226,100)">
+        <rect x="-70" y="-46" width="140" height="92" rx="8" fill="#fbfbf8" stroke="var(--ink)" stroke-width="4.5"/>
+        <path class="flap" d="M -70 -46 L 0 8 L 70 -46" fill="#eef0ee" stroke="var(--ink)" stroke-width="4.5" stroke-linejoin="round"/>
+        <circle class="seal" cx="0" cy="8" r="13" fill="var(--poppy)" stroke="var(--ink)" stroke-width="4"/></g>`;
+    sh.formats.forEach((f, i) => {
+      const x = 30 + (i % 2) * 206, y = 196 + Math.floor(i / 2) * 146;
+      h += `<g class="tile" data-x="${x}" data-y="${y}"><rect x="6" y="6" width="186" height="128" rx="16" fill="var(--ink)"/><rect width="186" height="128" rx="16" fill="#fff" stroke="var(--ink)" stroke-width="4"/>
+        <g transform="translate(93,46)">${glyph[i]}</g><text x="93" y="112" text-anchor="middle" font-size="36" font-weight="800" fill="var(--ink)">${esc(f)}</text></g>`;
+    });
+  } else if (sh.card === "files") {
+    h = frame();
+    sh.files.forEach((f, i) => {
+      const x = 30 + (i % 2) * 212, y = 40 + Math.floor(i / 2) * 172;
+      const col = ["var(--steel)", "var(--poppy)", "var(--signal)", "var(--ink)"][i];
+      h += `<g class="file" data-x="${x}" data-y="${y}"><g transform="scale(.78)">
+        <path d="M 0 0 H 70 L 100 30 V 140 H 0 Z" fill="#fff" stroke="var(--ink)" stroke-width="4.5" stroke-linejoin="round"/>
+        <path d="M 70 0 V 30 H 100" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linejoin="round"/>
+        <rect x="0" y="88" width="100" height="22" fill="${col}"/>
+        <path d="M 0 0 H 70 L 100 30 V 140 H 0 Z" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linejoin="round"/>
+        </g><text x="88" y="70" font-size="38" font-weight="850" style="font-stretch:85%" fill="var(--ink)">${esc(f)}</text></g>`;
+    });
+    h += `<g class="foot"><rect x="28" y="398" width="396" height="72" rx="36" fill="var(--signal)" stroke="var(--ink)" stroke-width="4.5"/>
+      <circle cx="68" cy="434" r="20" fill="var(--ink)"/><path d="M 58 434 L 66 442 L 80 426" fill="none" stroke="var(--signal)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="102" y="447" font-size="36" font-weight="800" style="font-stretch:92%" fill="var(--ink)">${esc(sh.foot)}</text></g>`;
+  } else if (sh.card === "signoff") {
+    h = frame() + `<g transform="translate(226,128)">
+        <rect x="-74" y="-50" width="148" height="100" rx="8" fill="#fbfbf8" stroke="var(--ink)" stroke-width="4.5"/>
+        <path d="M -74 -50 L 0 6 L 74 -50" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linejoin="round"/>
+        <g class="check"><circle cx="54" cy="36" r="28" fill="var(--signal)" stroke="var(--ink)" stroke-width="4.5"/><path d="M 40 36 L 50 46 L 68 26" fill="none" stroke="var(--ink)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+      <text class="big" x="226" y="320" text-anchor="middle" font-size="84" letter-spacing="-2">${esc(sh.head)}</text>
+      <rect class="bar" x="56" y="352" width="340" height="16" rx="8" fill="var(--signal)" stroke="var(--ink)" stroke-width="4"/>
+      <text class="t" x="226" y="436" text-anchor="middle" font-size="36" style="font-stretch:72%">${esc(sh.foot)}</text>`;
+  }
+  g.innerHTML = h;
+  $("#cards").appendChild(g);
+  CARDS[s.id] = g;
+  return g;
+}
+V.scenes.forEach(makeCard);
+// GIF bars inside the motion card
+(function () { const g = CARDS.motion && CARDS.motion.querySelector(".bars"); if (!g) return;
+  for (let i = 0; i < 6; i++) { const r = document.createElementNS(SVGNS, "rect"); r.setAttribute("x", 66 + i * 58); r.setAttribute("width", 40); r.setAttribute("rx", 6); r.setAttribute("fill", ["var(--signal)", "var(--steel)", "#fff"][i % 3]); g.appendChild(r); }
+})();
+
+/* ---------- hands ---------- */
+const HAND = {
+  open: `<ellipse cx="-21" cy="12" rx="9" ry="14" transform="rotate(28 -21 12)" fill="var(--skin)" stroke="var(--ink)" stroke-width="4.5"/>
+    <path d="M -20 4 C -26 30 -18 52 2 52 C 22 52 26 30 20 4 C 14 -6 -14 -6 -20 4 Z" fill="var(--skin)" stroke="var(--ink)" stroke-width="4.5"/>
+    <path d="M -6 30 L -6 46 M 6 30 L 6 46" stroke="var(--skin2)" stroke-width="4" stroke-linecap="round"/>`,
+  point: `<rect x="-7" y="22" width="15" height="38" rx="7.5" fill="var(--skin)" stroke="var(--ink)" stroke-width="4.5"/>
+    <circle cx="0" cy="16" r="20" fill="var(--skin)" stroke="var(--ink)" stroke-width="4.5"/>
+    <ellipse cx="-17" cy="12" rx="8" ry="11" transform="rotate(20 -17 12)" fill="var(--skin)" stroke="var(--ink)" stroke-width="4"/>`,
+  fist: `<circle cx="0" cy="16" r="21" fill="var(--skin)" stroke="var(--ink)" stroke-width="4.5"/><path d="M -10 26 Q 0 32 10 26" fill="none" stroke="var(--skin2)" stroke-width="4" stroke-linecap="round"/>`,
+  thumb: `<rect x="-9" y="-44" width="18" height="40" rx="9" fill="var(--skin)" stroke="var(--ink)" stroke-width="4.5"/>
+    <rect x="-22" y="-12" width="44" height="40" rx="15" fill="var(--skin)" stroke="var(--ink)" stroke-width="4.5"/>
+    <path d="M -10 2 H 14 M -10 14 H 14" stroke="var(--skin2)" stroke-width="4" stroke-linecap="round"/>`,
+  env: `<g transform="translate(0,-46) rotate(-6)"><rect x="-56" y="-38" width="112" height="76" rx="6" fill="#fbfbf8" stroke="var(--ink)" stroke-width="4.5"/>
+    <path d="M -56 -38 L 0 6 L 56 -38" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linejoin="round"/>
+    <circle cx="0" cy="6" r="11" fill="var(--poppy)" stroke="var(--ink)" stroke-width="3.5"/>
+    <rect x="24" y="-28" width="20" height="22" fill="var(--signal)" stroke="var(--ink)" stroke-width="3"/></g>
+    <rect x="-22" y="-14" width="44" height="38" rx="15" fill="var(--skin)" stroke="var(--ink)" stroke-width="4.5"/>
+    <path d="M -10 0 H 14 M -10 11 H 14" stroke="var(--skin2)" stroke-width="4" stroke-linecap="round"/>`,
+};
+const UPRIGHT = { thumb: true, env: true };
+function setupHands(arm, mirror) {
+  const g = $(`#${arm} .hand`), out = {};
+  for (const k in HAND) {
+    const h = document.createElementNS(SVGNS, "g");
+    h.innerHTML = `<g transform="scale(${mirror ? -1 : 1},1)">${HAND[k]}</g>`;
+    h.style.display = "none"; g.appendChild(h); out[k] = h;
+  }
+  return out;
+}
+const HANDS = { L: setupHands("armL", true), R: setupHands("armR", false) };
+
+/* ---------- poses: keyframes with anticipation + overshoot ---------- */
+// Angles in degrees; 0 = arm hanging straight down. Screen-left arm (L) swings outward with +,
+// screen-right arm (R, toward the cards) swings outward with -. Forearm angles are relative to the upper arm.
+const REST = { lU: 9, lF: -12, lW: 0, rU: -9, rF: 12, rW: 0, lean: 0, shrug: 0, tilt: 0, env: 0, lHand: "open", rHand: "open" };
+const KEYS = [];
+const K = (at, dur, pose, e = "inOutBack") => KEYS.push({ at, dur, pose, e });
+const POINT_CARD = { rU: -70, rF: -62, rW: 0, rHand: "point", lean: -2 };
+const PRESENT = { rU: -58, rF: -52, rW: -10, rHand: "open", lean: -3 };
+const RELAX = { lU: REST.lU, lF: REST.lF, rU: REST.rU, rF: REST.rF, lW: 0, rW: 0, lean: 0, shrug: 0, tilt: 0, lHand: "open", rHand: "open" };
+const OSC = []; // additive oscillations: { a, b, f, fn(t-a) -> partial pose }
+
+(function choreograph() {
+  let s = S.hello;
+  // wave hello (already rising on frame 0 so the poster frame is alive)
+  K(-0.35, 0.55, { rU: -112, rF: -58, rHand: "open", lean: -1, tilt: -4 });
+  OSC.push({ a: 0.45, b: wt(s, "carry"), fn: (x) => ({ rF: 22 * Math.sin(TAU * 2.1 * x) }) });
+  K(wt(s, "messages") - 0.15, 0.5, { ...PRESENT, tilt: 0 });
+  K(s.end + 0.1, 0.45, { lean: 0 }, "outCubic");
+
+  s = S.audiences;
+  K(s.from + 0.05, 0.5, POINT_CARD);
+  OSC.push({ a: wt(s, "every"), b: wt(s, "every") + 0.4, fn: (x) => ({ rF: -7 * Math.sin(Math.PI * x / 0.4) }) });
+  // hand to chin, thinking, on "a little differently?"
+  K(wt(s, "little") - 0.25, 0.5, { ...RELAX, lU: -46, lF: -136, lW: 8, lHand: "fist", rU: -14, rF: 16, tilt: 7 });
+
+  s = S.number;
+  K(s.from + 0.0, 0.5, { ...RELAX, ...PRESENT });
+  K(wt(s, "top") - 0.25, 0.45, { rU: -128, rF: -40, rHand: "point", lean: -1 });
+
+  s = S.motion;
+  K(s.from + 0.0, 0.5, { ...RELAX, rU: -70, rF: -60, rHand: "open", lean: -2 });
+  OSC.push({ a: wt(s, "see"), b: wt(s, "see") + 1.1, fn: (x) => { const w = Math.sin(Math.PI * x / 1.1); return { rU: 22 * w * Math.sin(TAU * x / 0.55), rF: 26 * w * Math.cos(TAU * x / 0.55) }; } });
+  K(wt(s, "clicks") - 0.15, 0.4, { rU: -62, rF: -48, rHand: "point", tilt: 5 });
+
+  s = S.try;
+  K(s.from + 0.0, 0.5, { ...RELAX, ...POINT_CARD });
+  [wt(s, "try") + 0.05, wt(s, "step") + 0.05].forEach((c) => OSC.push({ a: c - 0.1, b: c + 0.32, fn: (x) => ({ rF: -10 * Math.sin(Math.PI * clamp(x / 0.42)), lean: -2 * Math.sin(Math.PI * clamp(x / 0.42)) }) }));
+
+  s = S.job;
+  K(s.from - 0.05, 0.45, { ...RELAX, lU: 20, lF: -24, lHand: "fist", lean: 3 });              // reach into the satchel
+  K(wt(s, "my") - 0.05, 0.12, { env: 1, lHand: "env" }, "outCubic");                          // envelope in hand
+  K(wt(s, "my"), 0.6, { lU: 150, lF: 26, lean: 1, tilt: -6 });                                // hold it up
+  K(wt(s, "format") - 0.2, 0.5, { rU: -58, rF: -52, rHand: "point", tilt: 0 });
+  K(s.to - 0.4, 0.4, { lU: 20, lF: -24, rU: REST.rU, rF: REST.rF, rHand: "open" });           // tuck it back
+
+  s = S.anyone;
+  K(s.from, 0.18, { env: 0, lHand: "open" }, "outCubic");
+  K(s.from + 0.1, 0.45, { lU: REST.lU, lF: REST.lF, lean: 0 });
+  K(wt(s, "link") - 0.2, 0.45, POINT_CARD);
+  // shrug: palms up, shoulders up, head tilt on "No special software."
+  K(wt(s, "no") - 0.3, 0.55, { lU: 10, lF: 52, lW: -10, rU: -10, rF: -52, rW: 0, lHand: "open", rHand: "open", shrug: 1, tilt: 8, lean: 0 });
+
+  s = S.signoff;
+  K(s.from + 0.05, 0.5, { ...RELAX, lU: 20, lF: -24, lHand: "fist", lean: 2 });             // pat the satchel
+  OSC.push({ a: wt(s, "deliveries"), b: wt(s, "make") + 0.2, fn: (x) => ({ lF: -6 * Math.abs(Math.sin(TAU * 1.6 * x)) }) });
+  K(wt(s, "thanks") - 0.25, 0.5, { lU: REST.lU, lF: REST.lF, lHand: "open", rU: -30, rF: -118, rW: 0, rHand: "thumb", tilt: -5, lean: -1 });
+  K(wt(s, "see") - 0.4, 0.28, { lU: 60, lF: 100, lHand: "open" }, "inOutCubic");   // elbow leads, hand tucked
+  K(wt(s, "see") - 0.12, 0.4, { lU: 125, lF: 45 }, "outBack");
+  OSC.push({ a: wt(s, "see") + 0.2, b: V.duration + 1, fn: (x) => ({ lF: 11 * (Math.sin(TAU * 2.0 * x) - 1) * (x < 2.2 ? 1 : Math.max(0.3, 1 - (x - 2.2))) }) });  // swings outward only, clear of the cap
+})();
+KEYS.sort((a, b) => a.at - b.at);
+
+function poseAt(t) {
+  const p = { ...REST };
+  for (const k of KEYS) {
+    if (t < k.at) break;
+    const x = clamp((t - k.at) / k.dur), e = ease[k.e](x);
+    for (const f in k.pose) {
+      const v = k.pose[f];
+      if (typeof v === "number") p[f] = lerp(p[f], v, e); else if (x >= 0.45) p[f] = v;
+    }
+  }
+  for (const o of OSC) if (t >= o.a && t < o.b) { const d = o.fn(t - o.a); for (const f in d) p[f] += d[f]; }
+  // Keep the screen-left hand inside the frame mid-gesture: if a swing would carry the wrist past
+  // x = -195 (torso units), bend the forearm just enough (continuous, so no pops).
+  const XMIN = -180, ex = -84 - 86 * Math.sin(p.lU * D2R), need = (ex - XMIN) / 80;
+  const wf = p.lU + p.lF, sx = -80 * Math.sin(wf * D2R);
+  if (ex + sx < XMIN) {
+    const asn = Math.asin(clamp(-need, -1, 1)) / D2R;          // sin(wf) must be <= need
+    const cw = ((wf % 360) + 360) % 360;
+    p.lF = (cw > 90 && cw < 270 ? 180 - (-asn) : -asn) - p.lU + (wf - cw);
+  }
+  return p;
+}
+
+/* ---------- emphasis, questions, blinks, saccades ---------- */
+const EMPH = [];
+V.scenes.forEach((s) => (s.show.emphasis || []).forEach((w, j) => EMPH.push({ at: wt(s, w) - 0.06, sign: j % 2 ? 1 : -1 })));
+const bump = (x, d) => (x < 0 || x > d ? 0 : Math.pow(Math.sin(Math.PI * x / d), 2));
+function emphasisAt(t) {
+  let tilt = 0, nod = 0, bob = 0, brow = 0;
+  for (const e of EMPH) { const b = bump(t - e.at, 0.55); tilt += e.sign * 4.5 * b; nod += 5 * b; bob += 5 * bump(t - e.at, 0.4); brow += 0.45 * b; }
+  return { tilt, nod, bob, brow };
+}
+function questionAt(t) {
+  let q = 0;
+  for (const s of V.scenes) if (/\?\s*$/.test(s.text)) q = Math.max(q, smooth(seg(t, lerp(s.start, s.end, .45), lerp(s.start, s.end, .45) + 0.3)) * (1 - smooth(seg(t, s.end + 0.2, s.end + 0.6))));
+  return q;
+}
+const BLINKS = []; const SACC = [];
+(function () {
+  const r = rng(20261022);
+  for (let t = 0.9; t < V.duration; t += 1.7 + r() * 2.9) { BLINKS.push(t); if (r() < 0.2) BLINKS.push(t + 0.3); }
+  const q = rng(77);
+  for (let t = 0.3; t < V.duration; t += 0.45 + q() * 1.25) SACC.push({ t, dx: (q() - .5) * 7, dy: (q() - .5) * 5 });
+})();
+function blinkAt(t) {
+  let b = 0;
+  for (const bt of BLINKS) { const x = t - bt; if (x >= 0 && x < 0.26) b = Math.max(b, x < 0.07 ? x / 0.07 : x < 0.11 ? 1 : 1 - (x - 0.11) / 0.15); }
+  return b;
+}
+// Where Sen looks: at the card shortly after it lands, at the envelope when holding it up, otherwise at us.
+const LOOK = [];
+V.scenes.forEach((s) => {
+  const c = cardIn(s);
+  LOOK.push({ at: c + 0.15, gx: 1, gy: -0.25 }, { at: c + 1.0, gx: 0, gy: 0 });
+});
+LOOK.push({ at: wt(S.job, "my") + 0.3, gx: -0.8, gy: -1 }, { at: wt(S.job, "deliver"), gx: 0, gy: 0 });
+LOOK.sort((a, b) => a.at - b.at);
+function lookAt(t) {
+  let gx = 0, gy = 0, px = 0, py = 0, at = -1;
+  for (const l of LOOK) { if (t < l.at) break; px = gx; py = gy; gx = l.gx; gy = l.gy; at = l.at; }
+  const k = at < 0 ? 1 : smooth((t - at) / 0.14), hk = at < 0 ? 1 : smooth((t - at) / 0.45);
+  let sx = 0, sy = 0, ps = { dx: 0, dy: 0 }, sat = 0;
+  for (const s of SACC) { if (t < s.t) break; ps = { dx: sx, dy: sy }; sx = s.dx; sy = s.dy; sat = s.t; }
+  const sk = smooth((t - sat) / 0.06);
+  return { ex: lerp(px, gx, k) * 9 + lerp(ps.dx, sx, sk), ey: lerp(py, gy, k) * 9 + lerp(ps.dy, sy, sk), turn: lerp(px, gx, hk) };
+}
+function cardIn(s) { return s.id === "hello" ? wt(s, "sen") - 0.15 : s.from + 0.12; }
+
+/* ---------- mouth ---------- */
+// w half-width, a upper opening, b lower opening, te upper teeth, lo lower teeth, to tongue, tu tongue raised, bi lip bite, cl corner lift
+const MOUTH = {
+  rest: { w: 30, a: -4, b: -2, te: 0, lo: 0, to: 0, tu: 0, bi: 0, cl: 6 },
+  MBP:  { w: 27, a: 0.5, b: 0.5, te: 0, lo: 0, to: 0, tu: 0, bi: 0, cl: 2 },
+  AI:   { w: 33, a: 8, b: 30, te: .7, lo: .2, to: .8, tu: 0, bi: 0, cl: 3 },
+  E:    { w: 38, a: 6, b: 17, te: 1, lo: .7, to: .3, tu: 0, bi: 0, cl: 5 },
+  O:    { w: 21, a: 11, b: 24, te: .2, lo: 0, to: .5, tu: 0, bi: 0, cl: 0 },
+  U:    { w: 15, a: 6, b: 11, te: 0, lo: 0, to: .2, tu: 0, bi: 0, cl: 0 },
+  FV:   { w: 31, a: 5, b: 7, te: 1, lo: 0, to: 0, tu: 0, bi: 1, cl: 3 },
+  L:    { w: 31, a: 7, b: 21, te: .8, lo: .2, to: 1, tu: 1, bi: 0, cl: 3 },
+  etc:  { w: 31, a: 4, b: 11, te: .9, lo: .6, to: .3, tu: 0, bi: 0, cl: 4 },
+};
+const mixM = (A, B, k) => { const o = {}; for (const f in A) o[f] = lerp(A[f], B[f], k); return o; };
+function mouthAt(t) {
+  for (const s of V.scenes) {
+    const vs = VIS[s.id];
+    if (!vs || !vs.cues || t < s.start - 0.05 || t > s.start + vs.duration + 0.25) continue;
+    const lt = t - s.start, cues = vs.cues;
+    let i = 0; while (i < cues.length - 1 && lt >= cues[i].t1) i++;
+    const c = cues[i], prev = cues[i - 1] || { v: "rest" };
+    const k = smooth((lt - c.t0) / 0.065);
+    return { m: mixM(MOUTH[prev.v], MOUTH[c.v], k), v: c.v };
+  }
+  return { m: MOUTH.rest, v: "rest" };
+}
+function drawMouth(m) {
+  const { w, a, b, cl } = m;
+  const uc = (-a + 0.25 * cl) / 0.75, lc = (b + 0.25 * cl) / 0.75;
+  const d = `M ${-w} ${-cl} C ${-w * .5} ${uc} ${w * .5} ${uc} ${w} ${-cl} C ${w * .5} ${lc} ${-w * .5} ${lc} ${-w} ${-cl} Z`;
+  $("#mouthFill").setAttribute("d", d); $("#mouthClipPath").setAttribute("d", d);
+  const open = Math.max(0, b + a);
+  $("#mouthFill").setAttribute("opacity", open > 2 ? 1 : open / 2);
+  $("#mouthLine").setAttribute("d", open > 1.5 ? d : `M ${-w} ${-cl} C ${-w * .5} ${uc} ${w * .5} ${uc} ${w} ${-cl}`);
+  $("#mouthLine").setAttribute("stroke-width", lerp(5.5, 4.5, clamp(open / 10)));
+  $("#teeth").setAttribute("y", -a - 3); $("#teeth").setAttribute("height", Math.max(0, 10 * m.te));
+  $("#teethLo").setAttribute("y", b - 7 * m.lo + 2); $("#teethLo").setAttribute("height", Math.max(0, 7 * m.lo));
+  $("#tongue").setAttribute("cy", lerp(b - 3, -a + 7, m.tu)); $("#tongue").setAttribute("rx", w * .6); $("#tongue").setAttribute("ry", 4 + 7 * m.to);
+  $("#tongue").setAttribute("opacity", clamp(m.to * 1.5));
+  $("#bite").setAttribute("d", `M ${-w * .62} ${b - 1} Q 0 ${b + 3} ${w * .62} ${b - 1}`); $("#bite").setAttribute("opacity", m.bi);
+}
+
+/* ---------- body state + follow-through springs ---------- */
+function bodyAt(t) {
+  const p = poseAt(t), e = emphasisAt(t);
+  const sway = 1.3 * Math.sin(TAU * t / 4.3) + 0.6 * Math.sin(TAU * t / 2.7 + 1);
+  return { p, e, lean: p.lean + sway, y: -e.bob + 2 * Math.sin(TAU * t / 3.6) - 6 * p.shrug, tilt: p.tilt + e.tilt + 1.6 * Math.sin(TAU * t / 5.1) };
+}
+const DRV_CACHE = new Map();
+function driver(t) {
+  const key = Math.round(t * 600);
+  let v = DRV_CACHE.get(key);
+  if (v === undefined) { const b = bodyAt(t); v = { lean: b.lean, y: b.y, tilt: b.tilt }; DRV_CACHE.set(key, v); }
+  return v;
+}
+// Damped spring driven by the body's acceleration: the bag and scarf lag, overshoot, and settle.
+function spring(t, fn, f, z) {
+  const w = TAU * f, wd = w * Math.sqrt(1 - z * z), dt = 1 / 60, h = 1 / 60;
+  let y = 0;
+  for (let i = 1; i <= 75; i++) {
+    const tau = i * dt, u = t - tau;
+    const acc = (fn(u + h) - 2 * fn(u) + fn(u - h)) / (h * h);
+    y += Math.exp(-z * w * tau) * Math.sin(wd * tau) / wd * acc * dt;
+  }
+  return -y;
+}
+
+/* ---------- character rig ---------- */
+const dir = (deg) => [-Math.sin(deg * D2R), Math.cos(deg * D2R)];
+const L1 = 86, L2 = 80;
+function drawArm(id, sx, sy, a1, a2, wrist, hand, hands, env) {
+  const d1 = dir(a1), d2 = dir(a1 + a2);
+  const ex = sx + L1 * d1[0], ey = sy + L1 * d1[1];
+  const wx = ex + L2 * d2[0], wy = ey + L2 * d2[1];
+  const d = `M ${sx} ${sy} L ${ex.toFixed(2)} ${ey.toFixed(2)} L ${wx.toFixed(2)} ${wy.toFixed(2)}`;
+  const g = $("#" + id);
+  g.querySelector(".ink").setAttribute("d", d); g.querySelector(".fill").setAttribute("d", d);
+  g.querySelector(".shade").setAttribute("d", d);
+  const rot = UPRIGHT[hand] ? wrist : a1 + a2 + wrist;
+  g.querySelector(".hand").setAttribute("transform", `translate(${(wx + 4 * d2[0]).toFixed(2)},${(wy + 4 * d2[1]).toFixed(2)}) rotate(${rot.toFixed(2)})`);
+  for (const k in hands) hands[k].style.display = k === hand ? "" : "none";
+  return { ex, ey, wx, wy };
+}
+const ROOT = { x: 336, y: 950, k: 1.22 };
+window.__rig = {}; // exposed for verification (joint positions)
+
+function renderCharacter(t) {
+  const b = bodyAt(t), p = b.p, e = b.e;
+  const breath = Math.sin(TAU * t / 3.6);
+  $("#charRoot").setAttribute("transform", `translate(${ROOT.x},${ROOT.y}) scale(${ROOT.k})`);
+  $("#torso").setAttribute("transform", `translate(0,${b.y.toFixed(2)}) rotate(${b.lean.toFixed(2)} 0 -100)`);
+  $("#breath").setAttribute("transform", `translate(0,-100) scale(${1 + 0.006 * breath},${1 + 0.014 * breath}) translate(0,100)`);
+  const torso = "M -96 -100 C -104 -180 -100 -262 -66 -292 Q 0 -306 66 -292 C 100 -262 104 -180 96 -100 Q 0 -82 -96 -100 Z";
+  $("#jacket").setAttribute("d", torso); $("#torsoClipPath").setAttribute("d", torso);
+  const shoulderY = -268 - 3 * breath - 13 * p.shrug;
+  // head: tilt around the neck, nod, sink into the shoulders on a shrug, turn toward what Sen looks at
+  const look = lookAt(t);
+  const tilt = b.tilt + 3 * look.turn;
+  $("#head").setAttribute("transform", `translate(${(4 * look.turn).toFixed(2)},${(e.nod + 7 * p.shrug - 2 * breath).toFixed(2)}) rotate(${tilt.toFixed(2)} 0 -310)`);
+  $("#face").setAttribute("transform", `translate(${(9 * look.turn).toFixed(2)},${(-3 * Math.max(0, -look.turn)).toFixed(2)})`);
+  $("#earL").setAttribute("cx", -114 + 4 * look.turn); $("#earR").setAttribute("cx", 114 + 4 * look.turn);
+  $("#cap").setAttribute("transform", `translate(${(3 * look.turn).toFixed(2)},0)`);
+  // eyes
+  const blink = blinkAt(t);
+  document.querySelectorAll(".pupil").forEach((el) => el.setAttribute("transform", `translate(${look.ex.toFixed(2)},${look.ey.toFixed(2)})`));
+  document.querySelectorAll(".lid").forEach((el) => el.setAttribute("height", (64 * blink).toFixed(2)));
+  [["#eyeL .lidline", -44], ["#eyeR .lidline", 44]].forEach(([q, cx]) => {
+    const y = -441 + 62 * blink;
+    $(q).setAttribute("d", blink > 0.02 ? `M ${cx - 25} ${y.toFixed(2)} Q ${cx} ${(y + 6 * blink).toFixed(2)} ${cx + 25} ${y.toFixed(2)}` : "");
+  });
+  // brows: questions, emphasis and shrugs raise them
+  const raise = clamp(questionAt(t) + e.brow + 0.9 * p.shrug + 0.6 * bump(t - 0.6, 0.9), 0, 1.3);
+  $("#browL").setAttribute("transform", `translate(-44,${(-458 - 12 * raise).toFixed(2)}) rotate(${(-4 - 8 * raise).toFixed(2)})`);
+  $("#browR").setAttribute("transform", `translate(44,${(-458 - 12 * raise + 3 * p.shrug).toFixed(2)}) rotate(${(4 + 8 * raise).toFixed(2)})`);
+  // mouth
+  const mo = mouthAt(t);
+  drawMouth(mo.m);
+  // arms
+  const L = drawArm("armL", -84, shoulderY, p.lU, p.lF, p.lW, p.lHand, HANDS.L);
+  const R = drawArm("armR", 84, shoulderY, p.rU, p.rF, p.rW, p.rHand, HANDS.R);
+  window.__rig = { t, L, R, shoulderY, mouth: mo.v, lean: b.lean };
+  // satchel: hangs from the strap, swings against the body's motion
+  const sw = spring(t, (u) => driver(u).lean + 0.8 * driver(u).y, 1.5, 0.18);
+  $("#satchel").setAttribute("transform", `translate(-80,-150) rotate(${(0.8 * sw - 0.6 * b.lean).toFixed(2)})`);
+  $("#strap").setAttribute("y1", shoulderY - 18); $("#strap2").setAttribute("y1", shoulderY - 18);
+  // scarf tails: a chain of segments with follow-through
+  const st = spring(t, (u) => driver(u).lean + 0.7 * driver(u).tilt + 1.2 * driver(u).y, 1.9, 0.22);
+  const chain = (base, n, len, lag) => {
+    let x = 44, y = -294, ang = base;
+    const pts = [`M ${x} ${y}`];
+    for (let i = 0; i < n; i++) { ang += (i ? 1 : 0.4) * (st * lag * (1 + i * 0.5)) - b.lean * 0.3; const d = dir(ang); x += len * d[0]; y += len * d[1]; pts.push(`L ${x.toFixed(2)} ${y.toFixed(2)}`); }
+    return pts.join(" ");
+  };
+  const ta = chain(-8 + 3 * Math.sin(TAU * t / 2.3), 4, 22, 0.9), tb = chain(14 + 2 * Math.sin(TAU * t / 2.9 + 1), 3, 22, 1.2);
+  $("#tailA").setAttribute("d", ta); $("#tailAf").setAttribute("d", ta);
+  $("#tailB").setAttribute("d", tb); $("#tailBf").setAttribute("d", tb);
+}
+
+/* ---------- cards ---------- */
+function renderCards(t) {
+  const cur = sceneAt(t);
+  V.scenes.forEach((s, i) => {
+    const g = CARDS[s.id];
+    const on = i === cur.i;
+    g.style.display = on ? "" : "none";
+    if (!on) return;
+    const a0 = cardIn(s);
+    const a = ease.outBack(clamp((t - a0) / 0.55));
+    const last = i === V.scenes.length - 1;
+    const out = last ? 1 : 1 - ease.inCubic(clamp(1 - (s.to - t) / 0.35));
+    const vis = clamp((t - a0) / 0.2) * out;
+    g.setAttribute("opacity", vis.toFixed(3));
+    g.setAttribute("transform", `translate(${(CX - 70 * (1 - a) + 0 * out).toFixed(2)},${(CY + 30 * (1 - a) - 30 * (1 - out)).toFixed(2)}) rotate(${(-5 * (1 - a)).toFixed(2)} 0 ${CH}) scale(${(0.93 * (0.86 + 0.14 * a)).toFixed(4)})`);
+    const lt = t - a0, sh = s.show;
+    if (sh.card === "nametag") {
+      const sw = 7 * Math.exp(-2.4 * Math.max(0, lt)) * Math.sin(TAU * 1.3 * Math.max(0, lt)) + 0.8 * Math.sin(TAU * t / 3);
+      g.querySelector(".swing").setAttribute("transform", `rotate(${sw.toFixed(2)} 226 -120)`);
+    } else if (sh.card === "audiences") {
+      g.querySelectorAll(".person").forEach((el, j) => {
+        const x = 78 + j * 148, k = ease.outBack(clamp((t - a0 - 0.15 - j * 0.12) / 0.5));
+        el.setAttribute("transform", `translate(${x},${(40 * (1 - k)).toFixed(2)})`); el.setAttribute("opacity", clamp(k * 2).toFixed(3));
+        const bk = ease.outBack(clamp((t - wt(s, "takes") - j * 0.18) / 0.45));
+        const bub = el.querySelector(".bubble");
+        bub.setAttribute("transform", `translate(0,${(170 * (1 - bk)).toFixed(2)}) translate(0,170) scale(${bk.toFixed(3)}) translate(0,-170)`);
+        bub.setAttribute("opacity", clamp(bk * 3).toFixed(3));
+      });
+    } else if (sh.card === "number") {
+      const k = ease.outCubic(clamp((t - a0 - 0.1) / 1.1));
+      const target = parseFloat(String(sh.value).replace(/[^0-9.]/g, "")) || 0;
+      g.querySelector(".num").textContent = sh.value.replace(/[0-9.]+/, String(Math.round(target * k)));
+      const len = 420, dk = ease.inOutCubic(clamp((t - wt(s, "number")) / 0.9));
+      ["spark", "spark2"].forEach((c) => { const p = g.querySelector("." + c); p.setAttribute("stroke-dasharray", `${len} ${len}`); p.setAttribute("stroke-dashoffset", (len * (1 - dk)).toFixed(1)); });
+      g.querySelector(".sparkdot").setAttribute("transform", `translate(410,318) scale(${ease.outBack(clamp((t - wt(s, "number") - 0.8) / 0.4)).toFixed(3)}) translate(-410,-318)`);
+    } else if (sh.card === "motion") {
+      const P = 1.6, ph = (((t - a0) % P) + P) % P / P;   // the GIF loops
+      g.querySelectorAll(".bars rect").forEach((r, j) => {
+        const v = 0.25 + 0.7 * Math.pow(Math.sin(Math.PI * clamp(ph * 1.25 - j * 0.06)), 1.4);
+        const hgt = 240 * v; r.setAttribute("y", (400 - hgt).toFixed(2)); r.setAttribute("height", hgt.toFixed(2));
+      });
+      g.querySelector(".loopbar").setAttribute("width", (380 * ph).toFixed(2));
+    } else if (sh.card === "guide") {
+      const c1 = wt(s, "try") + 0.05, c2 = wt(s, "step") + 0.05;
+      // cursor glides to the button and clicks twice
+      const m1 = ease.inOutCubic(clamp((t - (c1 - 0.7)) / 0.6));
+      const cx = lerp(390, 300, m1), cy = lerp(470, 262, m1);
+      const press = Math.max(bump(t - c1, 0.22), bump(t - c2, 0.22));
+      g.querySelector(".cursor").setAttribute("transform", `translate(${cx.toFixed(2)},${(cy + 4 * press).toFixed(2)}) scale(${(1 - 0.12 * press).toFixed(3)})`);
+      g.querySelector(".btnface").setAttribute("transform", `translate(${(5 * press).toFixed(2)},${(5 * press).toFixed(2)})`);
+      const rip = (c) => { const x = clamp((t - c) / 0.45); return x > 0 && x < 1 ? x : 0; };
+      const rr = Math.max(rip(c1), rip(c2));
+      const rp = g.querySelector(".ripple"); rp.setAttribute("cx", 310); rp.setAttribute("cy", 272); rp.setAttribute("r", (10 + 70 * rr).toFixed(1)); rp.setAttribute("opacity", rr ? (1 - rr).toFixed(3) : 0);
+      const step = (t >= c2 ? 3 : t >= c1 ? 2 : 1);
+      g.querySelector(".step").textContent = sh.label.replace(/\d+/, String(step));
+      g.querySelectorAll(".dots circle").forEach((d, j) => d.setAttribute("fill", j < step ? "var(--steel)" : "var(--card)"));
+      g.querySelectorAll(".row").forEach((r, j) => { const k = ease.outBack(clamp((t - c1 - 0.15 - j * 0.12) / 0.4)); r.setAttribute("opacity", clamp(k).toFixed(3)); r.setAttribute("transform", `translate(${40 + 20 * (1 - k)},${336 + j * 46})`); });
+    } else if (sh.card === "formats") {
+      const open = ease.outBack(clamp((t - wt(s, "deliver") + 0.1) / 0.35));
+      g.querySelector(".flap").setAttribute("transform", `scale(1,${(1 - 1.9 * open).toFixed(3)}) translate(0,${(46 * open * 0).toFixed(1)})`);
+      g.querySelector(".flap").setAttribute("transform-origin", "0 -46");
+      g.querySelector(".seal").setAttribute("opacity", (1 - clamp(open * 2)).toFixed(3));
+      g.querySelectorAll(".tile").forEach((el, j) => {
+        const k = ease.outBack(clamp((t - wt(s, "deliver") - 0.15 - j * 0.16) / 0.5));
+        const x = +el.dataset.x, y = +el.dataset.y;
+        el.setAttribute("transform", `translate(${lerp(226 - 93, x, k).toFixed(2)},${lerp(80, y, k).toFixed(2)}) scale(${(0.3 + 0.7 * clamp(k, 0, 1.2)).toFixed(3)})`);
+        el.setAttribute("opacity", clamp(k * 4).toFixed(3));
+      });
+      const fit = bump(t - wt(s, "fits"), 0.5);
+      g.querySelectorAll(".tile rect:nth-child(2)").forEach((r) => r.setAttribute("fill", `rgb(255,${Math.round(lerp(255, 222, fit))},${Math.round(lerp(255, 120, fit))})`));
+    } else if (sh.card === "files") {
+      const at = [wt(s, "anyone") - 0.2, wt(s, "link"), wt(s, "pdf"), wt(s, "video")];
+      g.querySelectorAll(".file").forEach((el, j) => {
+        const k = ease.outBack(clamp((t - at[j]) / 0.45));
+        el.setAttribute("transform", `translate(${el.dataset.x},${(+el.dataset.y + 30 * (1 - k)).toFixed(2)}) scale(${(0.8 + 0.2 * k).toFixed(3)})`);
+        el.setAttribute("opacity", clamp(k * 2).toFixed(3));
+      });
+      const fk = ease.outBack(clamp((t - wt(s, "no") + 0.05) / 0.5));
+      const foot = g.querySelector(".foot");
+      foot.setAttribute("transform", `translate(226,434) scale(${(0.6 + 0.4 * fk).toFixed(3)}) translate(-226,-434)`); foot.setAttribute("opacity", clamp(fk * 2).toFixed(3));
+    } else if (sh.card === "signoff") {
+      const bk = ease.inOutCubic(clamp((t - a0 - 0.3) / 0.7));
+      g.querySelector(".bar").setAttribute("width", (340 * bk).toFixed(1));
+      const ck = ease.outBack(clamp((t - wt(s, "thanks")) / 0.45));
+      g.querySelector(".check").setAttribute("transform", `translate(54,36) scale(${ck.toFixed(3)}) translate(-54,-36)`);
+    }
+  });
+}
+
+/* ---------- set + parallax ---------- */
+function renderSet(t) {
+  const cam = 12 * Math.sin(TAU * t / 16) + 6 * Math.sin(TAU * t / 7.3 + 0.6);
+  const camY = 4 * Math.sin(TAU * t / 11);
+  $("#bgFar").setAttribute("transform", `translate(${(-cam * 0.3).toFixed(2)},${(-camY * 0.3).toFixed(2)})`);
+  $("#bgMid").setAttribute("transform", `translate(${(-cam * 0.65).toFixed(2)},${(-camY * 0.6).toFixed(2)})`);
+  $("#floor").setAttribute("transform", `translate(${(-cam * 0.8).toFixed(2)},0)`);
+  document.querySelectorAll("#clouds g").forEach((c) => {
+    const k = +c.dataset.k, x = ((+c.dataset.x + t * 6 * k) % 420) - 40;
+    c.setAttribute("transform", `translate(${x.toFixed(2)},${c.dataset.y}) scale(${k})`);
+  });
+  // character and cards are the nearest layer: the tracking camera keeps them steady
+  $("#cards").setAttribute("transform", `translate(${(-cam * 0.05).toFixed(2)},0)`);
+}
+
+window.renderFrame = function (t, info) {
+  renderSet(t);
+  renderCards(t);
+  renderCharacter(t);
+  const sc = sceneAt(t);
+  $("#tc").textContent = t.toFixed(2) + "s";
+  $("#sc").textContent = `${sc.i + 1}/${V.scenes.length} ${sc.s.id} · ${window.__rig.mouth}`;
+};
+
+/* ---------- harness: sizing + preview with sound (from templates/video-shell.html) ---------- */
+(function () {
+  const { width, height, fps, duration } = V;
+  const stage = $("#stage");
+  document.documentElement.style.setProperty("--w", width + "px");
+  document.documentElement.style.setProperty("--h", height + "px");
+  if (window.__CAPTURE__) { document.documentElement.classList.add("capture"); window.renderFrame(0, { frame: 0, fps, duration }); return; }
+  const fit = () => {
+    const k = Math.min(innerWidth / width, innerHeight / height);
+    stage.style.transform = `translate(${(innerWidth - width * k) / 2}px, ${(innerHeight - height * k) / 2}px) scale(${k})`;
+  };
+  addEventListener("resize", fit); fit();
+  const audio = $("#narration");
+  let hasAudio = false, playing = false, t = 0, last = performance.now();
+  audio.addEventListener("canplaythrough", () => { hasAudio = true; });
+  audio.addEventListener("error", () => { hasAudio = false; });
+  const seek = (x) => { t = clamp(x, 0, duration - 1e-3); if (hasAudio) audio.currentTime = t; window.renderFrame(t, { fps, duration }); };
+  window.__seek = seek;
+  const toggle = () => {
+    playing = !playing;
+    if (hasAudio) { if (playing) { audio.currentTime = t; audio.play().catch(() => {}); } else audio.pause(); }
+  };
+  addEventListener("keydown", (e) => {
+    if (e.code === "Space") { toggle(); e.preventDefault(); }
+    const step = e.shiftKey ? null : 1 / fps;
+    if (e.key === "ArrowRight") { if (step) seek(t + step); else { const n = V.scenes.find((s) => s.from > t + 1e-3); seek(n ? n.from : duration); } }
+    if (e.key === "ArrowLeft") { if (step) seek(t - step); else { const p = [...V.scenes].reverse().find((s) => s.from < t - 0.05); seek(p ? p.from : 0); } }
+  });
+  stage.addEventListener("click", toggle);
+  (function tick(now) {
+    if (playing) {
+      t = hasAudio && !audio.paused ? audio.currentTime : t + (now - last) / 1000;
+      if (t >= duration) { t = 0; if (hasAudio) audio.currentTime = 0; }
+      window.renderFrame(t, { fps, duration });
+    }
+    last = now; requestAnimationFrame(tick);
+  })(last);
+  window.renderFrame(0, { fps, duration });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "voice": "af_bella",
+  "speed": 0.88,
+  "gap": 0.6,
+  "leadIn": 0.7,
+  "tail": 1.6,
+  "scenes": [
+    {
+      "id": "hello",
+      "say": "Hi there! I'm Sen, and I carry messages for Seneca.",
+      "show": { "gesture": "wave", "card": "nametag", "name": "Sen", "role": "Messenger for Seneca", "emphasis": ["Sen", "Seneca"] }
+    },
+    {
+      "id": "audiences",
+      "say": "Have you ever noticed how every audience takes things in a little differently?",
+      "show": { "gesture": "point", "card": "audiences", "head": "Every audience", "people": ["Exec", "Engineer", "Customer"], "emphasis": ["every", "differently"] }
+    },
+    {
+      "id": "number",
+      "say": "Some people want the number, plain and simple, right at the top.",
+      "show": { "gesture": "present", "card": "number", "label": "Pipeline this quarter", "value": "+38%", "emphasis": ["number", "top"] }
+    },
+    {
+      "id": "motion",
+      "say": "Some want to see it move, so the idea clicks as it plays.",
+      "show": { "gesture": "flourish", "card": "motion", "label": "Looping GIF", "emphasis": ["move", "clicks"] }
+    },
+    {
+      "id": "try",
+      "say": "And some would rather try it themselves, one step at a time.",
+      "show": { "gesture": "tap", "card": "guide", "label": "Step 2 of 4", "button": "Run report", "emphasis": ["try", "step"] }
+    },
+    {
+      "id": "job",
+      "say": "So that's my job. I deliver every message in the format that fits.",
+      "show": { "gesture": "envelope", "card": "formats", "formats": ["Deck", "Chart", "Guide", "Video"], "emphasis": ["job", "fits"] }
+    },
+    {
+      "id": "anyone",
+      "say": "And it all opens for anyone. A link, a PDF, a video. No special software.",
+      "show": { "gesture": "shrug", "card": "files", "files": [".html", ".pdf", ".gif", ".mp4"], "foot": "No special software", "emphasis": ["anyone", "special"] }
+    },
+    {
+      "id": "signoff",
+      "say": "Okay, I've got deliveries to make. Thanks for watching, see you soon!",
+      "show": { "gesture": "thumbs", "card": "signoff", "head": "Seneca", "foot": "Every message, every format.", "emphasis": ["Thanks", "soon"] }
+    }
+  ]
+}

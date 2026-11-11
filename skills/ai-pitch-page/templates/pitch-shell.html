@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<!-- FILL: <title> = who it's for + the hook, e.g. "For Acme RevOps: routing that explains itself" -->
+<title>For {Company} {Team}: {one-line hook}</title>
+<!-- FILL: one sentence, shown in search-less previews and some chat apps -->
+<meta name="description" content="A one-page answer to the {Role title} posting, from {Candidate name}.">
+<!-- FILL: Open Graph tags. og:image and og:url must be ABSOLUTE https URLs, so set them once the
+     folder is hosted (see reference/pitch-parameters.md). Opened as a file, the page still works. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="For {Company} {Team}: {one-line hook}">
+<meta property="og:description" content="A one-page answer to the {Role title} posting, from {Candidate name}.">
+<meta property="og:image" content="https://{your-host}/{folder}/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta property="og:url" content="https://{your-host}/{folder}/">
+<!-- Keep: a pitch page is for one reader, not for search engines. -->
+<meta name="robots" content="noindex, nofollow">
+<script>
+  // Preview mode: ?preview in the URL (or data-preview set by scripts/render-preview.mjs)
+  // shows only #preview-card at 1200x627, the source of preview.png.
+  try { if (new URLSearchParams(location.search).has("preview")) document.documentElement.setAttribute("data-preview", ""); } catch (e) {}
+</script>
+<style>
+  /* RESTYLE: these tokens are a deliberately neutral placeholder. Re-theme per company by
+     borrowing the subject of the role (a RevOps page can feel like a dashboard, a design role's
+     like a portfolio), never the company's logo or trademarked branding. */
+  :root {
+    --bg: #f4f4f2;
+    --surface: #ffffff;
+    --sunk: #ebebe8;
+    --ink: #1e2124;
+    --ink-2: #4b5157;
+    --ink-3: #747b82;
+    --rule: #d9dad6;
+    --accent: #3b5b7a;
+    --accent-ink: #ffffff;
+    --accent-soft: #e3e9ef;
+
+    --f-display: "Avenir Next", Avenir, "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --f-text: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --f-num: "SF Mono", ui-monospace, "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141618;
+      --surface: #1c1f22;
+      --sunk: #23272b;
+      --ink: #e8eaec;
+      --ink-2: #b6bcc2;
+      --ink-3: #8a9198;
+      --rule: #30353a;
+      --accent: #8fb0cf;
+      --accent-ink: #10161c;
+      --accent-soft: #233140;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--f-text); }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 40px 0; border-top: 1px solid var(--rule); }
+  h1, h2, h3 { font-family: var(--f-display); line-height: 1.15; margin: 0; }
+  h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 18px; }
+  a { color: var(--accent); }
+  .eyebrow { font-size: 14px; color: var(--ink-2); margin: 0 0 10px; }
+
+  /* Hero */
+  .hero { padding: 56px 0 40px; border-top: 0; }
+  .hero h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 650; max-width: 22ch; }
+  .hero .fit { font-size: 19px; color: var(--ink-2); max-width: 60ch; margin: 16px 0 0; }
+
+  /* You asked / I've done */
+  .rows { display: grid; gap: 12px; }
+  .row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 20px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; }
+  .row .asked { font-weight: 600; }
+  .row .done { margin: 0; padding-left: 18px; color: var(--ink-2); }
+  .row .done li + li { margin-top: 4px; }
+  .label { display: block; font-size: 12px; color: var(--ink-3); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 4px; }
+
+  /* Demo */
+  .demo { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 20px; }
+  .sample-tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--ink-2); margin-bottom: 12px; }
+  .demo-out { font-family: var(--f-num); font-size: 22px; margin-top: 12px; }
+
+  /* First 90 days */
+  .steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .steps li { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; }
+  .steps b { display: block; font-family: var(--f-num); color: var(--accent); font-weight: 500; margin-bottom: 6px; }
+
+  /* Contact */
+  .contact { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+  .email { font-family: var(--f-num); user-select: all; -webkit-user-select: all; }
+  button { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--rule); background: var(--surface); color: var(--ink); cursor: pointer; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy-status { font-size: 13px; color: var(--ink-3); }
+  .copy-status:empty { display: none; }
+  footer { padding: 24px 0 48px; font-size: 13px; color: var(--ink-3); }
+
+  @media (max-width: 640px) {
+    .row { grid-template-columns: 1fr; gap: 8px; }
+    .steps { grid-template-columns: 1fr; }
+  }
+
+  /* Preview card: hidden in normal viewing; the only thing shown in preview mode. */
+  #preview-card { display: none; }
+  html[data-preview] body { margin: 0; background: var(--bg); }
+  html[data-preview] body > *:not(#preview-card) { display: none !important; }
+  html[data-preview] #preview-card {
+    display: flex; flex-direction: column; justify-content: space-between;
+    width: 1200px; height: 627px; padding: 64px 72px; overflow: hidden;
+    background: var(--surface); color: var(--ink); font-family: var(--f-display);
+  }
+  #preview-card .pc-for { font-size: 34px; color: var(--ink-2); margin: 0; }
+  #preview-card .pc-hook { font-size: 76px; font-weight: 700; line-height: 1.05; margin: 0; max-width: 16ch; }
+  #preview-card .pc-who { font-size: 30px; color: var(--accent); margin: 0; }
+</style>
+</head>
+<body>
+
+<!-- FILL: PREVIEW CARD (1200x627). Source of preview.png via scripts/render-preview.mjs.
+     Big text only, it shows small in the feed: who it's for, the one-line hook, the candidate name.
+     Keep it a direct child of <body>. -->
+<div id="preview-card" aria-hidden="true">
+  <p class="pc-for">For {Recipient name}, {Recipient title} at {Company}</p>
+  <p class="pc-hook">{One-line hook}</p>
+  <p class="pc-who">{Candidate name} &middot; for the {Role title} role</p>
+</div>
+
+<main class="wrap">
+
+  <!-- FILL: HERO. Name the reader and the role; one sentence of fit built on the single strongest
+       piece of evidence (with its number). 30 words or fewer. -->
+  <section class="hero">
+    <p class="eyebrow">For {Recipient name}, {Recipient title} &middot; {Company}</p>
+    <h1>{Role title}: {one-line hook}</h1>
+    <p class="fit">{One sentence: the strongest evidence, with its number, stated plainly.}</p>
+  </section>
+
+  <!-- FILL: YOU ASKED / I'VE DONE. 3-5 rows from the requirements map, top-ranked rows with real
+       evidence only. Left: the requirement in the posting's own words. Right: 1-2 evidence lines,
+       numbers only from the evidence source. Copy a .row per requirement. -->
+  <section aria-labelledby="h-asked">
+    <h2 id="h-asked">You asked / I've done</h2>
+    <div class="rows">
+      <div class="row">
+        <div class="asked"><span class="label">You asked</span>{Requirement, in the posting's words}</div>
+        <div><span class="label">I've done</span>
+          <ul class="done">
+            <li>{Action + what + measurable result, from the evidence}</li>
+          </ul>
+        </div>
+      </div>
+      <div class="row">
+        <div class="asked"><span class="label">You asked</span>{Requirement}</div>
+        <div><span class="label">I've done</span>
+          <ul class="done"><li>{Evidence line}</li></ul>
+        </div>
+      </div>
+      <div class="row">
+        <div class="asked"><span class="label">You asked</span>{Requirement}</div>
+        <div><span class="label">I've done</span>
+          <ul class="done"><li>{Evidence line}</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FILL: DEMO SLOT. Replace everything inside #demo with one small interactive piece that performs
+       the core skill on a problem shaped like the role (see "Demo ideas by role" in the reference).
+       Sample data only, labeled as a sample; one screen; usable in 30 seconds. Never the company's
+       real data, never an imitation of their product. The placeholder below just proves the slot works. -->
+  <section id="demo" aria-labelledby="h-demo">
+    <h2 id="h-demo">See it work</h2>
+    <div class="demo">
+      <span class="sample-tag">Sample data</span>
+      <label for="demo-in">Placeholder input</label>
+      <input id="demo-in" type="range" min="0" max="100" value="40">
+      <div class="demo-out" id="demo-out" aria-live="polite">40</div>
+    </div>
+  </section>
+
+  <!-- FILL (optional): FIRST 90 DAYS. Three modest, concrete steps grounded in the posting.
+       Listening and learning first. Delete this section if it doesn't earn its place. -->
+  <section aria-labelledby="h-90">
+    <h2 id="h-90">First 90 days</h2>
+    <ol class="steps">
+      <li><b>Days 1-30</b>{Listen: learn how it works today and who depends on it.}</li>
+      <li><b>Days 31-60</b>{One small, visible improvement agreed with the team.}</li>
+      <li><b>Days 61-90</b>{Make it durable: document, measure, hand off.}</li>
+    </ol>
+  </section>
+
+  <!-- FILL: CONTACT. Email as selectable text + copy button, LinkedIn URL, resume PDF link
+       (relative path; ship the PDF in the same folder). -->
+  <section aria-labelledby="h-contact">
+    <h2 id="h-contact">Contact</h2>
+    <div class="contact">
+      <span class="email" id="email">{name@example.com}</span>
+      <button type="button" id="copy-email">Copy email</button>
+      <span class="copy-status" id="copy-status" aria-live="polite"></span>
+      <a href="https://www.linkedin.com/in/{handle}/">linkedin.com/in/{handle}</a>
+      <a href="{Candidate_Name_Resume}.pdf">Resume (PDF)</a>
+    </div>
+  </section>
+
+</main>
+
+<!-- FILL: footer. Keep it short; for examples, say what is fictional. -->
+<footer class="wrap">{Candidate name} &middot; made for {Recipient name} &middot; one file, no tracking</footer>
+
+<script>
+  // Copy email: clipboard API inside the click handler (needs a user gesture); if that is
+  // unavailable (file://, older browsers, permissions), select the text so Cmd/Ctrl+C works.
+  (function () {
+    var btn = document.getElementById("copy-email");
+    var el = document.getElementById("email");
+    var status = document.getElementById("copy-status");
+    function selectText() {
+      var r = document.createRange(); r.selectNodeContents(el);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      status.textContent = "Selected: press Cmd/Ctrl+C";
+    }
+    btn.addEventListener("click", function () {
+      var text = el.textContent.trim();
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(function () { status.textContent = "Copied"; }, selectText);
+        } else { selectText(); }
+      } catch (e) { selectText(); }
+    });
+  })();
+
+  // FILL: DEMO SCRIPT. Replace with the demo's logic.
+  (function () {
+    var i = document.getElementById("demo-in"), o = document.getElementById("demo-out");
+    if (i && o) i.addEventListener("input", function () { o.textContent = i.value; });
+  })();
+</script>
+</body>
+</html>

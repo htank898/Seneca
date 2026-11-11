@@ -1,0 +1,88 @@
+{
+  "voice": "af_heart",
+  "speed": 0.9,
+  "gap": 0.55,
+  "leadIn": 0.6,
+  "tail": 1.4,
+  "scenes": [
+    {
+      "id": "audiences",
+      "say": "Every message you send lands with people who take things in differently.",
+      "show": {
+        "kicker": "One message",
+        "head": "Many audiences.",
+        "chips": [
+          "Executives",
+          "Engineers",
+          "Customers",
+          "New hires"
+        ]
+      }
+    },
+    {
+      "id": "where-they-are",
+      "say": "Some want the number. Some want to see it move. Some want to click through it themselves.",
+      "show": {
+        "kicker": "Meet them where they are",
+        "head": "Each, their way.",
+        "rows": [
+          "The number",
+          "The motion",
+          "The walkthrough"
+        ]
+      }
+    },
+    {
+      "id": "agents-build",
+      "say": "Seneca gives your agent the skills to build the format each audience needs.",
+      "show": {
+        "kicker": "Seneca gives your agent the skills",
+        "head": "Agents build it.",
+        "formats": [
+          "Deck",
+          "Chart",
+          "Guide",
+          "Letter",
+          "Animation",
+          "Video"
+        ]
+      }
+    },
+    {
+      "id": "web-native",
+      "say": "It's all made with HTML, CSS, and JavaScript, the language agents already speak best.",
+      "show": {
+        "kicker": "Built for agents",
+        "head": "Made of the web.",
+        "code": [
+          "<section>",
+          "  renderFrame(t)",
+          "</section>"
+        ]
+      }
+    },
+    {
+      "id": "opens-anywhere",
+      "say": "So what you get is a file that opens anywhere. A link, a PDF, a GIF, or a video like this one.",
+      "show": {
+        "kicker": "Portable by default",
+        "head": "Opens for anyone.",
+        "files": [
+          ".html",
+          ".pdf",
+          ".gif",
+          ".mp4"
+        ]
+      }
+    },
+    {
+      "id": "close",
+      "say": "Meet every audience where they are. Seneca is open source, and ready when you are.",
+      "show": {
+        "kicker": "Meet every audience where they are.",
+        "head": "Seneca",
+        "foot": "github.com/htank898/Seneca"
+      }
+    }
+  ]
+}

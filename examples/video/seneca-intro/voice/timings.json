@@ -1,0 +1,139 @@
+{
+  "sampleRate": 24000,
+  "voice": "af_heart",
+  "speed": 0.9,
+  "model": "hexgrad/Kokoro-82M",
+  "gap": 0.55,
+  "leadIn": 0.6,
+  "tail": 1.4,
+  "duration": 35.39,
+  "scenes": [
+    {
+      "id": "audiences",
+      "index": 0,
+      "file": "01-audiences.wav",
+      "text": "Every message you send lands with people who take things in differently.",
+      "start": 0.6,
+      "end": 4.535,
+      "duration": 3.935,
+      "hash": "019389bdc8f17de6",
+      "show": {
+        "kicker": "One message",
+        "head": "Many audiences.",
+        "chips": [
+          "Executives",
+          "Engineers",
+          "Customers",
+          "New hires"
+        ]
+      },
+      "from": 0.0,
+      "to": 4.81
+    },
+    {
+      "id": "where-they-are",
+      "index": 1,
+      "file": "02-where-they-are.wav",
+      "text": "Some want the number. Some want to see it move. Some want to click through it themselves.",
+      "start": 5.085,
+      "end": 9.712,
+      "duration": 4.628,
+      "hash": "d517b2f2eb5473ce",
+      "show": {
+        "kicker": "Meet them where they are",
+        "head": "Each, their way.",
+        "rows": [
+          "The number",
+          "The motion",
+          "The walkthrough"
+        ]
+      },
+      "from": 4.81,
+      "to": 9.987
+    },
+    {
+      "id": "agents-build",
+      "index": 2,
+      "file": "03-agents-build.wav",
+      "text": "Seneca gives your agent the skills to build the format each audience needs.",
+      "start": 10.262,
+      "end": 14.745,
+      "duration": 4.483,
+      "hash": "1196cf2d17ed1073",
+      "show": {
+        "kicker": "Seneca gives your agent the skills",
+        "head": "Agents build it.",
+        "formats": [
+          "Deck",
+          "Chart",
+          "Guide",
+          "Letter",
+          "Animation",
+          "Video"
+        ]
+      },
+      "from": 9.987,
+      "to": 15.02
+    },
+    {
+      "id": "web-native",
+      "index": 3,
+      "file": "04-web-native.wav",
+      "text": "It's all made with HTML, CSS, and JavaScript, the language agents already speak best.",
+      "start": 15.295,
+      "end": 21.638,
+      "duration": 6.343,
+      "hash": "51283bd69c571002",
+      "show": {
+        "kicker": "Built for agents",
+        "head": "Made of the web.",
+        "code": [
+          "<section>",
+          "  renderFrame(t)",
+          "</section>"
+        ]
+      },
+      "from": 15.02,
+      "to": 21.913
+    },
+    {
+      "id": "opens-anywhere",
+      "index": 4,
+      "file": "05-opens-anywhere.wav",
+      "text": "So what you get is a file that opens anywhere. A link, a PDF, a GIF, or a video like this one.",
+      "start": 22.188,
+      "end": 28.696,
+      "duration": 6.508,
+      "hash": "3367296171d15cb4",
+      "show": {
+        "kicker": "Portable by default",
+        "head": "Opens for anyone.",
+        "files": [
+          ".html",
+          ".pdf",
+          ".gif",
+          ".mp4"
+        ]
+      },
+      "from": 21.913,
+      "to": 28.971
+    },
+    {
+      "id": "close",
+      "index": 5,
+      "file": "06-close.wav",
+      "text": "Meet every audience where they are. Seneca is open source, and ready when you are.",
+      "start": 29.246,
+      "end": 33.99,
+      "duration": 4.744,
+      "hash": "e619a01072cab470",
+      "show": {
+        "kicker": "Meet every audience where they are.",
+        "head": "Seneca",
+        "foot": "github.com/htank898/Seneca"
+      },
+      "from": 28.971,
+      "to": 35.39
+    }
+  ]
+}

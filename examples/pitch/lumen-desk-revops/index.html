@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>For Lumen Desk Revenue: routing that explains itself</title>
+<meta name="description" content="A one-page answer to the Revenue Operations Automation Lead posting, from Jordan Avery. Sample: Jordan Avery and Lumen Desk are fictional.">
+<!-- og:image and og:url must be absolute https URLs; replace {your-host} once this folder is hosted. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="For Lumen Desk Revenue: routing that explains itself">
+<meta property="og:description" content="A one-page answer to the Revenue Operations Automation Lead posting, from Jordan Avery.">
+<meta property="og:image" content="https://{your-host}/lumen-desk-revops-7f3k/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="627">
+<meta property="og:url" content="https://{your-host}/lumen-desk-revops-7f3k/">
+<meta name="robots" content="noindex, nofollow">
+<script>
+  try { if (new URLSearchParams(location.search).has("preview")) document.documentElement.setAttribute("data-preview", ""); } catch (e) {}
+</script>
+<style>
+  /* Theme: a well-made RevOps dashboard. Cool neutral canvas, cobalt for "routed", green for "met". */
+  :root {
+    --bg: #edf0f4;
+    --surface: #ffffff;
+    --sunk: #f4f6f9;
+    --ink: #131c26;
+    --ink-2: #445162;
+    --ink-3: #66727f;
+    --rule: #d8dee6;
+    --accent: #2449c9;
+    --accent-ink: #ffffff;
+    --accent-soft: #e3e9fb;
+    --ok: #157545;
+    --ok-soft: #dff1e7;
+    --skip: #9aa4b1;
+
+    --f-display: "Avenir Next", Avenir, "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --f-text: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --f-num: "SF Mono", ui-monospace, "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0c1117;
+      --surface: #141b23;
+      --sunk: #19222c;
+      --ink: #e3e8ee;
+      --ink-2: #aab4c0;
+      --ink-3: #828e9b;
+      --rule: #263240;
+      --accent: #86a0ff;
+      --accent-ink: #0c1530;
+      --accent-soft: #1b2650;
+      --ok: #5cc690;
+      --ok-soft: #12301f;
+      --skip: #5a6573;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-text); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  h1, h2, h3 { font-family: var(--f-display); line-height: 1.15; margin: 0; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  .num { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
+  section { padding: 36px 0 8px; }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .sec-head h2 { font-size: 13px; letter-spacing: .09em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .sec-head .meta { font-size: 13px; color: var(--ink-3); }
+  .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
+
+  /* Top bar */
+  .top { border-bottom: 1px solid var(--rule); background: var(--surface); }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; padding-top: 12px; padding-bottom: 12px; }
+  .who { font-family: var(--f-display); font-weight: 650; }
+  .who span { font-weight: 400; color: var(--ink-3); }
+  .fiction { font-size: 12.5px; color: var(--ink-2); background: var(--sunk); border: 1px solid var(--rule); border-radius: 99px; padding: 3px 10px; }
+
+  /* Hero */
+  .hero { padding: 44px 0 0; }
+  .eyebrow { font-size: 14px; color: var(--ink-2); margin: 0 0 10px; }
+  .hero h1 { font-size: clamp(30px, 4.6vw, 48px); font-weight: 650; letter-spacing: -.01em; max-width: 20ch; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .fit { font-size: 18.5px; color: var(--ink-2); max-width: 58ch; margin: 14px 0 0; }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 28px; }
+  .kpi { padding: 14px 16px 16px; }
+  .kpi .k-label { font-size: 12.5px; color: var(--ink-3); }
+  .kpi .k-val { font-family: var(--f-num); font-size: 25px; margin-top: 6px; white-space: nowrap; }
+  .kpi .k-val s { color: var(--ink-3); text-decoration: none; font-size: 18px; }
+  .kpi .k-val i { font-style: normal; color: var(--ink-3); font-size: 18px; padding: 0 7px; }
+  .kpi .k-val b { font-weight: 600; color: var(--ok); }
+  .kpi .k-src { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+
+  /* You asked / I've done */
+  .rows { overflow: hidden; }
+  .row { display: grid; grid-template-columns: 44px minmax(0, 5fr) minmax(0, 7fr); gap: 16px; padding: 16px 18px; border-top: 1px solid var(--rule); }
+  .row:first-child { border-top: 0; }
+  .row .idx { font-family: var(--f-num); font-size: 13px; color: var(--ink-3); padding-top: 2px; }
+  .row .asked { font-weight: 600; }
+  .row .done { margin: 0; padding: 0; list-style: none; color: var(--ink-2); }
+  .row .done li { position: relative; padding-left: 16px; }
+  .row .done li + li { margin-top: 4px; }
+  .row .done li::before { content: ""; position: absolute; left: 0; top: .62em; width: 7px; height: 7px; border-radius: 2px; background: var(--ok); }
+  .row .src { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
+  .rows-head { display: grid; grid-template-columns: 44px minmax(0, 5fr) minmax(0, 7fr); gap: 16px; padding: 10px 18px; background: var(--sunk); border-bottom: 1px solid var(--rule); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+
+  /* Routing simulator */
+  .sim { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+  .sim-in { padding: 18px; border-right: 1px solid var(--rule); background: var(--sunk); border-radius: 12px 0 0 12px; }
+  .sim-out { padding: 18px 20px; }
+  fieldset { border: 0; margin: 0 0 14px; padding: 0; min-width: 0; }
+  legend { font-size: 12.5px; color: var(--ink-3); margin-bottom: 6px; padding: 0; }
+  .seg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .seg label { font-size: 14px; padding: 5px 11px; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); cursor: pointer; user-select: none; }
+  .seg input:checked + label { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .sim-note { font-size: 12.5px; color: var(--ink-3); margin: 4px 0 0; }
+
+  .result { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid var(--rule); }
+  .result .r-rule { font-size: 12.5px; color: var(--ink-3); grid-column: 1 / -1; }
+  .result .r-queue { font-family: var(--f-display); font-size: 22px; font-weight: 650; line-height: 1.2; }
+  .result .r-owner { font-size: 14px; color: var(--ink-2); }
+  .result .r-sla { text-align: right; grid-row: 2 / span 2; grid-column: 2; }
+  .result .r-sla span { display: block; font-size: 12px; color: var(--ink-3); }
+  .result .r-sla b { font-family: var(--f-num); font-size: 26px; font-weight: 600; color: var(--ok); }
+  .why { font-size: 14.5px; color: var(--ink-2); margin: 12px 0 10px; }
+  .trace { list-style: none; margin: 0; padding: 0; font-size: 13.5px; }
+  .trace li { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 10px; padding: 5px 0; border-top: 1px dashed var(--rule); }
+  .trace li:first-child { border-top: 0; }
+  .trace .st { font-family: var(--f-num); font-size: 11.5px; letter-spacing: .03em; padding-top: 2px; }
+  .trace .t-name { font-weight: 600; }
+  .trace .t-why { color: var(--ink-2); }
+  .trace .miss .st { color: var(--ink-3); }
+  .trace .hit { background: var(--ok-soft); border-radius: 6px; padding-left: 6px; padding-right: 6px; margin: 0 -6px; border-top-color: transparent; }
+  .trace .hit .st { color: var(--ok); font-weight: 600; }
+  .trace .hit + li { border-top-color: transparent; }
+  .trace .skip { color: var(--skip); }
+  .trace .skip .t-why, .trace .skip .t-name { color: var(--skip); font-weight: 400; }
+
+  /* First 90 days */
+  .steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .steps li { padding: 16px; color: var(--ink-2); }
+  .steps b { display: block; font-family: var(--f-num); font-size: 12.5px; color: var(--accent); font-weight: 500; margin-bottom: 6px; }
+  .steps strong { display: block; color: var(--ink); font-family: var(--f-display); font-size: 17px; margin-bottom: 4px; }
+
+  /* Contact */
+  .contact { display: flex; flex-wrap: wrap; gap: 12px 22px; align-items: center; padding: 16px 18px; }
+  .email { font-family: var(--f-num); font-size: 15px; user-select: all; -webkit-user-select: all; }
+  button { font: inherit; font-size: 14px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--rule); background: var(--sunk); color: var(--ink); cursor: pointer; }
+  button:hover { border-color: var(--ink-3); }
+  button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy-status { font-size: 13px; color: var(--ok); }
+  .copy-status:empty { display: none; }
+  footer { padding: 28px 0 48px; font-size: 13px; color: var(--ink-3); }
+
+  @media (max-width: 860px) {
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sim { grid-template-columns: 1fr; }
+    .sim-in { border-right: 0; border-bottom: 1px solid var(--rule); border-radius: 12px 12px 0 0; }
+    .steps { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .wrap { padding: 0 16px; }
+    .hero { padding-top: 32px; }
+    .fit { font-size: 17px; }
+    .kpi { padding: 12px; }
+    .kpi .k-val { font-size: 20px; }
+    .kpi .k-val s, .kpi .k-val i { font-size: 15px; }
+    .rows-head { display: none; }
+    .row { grid-template-columns: 1fr; gap: 6px; padding: 14px; }
+    .result .r-queue { font-size: 19px; }
+    .result .r-sla b { font-size: 22px; }
+    .trace li { grid-template-columns: 46px minmax(0, 1fr); gap: 8px; }
+    .kpi .k-val i { padding: 0 4px; }
+  }
+
+  /* Preview card (source of preview.png). Fixed light palette so the image is the same in any theme. */
+  #preview-card { display: none; }
+  html[data-preview] body { margin: 0; background: #edf0f4; }
+  html[data-preview] body > *:not(#preview-card) { display: none !important; }
+  html[data-preview] #preview-card {
+    display: grid; grid-template-rows: auto 1fr auto; width: 1200px; height: 627px; overflow: hidden;
+    padding: 60px 72px 56px; background: #ffffff; color: #131c26; font-family: var(--f-display);
+    border-top: 14px solid #2449c9;
+  }
+  #preview-card .pc-for { font-size: 38px; color: #445162; margin: 0; }
+  #preview-card .pc-hook { font-size: 92px; font-weight: 700; line-height: 1.02; letter-spacing: -.015em; margin: 26px 0 0; max-width: 13ch; }
+  #preview-card .pc-hook em { font-style: normal; color: #2449c9; }
+  #preview-card .pc-foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+  #preview-card .pc-who { font-size: 34px; font-weight: 650; margin: 0; }
+  #preview-card .pc-who span { display: block; font-size: 29px; font-weight: 400; color: #445162; }
+  #preview-card .pc-kpi { font-family: var(--f-num); font-size: 40px; color: #157545; font-weight: 600; text-align: right; white-space: nowrap; }
+  #preview-card .pc-kpi span { display: block; font-family: var(--f-display); font-size: 27px; color: #66727f; font-weight: 400; }
+</style>
+</head>
+<body>
+
+<!-- PREVIEW CARD: rendered to preview.png by skills/ai-pitch-page/scripts/render-preview.mjs -->
+<div id="preview-card" aria-hidden="true">
+  <p class="pc-for">For Dana Whitfield, VP Revenue at Lumen Desk</p>
+  <p class="pc-hook">Lead routing that <em>explains itself</em></p>
+  <div class="pc-foot">
+    <p class="pc-who">Jordan Avery<span>for the Revenue Operations Automation Lead role</span></p>
+    <p class="pc-kpi"><span>median speed-to-lead</span>9 h &rarr; 22 min</p>
+  </div>
+</div>
+
+<header class="top">
+  <div class="wrap">
+    <div class="who">Jordan Avery <span>/ for the Revenue Operations Automation Lead role</span></div>
+    <div class="fiction">Sample: Jordan Avery and Lumen Desk are fictional.</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <p class="eyebrow">For Dana Whitfield, VP Revenue &middot; Lumen Desk</p>
+    <h1>Lead routing that <em>explains itself</em>.</h1>
+    <p class="fit">Jordan rebuilt inbound lead routing in Salesforce Flow across 4 regions and 3 segments; median speed-to-lead fell from 9 hours to 22 minutes.</p>
+    <div class="kpis">
+      <div class="kpi panel">
+        <div class="k-label">Median speed-to-lead</div>
+        <div class="k-val"><s>9 h</s><i>&rarr;</i><b>22 min</b></div>
+        <div class="k-src">Northwind Analytics</div>
+      </div>
+      <div class="kpi panel">
+        <div class="k-label">Misrouted leads</div>
+        <div class="k-val"><s>14%</s><i>&rarr;</i><b>3%</b></div>
+        <div class="k-src">Northwind Analytics</div>
+      </div>
+      <div class="kpi panel">
+        <div class="k-label">First-touch SLA attainment</div>
+        <div class="k-val"><s>62%</s><i>&rarr;</i><b>91%</b></div>
+        <div class="k-src">Brightline Software</div>
+      </div>
+      <div class="kpi panel">
+        <div class="k-label">Assignment rules</div>
+        <div class="k-val"><s>41</s><i>&rarr;</i><b>12</b></div>
+        <div class="k-src">Northwind Analytics, documented</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- YOU ASKED / I'VE DONE: top 5 rows of requirements-map.md; gaps (scripting, CPQ, managing a team) are left off -->
+  <section aria-labelledby="h-asked">
+    <div class="sec-head"><h2 id="h-asked">You asked / I've done</h2><span class="meta">From the posting, in its words</span></div>
+    <div class="panel rows">
+      <div class="rows-head" aria-hidden="true"><span>#</span><span>You asked</span><span>I've done</span></div>
+      <div class="row">
+        <div class="idx" data-nocheck>01</div>
+        <div class="asked">Lead routing and assignment in Salesforce as a core part of the job</div>
+        <div>
+          <ul class="done">
+            <li>Replaced 41 legacy assignment rules with 12 documented routing rules and a round-robin queue; misrouted leads dropped from 14% to 3%.</li>
+            <li>Built a routing audit log that records which rule fired and why for every lead; routing-related tickets to RevOps fell 60%.</li>
+          </ul>
+          <div class="src"><span class="role-title">Senior Revenue Operations Manager</span>, Northwind Analytics &middot; in ops roles since 2018</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="idx" data-nocheck>02</div>
+        <div class="asked">Hands-on Salesforce Flow automation; Salesforce Administrator certification preferred</div>
+        <div>
+          <ul class="done">
+            <li>Rebuilt inbound lead routing in Salesforce Flow across 4 regions and 3 segments.</li>
+            <li>Automated weekly pipeline reporting, cutting prep from 4 hours to 20 minutes.</li>
+          </ul>
+          <div class="src"><span class="cert">Salesforce Certified Administrator</span> (2019) &middot; <span class="cert">Salesforce Certified Platform App Builder</span> (2021)</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="idx" data-nocheck>03</div>
+        <div class="asked">A track record of improving speed-to-lead and SLA attainment, with numbers</div>
+        <div>
+          <ul class="done">
+            <li>Built first-touch SLA alerts for inbound leads (1-hour SLA); SLA attainment rose from 62% to 91%.</li>
+            <li>Median speed-to-lead fell from 9 hours to 22 minutes after the routing rebuild.</li>
+          </ul>
+          <div class="src"><span class="role-title">Revenue Operations Analyst</span>, Brightline Software &middot; <span class="role-title">Senior Revenue Operations Manager</span>, Northwind Analytics</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="idx" data-nocheck>04</div>
+        <div class="asked">Experience designing territories and account ownership models</div>
+        <div>
+          <ul class="done">
+            <li>Designed the territory model for 22 reps across North America and EMEA.</li>
+            <li>Cleaned up account ownership on 3,400 accounts ahead of a territory realignment.</li>
+          </ul>
+          <div class="src"><span class="role-title">Revenue Operations Analyst</span> and <span class="role-title">Sales Operations Coordinator</span>, Brightline Software</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="idx" data-nocheck>05</div>
+        <div class="asked">Partner with Support; background in customer support</div>
+        <div>
+          <ul class="done">
+            <li>Resolved an average of 45 tickets a day at 96% CSAT.</li>
+            <li>Wrote 25 knowledge-base articles that became the team's standard replies.</li>
+          </ul>
+          <div class="src"><span class="role-title">Customer Support Specialist</span>, Harbor Point Telecom</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO: lead routing simulator. Sample rules and data built from scratch; not Lumen Desk's. -->
+  <section id="demo" data-sample aria-labelledby="h-demo">
+    <div class="sec-head"><h2 id="h-demo">Routing simulator</h2><span class="meta">Sample rules and sample leads, for illustration</span></div>
+    <div class="panel sim">
+      <form class="sim-in" id="sim-form" onsubmit="return false">
+        <fieldset>
+          <legend>Company size (employees)</legend>
+          <div class="seg">
+            <input type="radio" name="size" id="sz-s" value="s"><label for="sz-s">1&ndash;49</label>
+            <input type="radio" name="size" id="sz-m" value="m" checked><label for="sz-m">50&ndash;499</label>
+            <input type="radio" name="size" id="sz-l" value="l"><label for="sz-l">500+</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Region</legend>
+          <div class="seg">
+            <input type="radio" name="region" id="rg-na" value="na" checked><label for="rg-na">North America</label>
+            <input type="radio" name="region" id="rg-emea" value="emea"><label for="rg-emea">EMEA</label>
+            <input type="radio" name="region" id="rg-apac" value="apac"><label for="rg-apac">APAC</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Product interest</legend>
+          <div class="seg">
+            <input type="radio" name="interest" id="pi-desk" value="desk"><label for="pi-desk">Help desk</label>
+            <input type="radio" name="interest" id="pi-ai" value="ai" checked><label for="pi-ai">AI triage</label>
+            <input type="radio" name="interest" id="pi-sso" value="sso"><label for="pi-sso">SSO &amp; audit</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend>Lead source</legend>
+          <div class="seg">
+            <input type="radio" name="source" id="src-demo" value="demo" checked><label for="src-demo">Demo request</label>
+            <input type="radio" name="source" id="src-trial" value="trial"><label for="src-trial">Free trial</label>
+            <input type="radio" name="source" id="src-web" value="webinar"><label for="src-web">Webinar</label>
+            <input type="radio" name="source" id="src-partner" value="partner"><label for="src-partner">Partner referral</label>
+          </div>
+        </fieldset>
+        <p class="sim-note">Rules run top to bottom; the first match wins.</p>
+      </form>
+      <div class="sim-out" aria-live="polite">
+        <div class="result">
+          <div class="r-rule" id="r-rule"></div>
+          <div class="r-queue" id="r-queue"></div>
+          <div class="r-owner" id="r-owner"></div>
+          <div class="r-sla"><span>First-touch SLA</span><b id="r-sla"></b></div>
+        </div>
+        <p class="why" id="r-why"></p>
+        <ol class="trace" id="r-trace"></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIRST 90 DAYS: listening first, grounded in the posting -->
+  <section aria-labelledby="h-90">
+    <div class="sec-head"><h2 id="h-90" data-nocheck>First 90 days</h2><span class="meta">Listen first, then change one thing at a time</span></div>
+    <ol class="steps">
+      <li class="panel"><b data-nocheck>Days 1&ndash;30</b><strong>Map it before touching it</strong>Trace how leads move today, from every inbound source to a rep, with Sales and Support in the room.</li>
+      <li class="panel"><b data-nocheck>Days 31&ndash;60</b><strong>Agree on the clock</strong>Set a speed-to-lead SLA for each source with the sales leads, and put attainment on one dashboard everyone reads.</li>
+      <li class="panel"><b data-nocheck>Days 61&ndash;90</b><strong>Make every route readable</strong>Record which rule fired and why on each routed lead, and document the rules so anyone can check them.</li>
+    </ol>
+  </section>
+
+  <!-- CONTACT. Resume link: this sample ships no PDF, so it points to evidence.md (the master resume).
+       In a real pitch, link the resume PDF shipped in this folder, e.g. Jordan_Avery_Resume.pdf. -->
+  <section aria-labelledby="h-contact">
+    <div class="sec-head"><h2 id="h-contact">Contact</h2></div>
+    <div class="panel contact">
+      <span class="email" id="email">jordan.avery@example.com</span>
+      <button type="button" id="copy-email">Copy email</button>
+      <span class="copy-status" id="copy-status" aria-live="polite"></span>
+      <a href="https://www.linkedin.com/in/jordan-avery-sample/">linkedin.com/in/jordan-avery-sample</a>
+      <a href="evidence.md">Resume</a>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">Made for Dana Whitfield. One file, no tracking. Sample: Jordan Avery and Lumen Desk are fictional; the routing rules above are illustrative.</footer>
+
+<script>
+  // Copy email: clipboard API inside the click handler; otherwise select the text for Cmd/Ctrl+C.
+  (function () {
+    var btn = document.getElementById("copy-email");
+    var el = document.getElementById("email");
+    var status = document.getElementById("copy-status");
+    function selectText() {
+      var r = document.createRange(); r.selectNodeContents(el);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      status.textContent = "Selected: press Cmd/Ctrl+C";
+    }
+    btn.addEventListener("click", function () {
+      var text = el.textContent.trim();
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(function () { status.textContent = "Copied"; }, selectText);
+        } else { selectText(); }
+      } catch (e) { selectText(); }
+    });
+  })();
+
+  // Routing simulator (sample rules). Each rule is a list of AND clauses; first match wins.
+  (function () {
+    var FIELD = { size: "company size", region: "region", interest: "product interest", source: "source" };
+    var LABEL = {
+      size: { s: "1–49", m: "50–499", l: "500+" },
+      region: { na: "North America", emea: "EMEA", apac: "APAC" },
+      interest: { desk: "Help desk", ai: "AI triage", sso: "SSO & audit" },
+      source: { demo: "Demo request", trial: "Free trial", webinar: "Webinar", partner: "Partner referral" }
+    };
+    function reg(l) { return LABEL.region[l.region]; }
+    var RULES = [
+      { name: "Partner referral", when: { source: ["partner"] },
+        route: function () { return { queue: "Partner team queue", owner: "Partner manager on duty; the referring partner is copied", sla: "4 h" }; } },
+      { name: "Enterprise account", when: { size: ["l"] },
+        route: function (l) { return { queue: "Enterprise AE pod · " + reg(l), owner: "Named account owner for the territory", sla: "30 min" }; } },
+      { name: "Security evaluation", when: { interest: ["sso"], size: ["m"] },
+        route: function (l) { return { queue: "Enterprise AE pod · " + reg(l), owner: "Next Enterprise AE in rotation", sla: "30 min" }; } },
+      { name: "Mid-market demo request", when: { size: ["m"], source: ["demo"] },
+        route: function (l) { return { queue: "Mid-market AE round-robin · " + reg(l), owner: "Next available AE in the round-robin", sla: "15 min" }; } },
+      { name: "APAC coverage", when: { region: ["apac"] },
+        route: function () { return { queue: "APAC inside sales queue", owner: "First rep on shift in APAC hours", sla: "1 h" }; } },
+      { name: "Self-serve nurture", when: { size: ["s"], source: ["trial", "webinar"] },
+        route: function () { return { queue: "Product-led nurture · SDR", owner: "SDR team; in-app guide sent first", sla: "1 day" }; } },
+      { name: "Catch-all", when: {},
+        route: function (l) { return { queue: "SDR round-robin · " + reg(l), owner: "Next SDR in rotation", sla: "1 h" }; } }
+    ];
+
+    var form = document.getElementById("sim-form");
+    var $ = function (id) { return document.getElementById(id); };
+    function read() {
+      var d = new FormData(form);
+      return { size: d.get("size"), region: d.get("region"), interest: d.get("interest"), source: d.get("source") };
+    }
+    function names(f, vals) { return vals.map(function (v) { return LABEL[f][v]; }).join(" or "); }
+    function check(rule, l) {
+      var keys = Object.keys(rule.when);
+      for (var i = 0; i < keys.length; i++) {
+        var f = keys[i];
+        if (rule.when[f].indexOf(l[f]) < 0) {
+          return { ok: false, why: "Needs " + FIELD[f] + " " + names(f, rule.when[f]) + "; this lead is " + LABEL[f][l[f]] + "." };
+        }
+      }
+      if (!keys.length) return { ok: true, why: "No earlier rule matched, so the default applies.", parts: [] };
+      return { ok: true, why: "Matched: " + keys.map(function (f) { return FIELD[f] + " is " + LABEL[f][l[f]]; }).join(" and ") + ".",
+               parts: keys.map(function (f) { return FIELD[f] + " is " + LABEL[f][l[f]]; }) };
+    }
+    function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+    function run() {
+      var l = read(), hit = -1, out = [], res;
+      RULES.forEach(function (r, i) {
+        if (hit >= 0) { out.push({ cls: "skip", st: "SKIP", name: r.name, why: "Not checked: an earlier rule already matched." }); return; }
+        var c = check(r, l);
+        if (c.ok) { hit = i; res = c; out.push({ cls: "hit", st: "FIRED", name: r.name, why: c.why }); }
+        else out.push({ cls: "miss", st: "MISS", name: r.name, why: c.why });
+      });
+      var r = RULES[hit], route = r.route(l);
+      $("r-rule").textContent = "Rule " + (hit + 1) + " of " + RULES.length + " fired: " + r.name;
+      $("r-queue").textContent = route.queue;
+      $("r-owner").textContent = route.owner;
+      $("r-sla").textContent = route.sla;
+      var because = res.parts.length ? "because " + res.parts.join(" and ") : "because no earlier rule matched";
+      var before = hit === 0 ? "It was the first rule checked." :
+        (hit === 1 ? "Rule 1 didn't match." : "Rules 1–" + hit + " didn't match.");
+      $("r-why").textContent = "Routed to " + route.queue + " " + because + ". " + before;
+      $("r-trace").innerHTML = out.map(function (o, i) {
+        return '<li class="' + o.cls + '"><span class="st">' + o.st + '</span><span><span class="t-name">' + (i + 1) + ". " + esc(o.name) +
+          '</span> <span class="t-why">' + esc(o.why) + "</span></span></li>";
+      }).join("");
+    }
+    form.addEventListener("change", run);
+    run();
+  })();
+</script>
+</body>
+</html>

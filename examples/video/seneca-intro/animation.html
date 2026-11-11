@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seneca Intro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<script src="voice/timings.js" onerror="void 0"></script>
+<style>
+  /* Same patent-drawing identity as examples/gif/any-format.html. */
+  :root { --paper: #e6eae8; --card: #f7f8f7; --ink: #16191d; --steel: #5e7a94; --signal: #f5c518; --mute: #c9d1cd; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #2a2e33; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: var(--w); height: var(--h); background: var(--paper); overflow: hidden; transform-origin: 0 0; }
+  svg { display: block; font-family: "Archivo", sans-serif; }
+  .head { font-weight: 850; font-stretch: 112%; font-size: 80px; fill: var(--ink); letter-spacing: -1.5px; }
+  .kicker { font-weight: 650; font-size: 36px; fill: var(--steel); }
+  .t { font-weight: 700; fill: var(--ink); }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-weight: 600; white-space: pre; }
+  #hud { position: fixed; right: 12px; bottom: 12px; font: 12px/1.4 ui-monospace, monospace; color: #ccc; background: rgba(0,0,0,.6); padding: 6px 10px; border-radius: 6px; }
+  .capture #hud { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+<svg viewBox="0 0 1080 1080" width="1080" height="1080">
+  <defs>
+    <clipPath id="headclip"><rect x="0" y="104" width="1080" height="110"/></clipPath>
+  </defs>
+
+  <text id="brand" x="1016" y="84" text-anchor="end" font-size="30" font-weight="850" style="font-stretch:115%" fill="var(--ink)">Seneca</text>
+  <text id="kPrev" class="kicker" x="64" y="84"></text>
+  <text id="kCur" class="kicker" x="64" y="84"></text>
+  <g clip-path="url(#headclip)">
+    <text id="hPrev" class="head" x="60" y="182"></text>
+    <text id="hCur" class="head" x="60" y="182"></text>
+  </g>
+
+  <!-- 1. one message, many audiences -->
+  <g id="s-audiences">
+    <g id="spokes"></g>
+    <circle id="msgHalo" cx="540" cy="580" r="80" fill="none" stroke="var(--signal)" stroke-width="6"/>
+    <circle id="msg" cx="540" cy="580" r="48" fill="var(--signal)" stroke="var(--ink)" stroke-width="5"/>
+    <g id="people"></g>
+  </g>
+
+  <!-- 2. each, their way: three cards -->
+  <g id="s-where">
+    <g id="ways"></g>
+  </g>
+
+  <!-- 3. agents build the format -->
+  <g id="s-agents">
+    <g id="links"></g>
+    <g id="formats"></g>
+    <g id="agent">
+      <circle cx="540" cy="590" r="84" fill="var(--ink)"/>
+      <path id="spark" d="M 0 -42 L 11 -11 L 42 0 L 11 11 L 0 42 L -11 11 L -42 0 L -11 -11 Z" fill="var(--signal)"/>
+      <text x="540" y="720" text-anchor="middle" font-size="26" font-weight="700" fill="var(--steel)">your agent</text>
+    </g>
+  </g>
+
+  <!-- 4. made of the web -->
+  <g id="s-web">
+    <rect x="76" y="292" width="470" height="440" rx="20" fill="var(--ink)"/>
+    <rect x="64" y="280" width="470" height="440" rx="20" fill="var(--ink)" stroke="var(--ink)" stroke-width="4"/>
+    <circle cx="100" cy="316" r="8" fill="var(--signal)"/><circle cx="126" cy="316" r="8" fill="var(--steel)"/><circle cx="152" cy="316" r="8" fill="var(--steel)"/>
+    <g id="code"></g>
+    <rect id="caret" width="14" height="30" fill="var(--signal)"/>
+    <rect x="570" y="292" width="458" height="440" rx="20" fill="var(--ink)"/>
+    <rect id="outCard" x="558" y="280" width="458" height="440" rx="20" fill="var(--card)" stroke="var(--ink)" stroke-width="4"/>
+    <g id="outInner">
+      <rect id="oHead" x="598" y="330" width="300" height="34" rx="6" fill="var(--ink)"/>
+      <rect id="oSub" x="598" y="384" width="220" height="14" rx="7" fill="var(--steel)" opacity=".6"/>
+      <g id="oBars"></g>
+      <line x1="598" y1="660" x2="976" y2="660" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    <g id="langs"></g>
+  </g>
+
+  <!-- 5. opens for anyone -->
+  <g id="s-files">
+    <g id="files"></g>
+  </g>
+
+  <!-- 6. close -->
+  <g id="s-close">
+    <circle id="cDot" cx="104" cy="392" r="30" fill="var(--signal)" stroke="var(--ink)" stroke-width="5"/>
+    <text id="cWord" x="156" y="440" font-size="176" font-weight="900" style="font-stretch:120%" letter-spacing="-4" fill="var(--ink)">Seneca</text>
+    <rect id="cBar" x="64" y="488" width="0" height="18" rx="9" fill="var(--signal)" stroke="var(--ink)" stroke-width="4"/>
+    <g id="cl0"><text x="64" y="618" font-size="50" font-weight="850" style="font-stretch:110%" fill="var(--ink)">Open source.</text></g>
+    <g id="cl1"><text x="64" y="690" font-size="50" font-weight="850" style="font-stretch:110%" fill="var(--ink)">Ready when you are.</text></g>
+    <g id="cUrl"><text x="64" y="800" font-size="34" font-weight="650" fill="var(--steel)">github.com/htank898/Seneca</text></g>
+  </g>
+
+  <!-- progress: one segment per scene -->
+  <g id="progress"></g>
+</svg>
+</div>
+<div id="hud">space play/pause · ←/→ frame · shift+←/→ scene · <span id="tc">0.00s</span> · <span id="sc"></span></div>
+<audio id="narration" src="voice/narration.wav" preload="auto"></audio>
+
+<script>
+const CONFIG = { width: 1080, height: 1080, fps: 30 };
+window.VIDEO = window.VIDEO || (window.VIDEO_TIMINGS ? { ...CONFIG, duration: window.VIDEO_TIMINGS.duration, scenes: window.VIDEO_TIMINGS.scenes } : null);
+if (!window.VIDEO) throw new Error("Run tts.py first: voice/timings.js not found");
+const V = window.VIDEO;
+
+/* ---------- helpers (from templates/video-shell.html) ---------- */
+const TAU = Math.PI * 2;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const ease = {
+  inOutCubic: (x) => (x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  outCubic: (x) => 1 - Math.pow(1 - x, 3),
+  inCubic: (x) => x * x * x,
+  outBack: (x) => { const c = 1.70158, d = c + 1; return 1 + d * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); },
+};
+function sceneAt(t) {
+  let i = 0;
+  for (let k = 0; k < V.scenes.length; k++) if (t >= V.scenes[k].from) i = k;
+  const s = V.scenes[i];
+  return { s, i, local: t - s.from, left: s.to - t, p: seg(t, s.from, s.to), speak: seg(t, s.start, s.end) };
+}
+const enter = (sc, delay = 0, dur = 0.5, e = ease.outCubic) => e(clamp((sc.local - delay) / dur));
+const exit = (sc, dur = 0.35, e = ease.inCubic) => 1 - e(clamp(1 - sc.left / dur));
+function wordTime(s, phrase, nth = 0) {
+  let at = -1;
+  for (let k = 0; k <= nth; k++) at = s.text.toLowerCase().indexOf(phrase.toLowerCase(), at + 1);
+  return at < 0 ? s.start : s.start + (s.end - s.start) * (at / s.text.length);
+}
+const enterAt = (t, at, dur = 0.45, e = ease.outCubic) => e(clamp((t - at) / dur));
+
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent && parent.appendChild(e); return e; };
+const set = (e, attrs) => { for (const k in attrs) e.setAttribute(k, attrs[k]); };
+const S = Object.fromEntries(V.scenes.map((s) => [s.id, s]));
+const GROUPS = { "audiences": "s-audiences", "where-they-are": "s-where", "agents-build": "s-agents", "web-native": "s-web", "opens-anywhere": "s-files", "close": "s-close" };
+
+/* ---------- build ---------- */
+// 1. audiences around the message
+const PEOPLE = S["audiences"].show.chips.map((name, i) => ({ name, x: i % 2 ? 790 : 290, y: i < 2 ? 410 : 750 }));
+const people = PEOPLE.map((p) => {
+  const spoke = el("path", { d: `M 540 580 L ${p.x} ${p.y}`, stroke: "var(--ink)", "stroke-width": 3, fill: "none", "stroke-dasharray": "2 10", "stroke-linecap": "round" }, $("spokes"));
+  const g = el("g", {}, $("people"));
+  el("rect", { x: p.x - 158 + 10, y: p.y - 44 + 10, width: 316, height: 88, rx: 44, fill: "var(--ink)" }, g);
+  const box = el("rect", { x: p.x - 158, y: p.y - 44, width: 316, height: 88, rx: 44, fill: "var(--card)", stroke: "var(--ink)", "stroke-width": 4 }, g);
+  el("text", { x: p.x, y: p.y + 12, "text-anchor": "middle", "font-size": 34, class: "t" }, g).textContent = p.name;
+  const pkt = el("circle", { r: 10, fill: "var(--signal)", stroke: "var(--ink)", "stroke-width": 3 }, $("spokes"));
+  return { ...p, spoke, g, box, pkt };
+});
+
+// 2. three ways in
+const WAYS = S["where-they-are"].show.rows;
+const ways = WAYS.map((label, i) => {
+  const x = 64 + i * 326, y = 300, w = 300, h = 470;
+  const g = el("g", {}, $("ways"));
+  el("rect", { x: x + 12, y: y + 12, width: w, height: h, rx: 20, fill: "var(--ink)" }, g);
+  const box = el("rect", { x, y, width: w, height: h, rx: 20, fill: "var(--card)", stroke: "var(--ink)", "stroke-width": 4 }, g);
+  el("text", { x: x + 28, y: y + 58, "font-size": 30, class: "t" }, g).textContent = label;
+  const inner = el("g", {}, g);
+  return { x, y, w, h, g, box, inner, label };
+});
+// number
+const wNum = el("text", { x: ways[0].x + 26, y: 585, "font-size": 76, "font-weight": 900, style: "font-stretch:100%", fill: "var(--ink)" }, ways[0].inner);
+el("rect", { x: ways[0].x + 30, y: 650, width: 240, height: 16, rx: 8, fill: "var(--mute)" }, ways[0].inner);
+const wNumBar = el("rect", { x: ways[0].x + 30, y: 650, width: 0, height: 16, rx: 8, fill: "var(--signal)", stroke: "var(--ink)", "stroke-width": 3 }, ways[0].inner);
+// motion
+const mcx = ways[1].x + 150, mcy = 560;
+el("circle", { cx: mcx, cy: mcy, r: 110, fill: "none", stroke: "var(--mute)", "stroke-width": 4, "stroke-dasharray": "3 12", "stroke-linecap": "round" }, ways[1].inner);
+el("circle", { cx: mcx, cy: mcy, r: 64, fill: "none", stroke: "var(--mute)", "stroke-width": 4, "stroke-dasharray": "3 12", "stroke-linecap": "round" }, ways[1].inner);
+const mCore = el("circle", { cx: mcx, cy: mcy, r: 36, fill: "var(--signal)", stroke: "var(--ink)", "stroke-width": 5 }, ways[1].inner);
+const mO1 = el("circle", { r: 17, fill: "var(--ink)" }, ways[1].inner);
+const mO2 = el("rect", { x: -14, y: -14, width: 28, height: 28, rx: 5, fill: "var(--steel)", stroke: "var(--ink)", "stroke-width": 4 }, ways[1].inner);
+// walkthrough
+const wx = ways[2].x;
+el("rect", { x: wx + 28, y: 420, width: 244, height: 18, rx: 9, fill: "var(--ink)", opacity: .7 }, ways[2].inner);
+el("rect", { x: wx + 28, y: 452, width: 180, height: 14, rx: 7, fill: "var(--steel)", opacity: .5 }, ways[2].inner);
+const wBtn = el("g", {}, ways[2].inner);
+el("rect", { x: wx + 40, y: 510, width: 220, height: 64, rx: 32, fill: "var(--card)", stroke: "var(--ink)", "stroke-width": 4 }, wBtn);
+el("text", { x: wx + 150, y: 552, "text-anchor": "middle", "font-size": 27, "font-weight": 800, fill: "var(--ink)" }, wBtn).textContent = "Next step";
+const wRipple = el("circle", { cx: wx + 150, cy: 542, r: 0, fill: "none", stroke: "var(--ink)", "stroke-width": 4 }, ways[2].inner);
+const wDone = el("g", {}, ways[2].inner);
+el("circle", { cx: wx + 70, cy: 660, r: 20, fill: "var(--ink)" }, wDone);
+el("path", { d: `M ${wx + 60} 660 l 7 8 l 14 -16`, stroke: "var(--signal)", "stroke-width": 5, fill: "none", "stroke-linecap": "round", "stroke-linejoin": "round" }, wDone);
+el("text", { x: wx + 104, y: 670, "font-size": 28, "font-weight": 700, fill: "var(--ink)" }, wDone).textContent = "Done";
+const wCursor = el("path", { d: "M 0 0 L 0 44 L 12 33 L 21 52 L 30 48 L 21 30 L 36 30 Z", fill: "var(--card)", stroke: "var(--ink)", "stroke-width": 4, "stroke-linejoin": "round" }, ways[2].inner);
+
+// 3. formats around the agent
+const FORMATS = S["agents-build"].show.formats;
+const formats = FORMATS.map((name, i) => {
+  const a = -Math.PI / 2 + (i - 0.5) * (TAU / FORMATS.length) + TAU / 12;
+  const x = 540 + 340 * Math.cos(a), y = 590 + 230 * Math.sin(a);
+  const link = el("path", { d: `M 540 590 L ${x} ${y}`, stroke: "var(--ink)", "stroke-width": 3, "stroke-dasharray": "2 10", "stroke-linecap": "round", fill: "none" }, $("links"));
+  const g = el("g", {}, $("formats"));
+  el("rect", { x: -100 + 9, y: -50 + 9, width: 200, height: 100, rx: 16, fill: "var(--ink)" }, g);
+  el("rect", { x: -100, y: -50, width: 200, height: 100, rx: 16, fill: i === 5 ? "var(--signal)" : "var(--card)", stroke: "var(--ink)", "stroke-width": 4 }, g);
+  el("text", { x: 0, y: 12, "text-anchor": "middle", "font-size": 32, class: "t" }, g).textContent = name;
+  return { x, y, g, link };
+});
+
+// 4. code typing into a rendered result
+const CODE = [
+  ["<section>", "var(--mute)"],
+  ["  <h1>One message</h1>", "var(--card)"],
+  ["</section>", "var(--mute)"],
+  ["<style> h1 { … } </style>", "var(--steel)"],
+  ["renderFrame(t) {", "var(--signal)"],
+  ["  scene.enter(t)", "var(--card)"],
+  ["}", "var(--signal)"],
+];
+const codeLines = CODE.map(([txt, fill], i) => ({ txt, node: el("text", { x: 100, y: 396 + i * 44, "font-size": 27, class: "mono", fill, "xml:space": "preserve" }, $("code")) }));
+const CODE_CHARS = CODE.reduce((a, c) => a + c[0].length, 0);
+const OBARS = [0.45, 0.62, 0.52, 0.8, 0.95];
+const oBars = OBARS.map((v, i) => el("rect", { x: 610 + i * 72, width: 48, rx: 6, fill: i === 4 ? "var(--signal)" : "var(--ink)", stroke: "var(--ink)", "stroke-width": 3 }, $("oBars")));
+const LANGS = ["HTML", "CSS", "JavaScript"];
+const langs = LANGS.map((name, i) => {
+  const w = [150, 130, 240][i], x = [64, 230, 376][i];
+  const g = el("g", {}, $("langs"));
+  const box = el("rect", { x, y: 772, width: w, height: 64, rx: 32, fill: "var(--card)", stroke: "var(--ink)", "stroke-width": 4 }, g);
+  el("text", { x: x + w / 2, y: 815, "text-anchor": "middle", "font-size": 30, class: "t" }, g).textContent = name;
+  return { g, box, name };
+});
+
+// 5. files that open anywhere
+const FILES = [
+  { ext: ".html", word: "link", note: "any browser" },
+  { ext: ".pdf", word: "PDF", note: "print or attach" },
+  { ext: ".gif", word: "GIF", note: "any chat" },
+  { ext: ".mp4", word: "video", note: "any feed" },
+];
+const files = FILES.map((f, i) => {
+  const g = el("g", {}, $("files"));
+  el("path", { d: "M -96 -130 L 50 -130 L 96 -84 L 96 130 L -96 130 Z", transform: "translate(9 9)", fill: "var(--ink)" }, g);
+  el("path", { d: "M -96 -130 L 50 -130 L 96 -84 L 96 130 L -96 130 Z", fill: i === 3 ? "var(--signal)" : "var(--card)", stroke: "var(--ink)", "stroke-width": 4, "stroke-linejoin": "round" }, g);
+  el("path", { d: "M 50 -130 L 50 -84 L 96 -84", fill: "none", stroke: "var(--ink)", "stroke-width": 4, "stroke-linejoin": "round" }, g);
+  el("text", { x: 0, y: 14, "text-anchor": "middle", "font-size": 50, "font-weight": 900, style: "font-stretch:115%", fill: "var(--ink)" }, g).textContent = f.ext;
+  el("text", { x: 0, y: 92, "text-anchor": "middle", "font-size": 22, "font-weight": 650, fill: "var(--steel)" }, g).textContent = f.note;
+  return { ...f, g };
+});
+
+// progress segments
+const SEG_GAP = 10, SEG_W = (952 - SEG_GAP * (V.scenes.length - 1)) / V.scenes.length;
+const prog = V.scenes.map((s, i) => {
+  el("rect", { x: 64 + i * (SEG_W + SEG_GAP), y: 1012, width: SEG_W, height: 8, rx: 4, fill: "var(--mute)" }, $("progress"));
+  return el("rect", { x: 64 + i * (SEG_W + SEG_GAP), y: 1012, width: 0, height: 8, rx: 4, fill: "var(--ink)" }, $("progress"));
+});
+
+/* ---------- frame ---------- */
+function fitHead(node, text) {
+  node.textContent = text;
+  node.setAttribute("font-size", 80);
+  const w = node.getComputedTextLength();
+  if (w > 956) node.setAttribute("font-size", Math.floor(80 * 956 / w));
+}
+
+window.renderFrame = function (t) {
+  const sc = sceneAt(t), s = sc.s, P = V.scenes[Math.max(0, sc.i - 1)];
+  const out = exit(sc, 0.35);
+  const lift = (1 - out) * -24;
+
+  // headline + kicker swap (like any-format.gif)
+  // Scene 1 is fully composed at t=0 so the first frame works as the poster/thumbnail.
+  const wk = sc.i === 0 ? 1 : ease.inOutCubic(seg(sc.local, 0.0, 0.45));
+  fitHead($("hCur"), s.show.head);
+  set($("hCur"), { y: lerp(290, 182, wk) });
+  fitHead($("hPrev"), sc.i === 0 ? "" : P.show.head);
+  set($("hPrev"), { y: lerp(182, 70, wk), opacity: (1 - wk).toFixed(3) });
+  $("kCur").textContent = s.show.kicker; $("kPrev").textContent = sc.i === 0 ? "" : P.show.kicker;
+  set($("kCur"), { opacity: sc.i === 0 ? 1 : seg(sc.local, 0.12, 0.4).toFixed(3) });
+  set($("kPrev"), { opacity: (1 - seg(sc.local, 0.0, 0.12)).toFixed(3) });
+  const isClose = s.id === "close";
+  set($("brand"), { opacity: isClose ? (1 - seg(sc.local, 0, 0.3)).toFixed(3) : 1 });
+  if (isClose) { set($("hCur"), { opacity: 0 }); set($("hPrev"), { opacity: (1 - wk).toFixed(3) }); }
+  else set($("hCur"), { opacity: 1 });
+
+  // show only the active scene's group
+  for (const id in GROUPS) $(GROUPS[id]).setAttribute("display", id === s.id ? "inline" : "none");
+  const G = $(GROUPS[s.id]);
+  set(G, { opacity: out.toFixed(3), transform: `translate(0 ${lift.toFixed(2)})` });
+
+  if (s.id === "audiences") {
+    const d = 1;
+    set($("msg"), { r: (48 * d + 3 * Math.sin(TAU * t * 0.8)).toFixed(2) });
+    const halo = ((t - 0.6) / 1.6) % 1;
+    set($("msgHalo"), { r: (52 + halo * 90).toFixed(1), opacity: t < 0.9 ? 0 : (0.9 * (1 - halo)).toFixed(3) });
+    people.forEach((p, i) => {
+      // each audience appears in turn while "lands with people who take things in differently" is said
+      const at = lerp(wordTime(s, "lands"), wordTime(s, "differently"), i / 3);
+      const a = enterAt(t, at, 0.5, ease.outBack);
+      set(p.g, { opacity: clamp(a).toFixed(3), transform: `translate(${p.x} ${p.y}) scale(${(0.86 + 0.14 * a).toFixed(3)}) translate(${-p.x} ${-p.y})` });
+      set(p.spoke, { opacity: enterAt(t, at - 0.25, 0.4).toFixed(3) });
+      const k = ((t - at) / 1.3) % 1;
+      set(p.pkt, { cx: lerp(540, p.x, k), cy: lerp(580, p.y, k), opacity: t < at ? 0 : (seg(k, 0, 0.1) * (1 - seg(k, 0.75, 0.9))).toFixed(2) });
+    });
+  }
+
+  if (s.id === "where-they-are") {
+    const marks = [wordTime(s, "Some want the"), wordTime(s, "Some want to see"), wordTime(s, "Some want to click")];
+    ways.forEach((w, i) => {
+      const a = enter(sc, 0.15 + i * 0.12, 0.55, ease.outCubic);
+      set(w.g, { opacity: a.toFixed(3), transform: `translate(0 ${((1 - a) * 40).toFixed(1)})` });
+      const on = t >= marks[i] - 0.1 && (i === 2 || t < marks[i + 1] - 0.1);
+      set(w.box, { fill: on ? "var(--signal)" : "var(--card)" });
+    });
+    const n = ease.outCubic(seg(t, marks[0], marks[0] + 1.1));
+    wNum.textContent = "+" + Math.round(38 * n) + "%";
+    set(wNumBar, { width: (240 * 0.72 * n).toFixed(1) });
+    const ang = TAU * (t - marks[1]) / 2.4;
+    set(mCore, { r: (36 + 6 * Math.sin(TAU * t * 0.9)).toFixed(2) });
+    set(mO1, { cx: mcx + 110 * Math.cos(ang), cy: mcy + 110 * Math.sin(ang) });
+    set(mO2, { transform: `translate(${mcx + 64 * Math.cos(-1.6 * ang + 1)} ${mcy + 64 * Math.sin(-1.6 * ang + 1)}) rotate(${(ang * 115).toFixed(1)})` });
+    const m = ease.inOutCubic(seg(t, marks[2], marks[2] + 0.9));
+    const press = seg(t, marks[2] + 0.9, marks[2] + 1.0) * (1 - seg(t, marks[2] + 1.05, marks[2] + 1.2));
+    set(wCursor, { transform: `translate(${lerp(wx + 230, wx + 150, m)} ${lerp(720, 548, m)}) scale(${1 - press * 0.12})` });
+    set(wBtn, { transform: `translate(${wx + 150} 542) scale(${1 - press * 0.06}) translate(${-(wx + 150)} -542)` });
+    const rp = seg(t, marks[2] + 0.95, marks[2] + 1.5);
+    set(wRipple, { r: 40 + rp * 90, opacity: (rp > 0 ? 1 - rp : 0).toFixed(2) });
+    const dn = ease.outBack(seg(t, marks[2] + 1.15, marks[2] + 1.6));
+    set(wDone, { opacity: clamp(dn).toFixed(3), transform: `translate(0 ${((1 - dn) * 16).toFixed(1)})` });
+  }
+
+  if (s.id === "agents-build") {
+    const ag = enter(sc, 0.2, 0.55, ease.outBack);
+    set($("agent"), { opacity: clamp(ag).toFixed(3), transform: `translate(540 590) scale(${(0.7 + 0.3 * ag).toFixed(3)}) translate(-540 -590)` });
+    $("spark").setAttribute("transform", `translate(540 590) rotate(${(t * 40).toFixed(2)}) scale(${(1 + 0.08 * Math.sin(TAU * t * 1.2)).toFixed(3)})`);
+    const a0 = wordTime(s, "build"), a1 = wordTime(s, "needs");
+    formats.forEach((f, i) => {
+      const at = lerp(a0, a1, i / (formats.length - 1));
+      const a = enterAt(t, at, 0.5, ease.outBack);
+      const cx = lerp(540, f.x, clamp(a)), cy = lerp(590, f.y, clamp(a));
+      set(f.g, { opacity: clamp(a * 3).toFixed(3), transform: `translate(${cx.toFixed(1)} ${cy.toFixed(1)}) scale(${(0.5 + 0.5 * a).toFixed(3)})` });
+      set(f.link, { opacity: enterAt(t, at + 0.2, 0.3).toFixed(3) });
+    });
+  }
+
+  if (s.id === "web-native") {
+    // type the code across the spoken line, then the result builds on the right
+    const typed = Math.floor(CODE_CHARS * ease.inOutCubic(seg(t, s.from + 0.3, s.end - 0.6)));
+    let left = typed, cx = 100, cy = 396;
+    codeLines.forEach((c, i) => {
+      const n = clamp(left, 0, c.txt.length);
+      c.node.textContent = c.txt.slice(0, n);
+      if (left > 0) { cy = 396 + i * 44; cx = 100 + c.node.getComputedTextLength(); }
+      left -= c.txt.length;
+    });
+    set($("caret"), { x: (cx + 4).toFixed(1), y: cy - 24, opacity: (Math.floor(t * 2.5) % 2 === 0 || typed < CODE_CHARS) ? 1 : 0 });
+    const r1 = ease.outCubic(seg(t, wordTime(s, "HTML"), wordTime(s, "HTML") + 0.5));
+    set($("oHead"), { width: (300 * r1).toFixed(1) });
+    const r2 = ease.outCubic(seg(t, wordTime(s, "CSS"), wordTime(s, "CSS") + 0.5));
+    set($("oSub"), { width: (220 * r2).toFixed(1) });
+    set($("outCard"), { fill: r2 > 0.5 ? "var(--card)" : "#eef0ef" });
+    const jt = wordTime(s, "JavaScript");
+    oBars.forEach((b, i) => { const g = ease.outBack(seg(t, jt + i * 0.12, jt + 0.5 + i * 0.12)); const bh = Math.max(0.01, OBARS[i] * 210 * g); set(b, { y: 660 - bh, height: bh }); });
+    langs.forEach((l) => {
+      const at = wordTime(s, l.name);
+      const a = enterAt(t, at - 0.1, 0.4, ease.outBack);
+      set(l.g, { opacity: clamp(a).toFixed(3), transform: `translate(0 ${((1 - a) * 18).toFixed(1)})` });
+      set(l.box, { fill: t >= at ? "var(--signal)" : "var(--card)" });
+    });
+    const sp = enter(sc, 0.0, 0.5);
+    set($("code"), { opacity: sp.toFixed(3) });
+  }
+
+  if (s.id === "opens-anywhere") {
+    // a single file first ("a file that opens anywhere"), then it fans out into four as each is named
+    files.forEach((f, i) => {
+      const at = wordTime(s, f.word);
+      const fan = ease.inOutCubic(seg(t, at - 0.15, at + 0.45));
+      const base = enter(sc, 0.3, 0.5, ease.outBack);
+      const tx = lerp(540 + i * 6, 162 + i * 252, fan), ty = lerp(570 - i * 6, 590, fan);
+      const rot = lerp(-6 + i * 4, 0, fan);
+      set(f.g, { transform: `translate(${tx.toFixed(1)} ${ty.toFixed(1)}) rotate(${rot.toFixed(2)}) scale(${(0.9 + 0.1 * clamp(base)).toFixed(3)})` });
+    });
+    set($("files"), { opacity: clamp(enter(sc, 0.3, 0.4)).toFixed(3) });   // fade the stack as one, so back cards never show through
+    // z-order is a pure function of t: cards already fanned out first, then the stack with .html on top
+    const fanned = files.filter((f) => t >= wordTime(s, f.word) - 0.15);
+    const stacked = files.filter((f) => t < wordTime(s, f.word) - 0.15).reverse();
+    [...fanned, ...stacked].forEach((f) => $("files").appendChild(f.g));
+  }
+
+  if (s.id === "close") {
+    const w = enter(sc, 0.1, 0.7);
+    set($("cWord"), { opacity: w.toFixed(3), transform: `translate(${((1 - w) * 40).toFixed(1)} 0)` });
+    const d = enter(sc, 0.0, 0.6, ease.outBack);
+    set($("cDot"), { r: (30 * d).toFixed(2) });
+    set($("cBar"), { width: (952 * ease.inOutCubic(seg(sc.local, 0.4, 1.4))).toFixed(1) });
+    [["cl0", "open source"], ["cl1", "ready when"]].forEach(([id, word]) => {
+      const a = enterAt(t, wordTime(s, word) - 0.15, 0.5);
+      set($(id), { opacity: a.toFixed(3), transform: `translate(${((1 - a) * 28).toFixed(1)} 0)` });
+    });
+    const u = enterAt(t, s.end - 0.2, 0.6);
+    set($("cUrl"), { opacity: u.toFixed(3) });
+    set(G, { opacity: 1, transform: "" });   // the last scene holds; no exit
+  }
+
+  prog.forEach((r, i) => {
+    const sc2 = V.scenes[i];
+    set(r, { width: (SEG_W * seg(t, sc2.from, sc2.to)).toFixed(1) });
+  });
+  set($("progress"), { opacity: (seg(t, 0.2, 0.8) * (isClose ? 1 - seg(sc.local, 0, 0.4) : 1)).toFixed(3) });
+  $("tc").textContent = t.toFixed(2) + "s";
+  $("sc").textContent = `${sc.i + 1}/${V.scenes.length} ${s.id}`;
+};
+
+/* ---------- harness: sizing + preview with sound (from templates/video-shell.html) ---------- */
+(function () {
+  const { width, height, fps, duration } = V;
+  const stage = document.getElementById("stage");
+  document.documentElement.style.setProperty("--w", width + "px");
+  document.documentElement.style.setProperty("--h", height + "px");
+  if (window.__CAPTURE__) { document.documentElement.classList.add("capture"); window.renderFrame(0, { frame: 0, fps, duration }); return; }
+  const fit = () => {
+    const k = Math.min(innerWidth / width, innerHeight / height);
+    stage.style.transform = `translate(${(innerWidth - width * k) / 2}px, ${(innerHeight - height * k) / 2}px) scale(${k})`;
+  };
+  addEventListener("resize", fit); fit();
+  const audio = document.getElementById("narration");
+  let hasAudio = false, playing = false, t = 0, last = performance.now();
+  audio.addEventListener("canplaythrough", () => { hasAudio = true; });
+  const seek = (x) => { t = clamp(x, 0, duration - 1e-3); if (hasAudio) audio.currentTime = t; window.renderFrame(t, { fps, duration }); };
+  const toggle = () => { playing = !playing; if (hasAudio) { if (playing) { audio.currentTime = t; audio.play().catch(() => {}); } else audio.pause(); } };
+  addEventListener("keydown", (e) => {
+    if (e.code === "Space") { toggle(); e.preventDefault(); }
+    const step = e.shiftKey ? null : 1 / fps;
+    if (e.key === "ArrowRight") { if (step) seek(t + step); else { const n = V.scenes.find((s) => s.from > t + 1e-3); seek(n ? n.from : duration); } }
+    if (e.key === "ArrowLeft") { if (step) seek(t - step); else { const p = [...V.scenes].reverse().find((s) => s.from < t - 0.05); seek(p ? p.from : 0); } }
+  });
+  stage.addEventListener("click", toggle);
+  (function tick(now) {
+    if (playing) {
+      t = hasAudio && !audio.paused ? audio.currentTime : t + (now - last) / 1000;
+      if (t >= duration) { t = 0; if (hasAudio) audio.currentTime = 0; }
+      window.renderFrame(t, { fps, duration });
+    }
+    last = now; requestAnimationFrame(tick);
+  })(last);
+  window.renderFrame(0, { fps, duration });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+window.VIDEO_TIMINGS = {
+  "sampleRate": 24000,
+  "voice": "af_bella",
+  "speed": 0.88,
+  "model": "hexgrad/Kokoro-82M",
+  "gap": 0.6,
+  "leadIn": 0.7,
+  "tail": 1.6,
+  "duration": 39.691,
+  "scenes": [
+    {
+      "id": "hello",
+      "index": 0,
+      "file": "01-hello.wav",
+      "text": "Hi there! I'm Sen, and I carry messages for Seneca.",
+      "start": 0.7,
+      "end": 4.382,
+      "duration": 3.682,
+      "hash": "f243ed9cca1eff64",
+      "show": {
+        "gesture": "wave",
+        "card": "nametag",
+        "name": "Sen",
+        "role": "Messenger for Seneca",
+        "emphasis": [
+          "Sen",
+          "Seneca"
+        ]
+      },
+      "from": 0.0,
+      "to": 4.682
+    },
+    {
+      "id": "audiences",
+      "index": 1,
+      "file": "02-audiences.wav",
+      "text": "Have you ever noticed how every audience takes things in a little differently?",
+      "start": 4.982,
+      "end": 9.054,
+      "duration": 4.072,
+      "hash": "20620159919fcb09",
+      "show": {
+        "gesture": "point",
+        "card": "audiences",
+        "head": "Every audience",
+        "people": [
+          "Exec",
+          "Engineer",
+          "Customer"
+        ],
+        "emphasis": [
+          "every",
+          "differently"
+        ]
+      },
+      "from": 4.682,
+      "to": 9.354
+    },
+    {
+      "id": "number",
+      "index": 2,
+      "file": "03-number.wav",
+      "text": "Some people want the number, plain and simple, right at the top.",
+      "start": 9.654,
+      "end": 13.544,
+      "duration": 3.891,
+      "hash": "a649e31e8898ae96",
+      "show": {
+        "gesture": "present",
+        "card": "number",
+        "label": "Pipeline this quarter",
+        "value": "+38%",
+        "emphasis": [
+          "number",
+          "top"
+        ]
+      },
+      "from": 9.354,
+      "to": 13.844
+    },
+    {
+      "id": "motion",
+      "index": 3,
+      "file": "04-motion.wav",
+      "text": "Some want to see it move, so the idea clicks as it plays.",
+      "start": 14.144,
+      "end": 17.68,
+      "duration": 3.536,
+      "hash": "41ac7aa2891bedba",
+      "show": {
+        "gesture": "flourish",
+        "card": "motion",
+        "label": "Looping GIF",
+        "emphasis": [
+          "move",
+          "clicks"
+        ]
+      },
+      "from": 13.844,
+      "to": 17.98
+    },
+    {
+      "id": "try",
+      "index": 4,
+      "file": "05-try.wav",
+      "text": "And some would rather try it themselves, one step at a time.",
+      "start": 18.28,
+      "end": 21.795,
+      "duration": 3.514,
+      "hash": "9ba23c2f174db4f5",
+      "show": {
+        "gesture": "tap",
+        "card": "guide",
+        "label": "Step 2 of 4",
+        "button": "Run report",
+        "emphasis": [
+          "try",
+          "step"
+        ]
+      },
+      "from": 17.98,
+      "to": 22.095
+    },
+    {
+      "id": "job",
+      "index": 5,
+      "file": "06-job.wav",
+      "text": "So that's my job. I deliver every message in the format that fits.",
+      "start": 22.395,
+      "end": 26.81,
+      "duration": 4.415,
+      "hash": "ddd448f5965a2574",
+      "show": {
+        "gesture": "envelope",
+        "card": "formats",
+        "formats": [
+          "Deck",
+          "Chart",
+          "Guide",
+          "Video"
+        ],
+        "emphasis": [
+          "job",
+          "fits"
+        ]
+      },
+      "from": 22.095,
+      "to": 27.11
+    },
+    {
+      "id": "anyone",
+      "index": 6,
+      "file": "07-anyone.wav",
+      "text": "And it all opens for anyone. A link, a PDF, a video. No special software.",
+      "start": 27.41,
+      "end": 33.343,
+      "duration": 5.933,
+      "hash": "f05ebda7a2709ac0",
+      "show": {
+        "gesture": "shrug",
+        "card": "files",
+        "files": [
+          ".html",
+          ".pdf",
+          ".gif",
+          ".mp4"
+        ],
+        "foot": "No special software",
+        "emphasis": [
+          "anyone",
+          "special"
+        ]
+      },
+      "from": 27.11,
+      "to": 33.643
+    },
+    {
+      "id": "signoff",
+      "index": 7,
+      "file": "08-signoff.wav",
+      "text": "Okay, I've got deliveries to make. Thanks for watching, see you soon!",
+      "start": 33.943,
+      "end": 38.091,
+      "duration": 4.149,
+      "hash": "0fd61deab305cda5",
+      "show": {
+        "gesture": "thumbs",
+        "card": "signoff",
+        "head": "Seneca",
+        "foot": "Every message, every format.",
+        "emphasis": [
+          "Thanks",
+          "soon"
+        ]
+      },
+      "from": 33.643,
+      "to": 39.691
+    }
+  ]
+};
