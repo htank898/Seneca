@@ -18,8 +18,9 @@ This repo has six [Claude Code](https://claude.com/claude-code) skills that buil
 | **ai-graphic** | Static graphics at any size: profile banners, social posts, link-preview images, thumbnails, avatars, stickers | `.png` (or `.jpg`) per artboard, with platform safe-zone checks |
 | **ai-math** | Math as code: Manim animations, KaTeX equations inside any of the formats above, and real LaTeX documents | `.mp4` / `.gif` / transparent clip, typeset `.html`, LaTeX `.pdf` |
 | **ai-video-edit** | Edits a selfie or talking-head recording by what's said: name tags, stat callouts, price quotes, CTAs, captions, and end cards, timed to the speaker's words (transcribed locally with Whisper) | Edited `.mp4` + an `edit.json` you can tweak and re-render |
+| **ai-banner** | Profile banners and header images (LinkedIn, X, YouTube, GitHub, link cards) at each platform's exact size, checked against where the avatar covers it | Static `.png` at 2×, one per colorway |
 
-Each skill pairs with Anthropic's `frontend-design` skill for the design pass, and gives Claude a reference sheet of the parameters a professional would think about: form factors, safe areas, type scales, paper sizes, loop timing, file-size budgets.
+Each skill pairs with Anthropic's `frontend-design` skill for the design pass, and gives Claude a reference sheet of the parameters a professional would think about: form factors, safe areas, type scales, paper sizes, loop timing, banner crops, file-size budgets.
 
 ## Examples
 
@@ -111,6 +112,7 @@ KaTeX typesetting needs nothing beyond Node.
 - *"Write up the derivation as a two-page LaTeX PDF."*
 - *"Here's a selfie video walking Northwind through their quote. Add my name, the price breakdown, and a book-a-call button."*
 - *"Here's my intro video. Whenever I mention a place, pause it and chalk the name and a doodle of it."*
+- *"Make me a LinkedIn banner that says AI strategist, and show me it in a few color schemes."*
 
 Claude picks the skill, does a design pass, builds the HTML, renders it, checks its own output, and hands you the files.
 
@@ -124,6 +126,7 @@ node skills/ai-graphic/scripts/render-png.mjs graphic.html --scale 2 --guides
 node skills/ai-scale/scripts/scale.mjs preset money-tower --out scene.json && node skills/ai-scale/scripts/build.mjs scene.json
 node skills/ai-gif/scripts/prepare-footage.mjs talk.mp4 --words
 node skills/ai-gif/scripts/render-gif.mjs talk.html --video
+node skills/ai-banner/scripts/render-banner.mjs banner.html --theme a,b --guides
 node skills/ai-interactive-guide/scripts/render-steps.mjs guide.html --gif
 node skills/ai-interactive-guide/scripts/capture-ui-map.mjs https://app.example.com --headed --profile ./.guide-profile --wait
 node skills/ai-math/scripts/render-math.mjs scene.py SceneName --size 1080x1080 --gif
@@ -145,6 +148,7 @@ node skills/ai-video-edit/scripts/render-edit.mjs edit.json --preview 3,9.5
 - **Math:** Manim scenes, with Typst for equations, render to MP4 and GIF. With `--clip` they become a transparent frame sequence that any `renderFrame(t)` page can draw, so math animations drop into GIFs, videos, and guides. KaTeX typesets LaTeX into the HTML at build time, so pages carry no math JavaScript, only the fonts they use. Tectonic compiles real LaTeX with no TeX Live install.
 - **Video edits:** faster-whisper transcribes the recording on your machine with a timestamp for every word. Claude reads the transcript like an editor and writes `edit.json`, a list of overlays keyed to phrases ("when I say 'your quote'…"). A `renderFrame(t)` page draws the overlays as transparent frames, and ffmpeg lays them over the footage. It can also freeze the frame for a few seconds when a price needs reading time.
 - **Chalk callouts:** `chalk.js` writes with single-stroke handwriting fonts (EMS Allure and EMS Readability, SIL OFL), so text is drawn the way a hand writes it rather than traced as an outline. Doodles are SVG paths with a hand wobble. A timeline maps output time to scene time, so the scene (or footage, and its audio) freezes while the board draws. Decks and guides use the same kit live: `Chalk.auto()` draws marks when their slide or step appears.
+- **Banners:** the banner is laid out at the platform's upload size and screenshotted at 2× to a PNG. Colors live in tokens, so each `[data-theme]` colorway renders from the same source, and `--guides` draws the platform's avatar and crop zones on top for checking.
 
 ## License
 
