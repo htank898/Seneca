@@ -1,0 +1,8 @@
+{
+  "name": "face-puppet",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@mediapipe/tasks-vision": "1.1.1"
+  }
+}

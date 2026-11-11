@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Face puppet</title>
+<!-- Built from skills/ai-gif/templates/motion-shell.html. A linear clip, not a loop:
+     renderFrame(t) reads tracked frame floor(t * TRACK.frames). -->
+<style>
+  /* Risograph spot inks on cool paper. Inks overprint with multiply. */
+  :root {
+    --paper: #e4e9ee;
+    --blue: #0078bf;    /* riso Blue */
+    --pink: #ff48b0;    /* riso Fluorescent Pink */
+    --yellow: #ffe800;  /* riso Yellow */
+    --ink: #2a1e5c;     /* overprint dark: mouth, pupils */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #111; overflow: hidden; }
+  #stage {
+    position: absolute; left: 0; top: 0;
+    width: var(--w); height: var(--h);
+    background: var(--paper);
+    overflow: hidden; transform-origin: 0 0;
+  }
+  .ink { mix-blend-mode: multiply; }
+  #hud {
+    position: fixed; right: 12px; bottom: 12px; z-index: 10;
+    font: 12px/1.4 ui-monospace, monospace; color: #ccc;
+    background: rgba(0,0,0,.6); padding: 6px 10px; border-radius: 6px;
+  }
+  .capture #hud { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="scene" viewBox="0 0 1280 720" width="100%" height="100%">
+    <defs>
+      <!-- Paper tooth: fixed seed, so every frame is identical grain. -->
+      <filter id="grain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/>
+        <feColorMatrix values="0 0 0 0 0.16  0 0 0 0 0.12  0 0 0 0 0.36  0 0 0 -1.4 0.72"/>
+      </filter>
+      <clipPath id="clipEyeL"><path id="eyeShapeL"/></clipPath>
+      <clipPath id="clipEyeR"><path id="eyeShapeR"/></clipPath>
+      <clipPath id="clipMouth"><path id="mouthClip"/></clipPath>
+    </defs>
+
+    <!-- Backdrop: one blue disc, misregistered pink ring. -->
+    <circle class="ink" cx="640" cy="372" r="292" fill="var(--blue)" opacity=".2"/>
+    <circle id="ring" class="ink" cx="648" cy="366" r="292" fill="none" stroke="var(--pink)" stroke-width="5" opacity=".7"/>
+
+    <!-- Body: moves a little with the head (camera follow), never rotates much. -->
+    <g id="body">
+      <path class="ink" fill="var(--blue)" opacity=".45"
+        d="M 400 720 C 410 600 470 560 560 548 L 720 548 C 810 560 870 600 880 720 Z"/>
+      <path class="ink" fill="var(--blue)"
+        d="M 470 720 C 476 640 500 600 560 574 L 640 660 L 720 574 C 780 600 804 640 810 720 Z"/>
+      <path fill="var(--yellow)" d="M 596 470 L 684 470 L 690 566 L 640 606 L 590 566 Z"/>
+      <path class="ink" fill="var(--pink)" opacity=".35" d="M 596 520 Q 640 548 684 520 L 688 556 Q 640 580 592 556 Z"/>
+      <!-- collar -->
+      <path fill="var(--paper)" stroke="var(--blue)" stroke-width="5" stroke-linejoin="round"
+        d="M 592 548 L 640 606 L 612 640 L 566 566 Z M 688 548 L 640 606 L 668 640 L 714 566 Z"/>
+    </g>
+
+    <!-- Head: roll pivots at the neck. Layers inside parallax by depth. -->
+    <g id="head">
+      <g id="layerBack">
+        <ellipse id="earL" cx="482" cy="352" rx="34" ry="52" fill="var(--pink)"/>
+        <ellipse id="earR" cx="798" cy="352" rx="34" ry="52" fill="var(--pink)"/>
+        <path fill="var(--blue)" d="M 494 330 C 486 190 590 136 650 138 C 744 140 798 200 790 330 Z"/>
+      </g>
+      <g id="layerSkull">
+        <path id="skull" fill="var(--yellow)"
+          d="M 640 160 C 740 160 792 230 792 330 C 792 440 730 510 640 512 C 550 510 488 440 488 330 C 488 230 540 160 640 160 Z"/>
+        <!-- side-parted fringe, sitting on the skull -->
+        <path id="fringe" fill="var(--blue)"
+          d="M 496 300 C 488 200 560 146 652 146 C 744 146 796 210 788 296 C 770 236 730 214 690 210 C 640 206 600 222 572 250 C 548 274 520 290 496 300 Z"/>
+      </g>
+      <g id="layerFace">
+        <!-- cheeks (pink over yellow reads as warm orange) -->
+        <ellipse id="cheekL" class="ink" cx="560" cy="406" rx="38" ry="22" fill="var(--pink)" opacity=".35"/>
+        <ellipse id="cheekR" class="ink" cx="720" cy="406" rx="38" ry="22" fill="var(--pink)" opacity=".35"/>
+        <!-- eyes -->
+        <g id="eyeL" transform="translate(574 336)">
+          <use href="#eyeShapeL" fill="var(--paper)"/>
+          <g clip-path="url(#clipEyeL)">
+            <circle id="pupilL" r="13" fill="var(--ink)"/>
+            <rect id="lidL" x="-60" y="-60" width="120" height="0" fill="var(--yellow)"/>
+            <rect id="lidLowL" x="-60" y="60" width="120" height="0" fill="var(--yellow)"/>
+          </g>
+          <path id="lashL" fill="none" stroke="var(--blue)" stroke-width="6" stroke-linecap="round"/>
+        </g>
+        <g id="eyeR" transform="translate(706 336)">
+          <use href="#eyeShapeR" fill="var(--paper)"/>
+          <g clip-path="url(#clipEyeR)">
+            <circle id="pupilR" r="13" fill="var(--ink)"/>
+            <rect id="lidR" x="-60" y="-60" width="120" height="0" fill="var(--yellow)"/>
+            <rect id="lidLowR" x="-60" y="60" width="120" height="0" fill="var(--yellow)"/>
+          </g>
+          <path id="lashR" fill="none" stroke="var(--blue)" stroke-width="6" stroke-linecap="round"/>
+        </g>
+        <!-- brows -->
+        <rect id="browL" x="-40" y="-8" width="80" height="16" rx="8" fill="var(--blue)"/>
+        <rect id="browR" x="-40" y="-8" width="80" height="16" rx="8" fill="var(--blue)"/>
+        <!-- mouth -->
+        <g id="mouth">
+          <path id="mouthFill" fill="var(--ink)"/>
+          <g clip-path="url(#clipMouth)">
+            <rect id="teeth" x="-80" y="-60" width="160" height="0" fill="var(--paper)"/>
+            <ellipse id="tongue" class="ink" rx="30" ry="16" fill="var(--pink)"/>
+          </g>
+          <path id="lip" fill="none" stroke="var(--pink)" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" class="ink"/>
+        </g>
+      </g>
+      <g id="layerNose">
+        <path id="nose" class="ink" fill="var(--pink)" opacity=".7"
+          d="M 0 -46 C 6 -20 22 0 18 12 C 14 22 -14 22 -18 12 C -22 0 -6 -20 0 -46 Z"/>
+      </g>
+    </g>
+
+    <rect width="1280" height="720" filter="url(#grain)" opacity=".5" pointer-events="none"/>
+  </svg>
+</div>
+<div id="hud">space pause · ←/→ scrub · <span id="tc">0</span></div>
+
+<script src="track.js"></script>
+<script>
+/* ---------- config ---------- */
+const TRACK = window.TRACK;
+window.MOTION = { width: 1280, height: 720, fps: TRACK.fps, seconds: TRACK.frames / TRACK.fps };
+
+/* ---------- helpers ---------- */
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const smooth = (a, b, x) => { const k = clamp((x - a) / (b - a)); return k * k * (3 - 2 * k); };
+const $ = (s) => document.querySelector(s);
+const D2R = Math.PI / 180;
+
+/* ---------- retargeting: blendshapes -> 15 rig parameters ----------
+   The performer is not the puppet. Each channel is calibrated against this
+   performance (rest = a low percentile, peak = a high one) so the rig reacts
+   to *change*, then gained and clamped. Calibration is computed once from the
+   whole track, so it is still a pure function of t. */
+const CH = Object.fromEntries(TRACK.channels.map((k, i) => [k, i]));
+const pct = (k, p) => {
+  const v = TRACK.data.map((r) => r[CH[k]]).sort((a, b) => a - b);
+  return v[Math.floor(p * (v.length - 1))];
+};
+const CAL = {};
+for (const k of TRACK.channels) CAL[k] = { lo: pct(k, 0.1), mid: pct(k, 0.5), hi: pct(k, 0.97) };
+// 0 at this performer's rest, 1 at their near-max; `gain` exaggerates past it.
+// MIN_SPAN keeps near-dead channels (browDown* peaks at 0.04 here) from having
+// their noise stretched to full strength.
+const MIN_SPAN = 0.25;
+const norm = (f, k, gain = 1) => {
+  const c = CAL[k]; return clamp(((f[CH[k]] - c.lo) / Math.max(MIN_SPAN, c.hi - c.lo)) * gain, 0, 1.4);
+};
+// Head pose: the gist, not a mirror. A zero-phase Gaussian (offline, so it can look
+// ahead) keeps the broad turns and nods and drops the twitch; tanh soft-clips big
+// moves instead of slamming into a limit.
+const col = (k) => TRACK.data.map((r) => r[CH[k]]);
+function gaussian(xs, sigma) {
+  const rad = Math.ceil(sigma * 3), w = [];
+  for (let d = -rad; d <= rad; d++) w.push(Math.exp(-(d * d) / (2 * sigma * sigma)));
+  return xs.map((_, i) => {
+    let s = 0, n = 0;
+    for (let d = -rad; d <= rad; d++) { const j = i + d; if (j < 0 || j >= xs.length) continue; s += xs[j] * w[d + rad]; n += w[d + rad]; }
+    return s / n;
+  });
+}
+const RIG_SPEC = {
+  headYaw:   { gain: 1.0, limit: 22, sigma: 7 },  // degrees, relative to the performer's median pose
+  headPitch: { gain: 0.8, limit: 12, sigma: 7 },
+  headRoll:  { gain: 0.8, limit: 12, sigma: 9 },
+};
+const POSE = Object.fromEntries([["headYaw", "yaw"], ["headPitch", "pitch"], ["headRoll", "roll"]].map(([p, k]) => {
+  const s = RIG_SPEC[p];
+  return [p, gaussian(col(k), s.sigma).map((x) => s.limit * Math.tanh(((x - CAL[k].mid) * s.gain) / s.limit))];
+}));
+
+// Eyes: assume the performer is talking to camera. Tracked gaze is ignored on
+// purpose; it's noisy and literal mirroring read as the puppet looking past you.
+// Instead: hold on camera, take small seeded glances (a fixation, then a quick
+// dart, like real eyes), and counter-rotate against the head so a turn of the
+// head doesn't drag the eyes off you.
+const GLANCES = (() => {
+  let s = 1234567;                                            // fixed seed: same every render
+  const rnd = () => ((s = (s * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const out = [];
+  for (let f = 0, k = 0; f < TRACK.frames; k++) {
+    const away = k % 2 === 1;                                 // alternate: camera, glance, camera...
+    const dur = Math.round(away ? 10 + rnd() * 14 : 24 + rnd() * 36);
+    const x = away ? (rnd() < 0.5 ? -1 : 1) * (0.25 + rnd() * 0.25) : (rnd() - 0.5) * 0.12;
+    const y = away ? (rnd() - 0.6) * 0.35 : (rnd() - 0.5) * 0.08;
+    out.push({ start: f, x, y }); f += dur;
+  }
+  return out;
+})();
+function glanceAt(i) {
+  let k = 0; while (k + 1 < GLANCES.length && GLANCES[k + 1].start <= i) k++;
+  const cur = GLANCES[k], prev = GLANCES[Math.max(0, k - 1)];
+  const dart = 1 - Math.pow(1 - clamp((i - cur.start) / 3), 3);   // ~3-frame saccade
+  return { x: lerp(prev.x, cur.x, k ? dart : 1), y: lerp(prev.y, cur.y, k ? dart : 1) };
+}
+
+function retarget(f, i) {
+  const v = (k) => f[CH[k]];
+  // Blink: MediaPipe reports ~0.15-0.2 when open and leaks in when looking down.
+  // A smoothstep window turns that mush into a decisive close.
+  // Looking down drags the lids (and the blink score) down too; discount it.
+  const blink = (k) => {
+    const side = k.endsWith("Left") ? "Left" : "Right", dn = "eyeLookDown" + side;
+    const x = v(k) - 0.6 * Math.max(0, v(dn) - CAL[dn].mid);
+    return smooth(Math.max(0.36, CAL[k].mid + 0.15), 0.62, x);
+  };
+  const browUp = (side) => clamp(0.55 * norm(f, "browInnerUp", 1.2) + 0.65 * norm(f, `browOuterUp${side}`, 1.2), 0, 1.2);
+  const headYaw = POSE.headYaw[i], headPitch = POSE.headPitch[i], g = glanceAt(i);
+  return {
+    headYaw, headPitch,
+    headRoll: POSE.headRoll[i],
+    blinkL: blink("eyeBlinkLeft"),
+    blinkR: blink("eyeBlinkRight"),
+    browUpL: browUp("Left"),
+    browUpR: browUp("Right"),
+    browDownL: norm(f, "browDownLeft", 1.5),
+    browDownR: norm(f, "browDownRight", 1.5),
+    jawOpen: clamp(norm(f, "jawOpen", 1.25) * 0.85 + 0.25 * norm(f, "mouthLowerDownLeft"), 0, 1.2),
+    mouthRound: clamp(0.8 * norm(f, "mouthPucker", 1.1) + 0.6 * norm(f, "mouthFunnel", 1.2), 0, 1),
+    mouthPress: clamp(norm(f, "mouthPressLeft") * (1 - norm(f, "jawOpen", 2)), 0, 1),  // M/B/P closure
+    smile: clamp((norm(f, "mouthSmileLeft", 1.3) + norm(f, "mouthSmileRight", 1.3)) / 2, 0, 1.1),
+    gazeX: clamp(g.x - headYaw / 30, -1, 1),     // + = viewer's right
+    gazeY: clamp(g.y + headPitch / 30, -1, 1),   // chin up -> eyes drop to stay on camera
+  };
+}
+
+/* ---------- drawing ---------- */
+function eyePath(w, h) {   // almond, centred on 0,0
+  return `M ${-w} 0 C ${-w * 0.6} ${-h * 1.35} ${w * 0.6} ${-h * 1.35} ${w} 0 C ${w * 0.6} ${h * 1.2} ${-w * 0.6} ${h * 1.2} ${-w} 0 Z`;
+}
+function mouthPath(W, top, bot, cornerY) {
+  return `M ${-W} ${cornerY} C ${-W * 0.5} ${top} ${W * 0.5} ${top} ${W} ${cornerY} ` +
+         `C ${W * 0.55} ${bot} ${-W * 0.55} ${bot} ${-W} ${cornerY} Z`;
+}
+const set = (el, attrs) => { for (const k in attrs) el.setAttribute(k, attrs[k]); };
+
+function drawEye(side, blink, gx, gy, smile, browUp, yawK) {
+  const s = side === "L" ? "L" : "R";
+  const w = 34 * yawK, h = 22;
+  const shape = eyePath(w, h);
+  $(`#eyeShape${s}`).setAttribute("d", shape);
+  // upper lid falls from above the eye to past centre; wide-eyed when brows lift
+  const lidTop = -h * 1.4, lidShut = h * 1.3;   // fully shut covers the whole eye
+  const lidY = lerp(lidTop - browUp * 4, lidShut, blink);
+  set($(`#lid${s}`), { y: lidTop - 40, height: Math.max(0, lidY - (lidTop - 40)) });
+  // lower lid rises with a smile (cheek push)
+  const lowY = lerp(h * 1.1, h * 0.35, clamp(smile * 0.7 + blink * 0.25));
+  set($(`#lidLow${s}`), { y: lowY, height: 80 });
+  set($(`#pupil${s}`), { cx: gx * w * 0.5, cy: gy * h * 0.45 + 2, r: 12.5 });
+  // lash line rides the upper lid edge
+  const ly = clamp(lidY, -h * 1.0, h * 0.35);
+  $(`#lash${s}`).setAttribute("d", `M ${-w - 4} ${lerp(-2, ly * 0.2 + 2, blink)} Q 0 ${ly - 6 + blink * 8} ${w + 4} ${lerp(-2, ly * 0.2 + 2, blink)}`);
+}
+
+function drawBrow(el, cx, cy, up, down, inner) {
+  // inner = +1 for the brow whose inner end is on the right (viewer's left brow)
+  const y = cy - 22 * up + 14 * down;
+  const tilt = inner * (12 * down - 5 * up);   // frown: inner ends drop; raise: inner ends lift
+  set(el, { transform: `translate(${cx} ${y}) rotate(${tilt})` });
+}
+
+/* ---------- the frame: a pure function of t ---------- */
+let lastRig = null;
+window.renderFrame = function (t) {
+  const i = clamp(Math.floor(t * TRACK.frames), 0, TRACK.frames - 1);
+  const f = TRACK.data[i];
+  const R = retarget(f, i);
+  lastRig = R;
+
+  const yaw = R.headYaw * D2R, pitch = R.headPitch * D2R;
+  const sy = Math.sin(yaw), sp = Math.sin(pitch);
+  // Parallax: deeper layers move less (and the back layer moves the other way).
+  const px = (depth) => sy * depth;
+  const py = (depth) => -sp * depth;   // chin up (+pitch) lifts the face plane
+
+  // Camera follow: the puppet drifts with where the face sits in frame.
+  const fx = (f[CH.faceX] - CAL.faceX.mid) * 260, fy = (f[CH.faceY] - CAL.faceY.mid) * 200;
+  set($("#body"), { transform: `translate(${fx * 0.6 + px(10)} ${fy * 0.5})` });
+  set($("#head"), { transform: `translate(${fx} ${fy}) rotate(${R.headRoll} 640 520)` });
+  set($("#layerBack"), { transform: `translate(${px(-34)} ${py(-24)})` });
+  set($("#layerSkull"), { transform: `translate(${px(8)} ${py(6)})` });
+  set($("#layerFace"), { transform: `translate(${px(70)} ${py(52)})` });
+  // ears: the near ear grows, the far ear tucks behind the skull
+  set($("#earL"), { rx: 34 * (1 - 0.6 * clamp(-sy * 2)), cx: 482 + 30 * clamp(-sy * 2) });
+  set($("#earR"), { rx: 34 * (1 - 0.6 * clamp(sy * 2)), cx: 798 - 30 * clamp(sy * 2) });
+  // foreshortening: the eye on the far side narrows
+  const kL = 1 - 0.35 * clamp(-sy * 2.2), kR = 1 - 0.35 * clamp(sy * 2.2);
+
+  drawEye("L", R.blinkL, R.gazeX, R.gazeY, R.smile, R.browUpL, kL);
+  drawEye("R", R.blinkR, R.gazeX, R.gazeY, R.smile, R.browUpR, kR);
+  set($("#eyeL"), { transform: `translate(${574 + sy * 10} ${336 - 4 * R.smile})` });
+  set($("#eyeR"), { transform: `translate(${706 + sy * 10} ${336 - 4 * R.smile})` });
+  drawBrow($("#browL"), 572 + sy * 8, 282, R.browUpL, R.browDownL, 1);
+  drawBrow($("#browR"), 708 + sy * 8, 282, R.browUpR, R.browDownR, -1);
+
+  // nose: furthest forward, so it leads every turn
+  set($("#nose"), { transform: `translate(${640 + px(110)} ${384 + py(80)}) scale(${1 - 0.15 * Math.abs(sy)} 1)` });
+  set($("#cheekL"), { opacity: 0.3 + 0.35 * R.smile });
+  set($("#cheekR"), { opacity: 0.3 + 0.35 * R.smile });
+
+  // mouth: width from smile vs round, height from jaw, corners from smile
+  const open = clamp(R.jawOpen) * (1 - 0.8 * R.mouthPress);
+  const W = 52 * (1 + 0.35 * R.smile - 0.42 * R.mouthRound) * (1 - 0.15 * Math.abs(sy));
+  const cornerY = -14 * R.smile + 4 * open;
+  const top = -6 - 8 * open - 6 * R.mouthRound - 4 * R.smile;
+  const bot = 6 + 64 * open + 8 * R.mouthRound;
+  const mp = mouthPath(W, top, bot, cornerY);
+  const mx = 640 + sy * 40, my = 452 - 4 * R.smile;
+  set($("#mouth"), { transform: `translate(${mx} ${my})` });
+  $("#mouthFill").setAttribute("d", mp);
+  $("#mouthClip").setAttribute("d", mp);
+  $("#lip").setAttribute("d", mp);
+  set($("#teeth"), { y: top - 10, height: 10 + 12 * clamp(open * 2) });
+  set($("#tongue"), { cx: 0, cy: bot - 4, rx: W * 0.55, ry: 6 + 16 * open });
+
+  // pink registration ring wanders with yaw velocity-free offset (pure of t)
+  set($("#ring"), { cx: 648 + sy * 14, cy: 366 - sp * 10 });
+
+  $("#tc").textContent = `${i} / ${TRACK.frames}`;
+};
+window.rigAt = (i) => { window.renderFrame(i / TRACK.frames); return lastRig; };
+
+/* ---------- harness: sizing + preview loop (do not edit) ---------- */
+(function () {
+  const { width, height, fps, seconds } = window.MOTION;
+  const stage = $("#stage");
+  document.documentElement.style.setProperty("--w", width + "px");
+  document.documentElement.style.setProperty("--h", height + "px");
+  if (window.__CAPTURE__) { document.documentElement.classList.add("capture"); window.renderFrame(0); return; }
+  const fit = () => {
+    const k = Math.min(innerWidth / width, innerHeight / height);
+    stage.style.transform = `translate(${(innerWidth - width * k) / 2}px, ${(innerHeight - height * k) / 2}px) scale(${k})`;
+  };
+  addEventListener("resize", fit); fit();
+  let playing = true, t = 0, last = performance.now();
+  const step = 1 / (fps * seconds);
+  addEventListener("keydown", (e) => {
+    if (e.code === "Space") { playing = !playing; e.preventDefault(); }
+    if (e.key === "ArrowRight") { t = (t + step) % 1; window.renderFrame(t); }
+    if (e.key === "ArrowLeft") { t = (t - step + 1) % 1; window.renderFrame(t); }
+  });
+  (function tick(now) {
+    if (playing) { t = (t + (now - last) / 1000 / seconds) % 1; window.renderFrame(t); }
+    last = now; requestAnimationFrame(tick);
+  })(last);
+})();
+</script>
+</body>
+</html>
