@@ -18,6 +18,7 @@ const out = resolve(args.out || base + ".pdf");
 
 const browser = await launch();
 const page = await browser.newPage();
+await page.addInitScript(() => { window.__CHALK_INSTANT__ = true; }); // chalk.js marks render fully drawn
 await page.goto(fileUrl(inputPath), { waitUntil: "networkidle" });
 await page.evaluate(() => document.fonts.ready);
 const info = await page.evaluate(() => window.deck && { count: window.deck.count, w: window.deck.width, h: window.deck.height });

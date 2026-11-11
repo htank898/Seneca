@@ -12,7 +12,7 @@ This repo has six [Claude Code](https://claude.com/claude-code) skills that buil
 |---|---|---|
 | **ai-slide-deck** | Presentations with transitions, builds, speaker notes, and an overview grid | One `.html` file + a one-slide-per-page `.pdf` |
 | **ai-pdf** | Letters, invitations, itineraries, and one-pagers on custom-designed stationery | Print-accurate `.pdf` |
-| **ai-gif** | Looping motion graphics for explainers, social posts, and visual gags | `.gif` + optional `.mp4` |
+| **ai-gif** | Looping motion graphics for explainers, social posts, and visual gags, plus chalkboard callouts that pause a scene or real footage to hand-write a word and doodle it | `.gif` + optional `.mp4` (with audio for footage) |
 | **ai-interactive-guide** | Click-through software walkthroughs: a rebuilt replica of the app with a spotlight and step-by-step coach marks | One `.html` file + optional walkthrough `.gif` |
 | **ai-scale** | Big numbers you can feel: money stacked next to a person and zooming out to space, amounts walked back through history, exponential growth | `.mp4`/`.gif`, an interactive `.html` explorer, and a `.png` per stop |
 | **ai-graphic** | Static graphics at any size: profile banners, social posts, link-preview images, thumbnails, avatars, stickers | `.png` (or `.jpg`) per artboard, with platform safe-zone checks |
@@ -39,6 +39,9 @@ The GIF at the top is [`examples/gif/any-format.html`](examples/gif/any-format.h
 **Scale:** [`money-tower`](examples/scale/money-tower.html) stacks net worth in $100 bills from $100K to $1T, which passes the Space Station. [`money-time`](examples/scale/money-time.html) spends $1 a second backwards to the Ice Age, then the dinosaurs. [`paper-moon`](examples/scale/paper-moon.html) folds paper 42 times to reach the Moon. Each one is a single scene file rendered three ways.
 
 ![A stack of $100 bills growing from $100K to $1T next to a person, passing buildings, Everest, and space](examples/scale/money-tower.gif)
+**Chalk callouts:** the video pauses right after "St. Louis, Missouri," a chalkboard slides in, writes the name by hand, sketches the Gateway Arch, and the video picks up where it left off. The source is [`examples/gif/chalk-callout.html`](examples/gif/chalk-callout.html) ([MP4](examples/gif/chalk-callout.mp4)). The same thing works over real footage: `prepare-footage.mjs` transcribes it with word timings, Claude adds a callout wherever a place, name, or number is mentioned, and the audio pauses with the picture.
+
+![A talking-head scene pauses after "I'm from St. Louis, Missouri." A chalkboard slides in, writes St. Louis, Missouri in script, draws the Gateway Arch, then slides away and the scene resumes.](examples/gif/chalk-callout.gif)
 
 **Interactive guide:** [a tour of the LinkedIn home screen](examples/guide/linkedin-home-tour.html). Open it in a browser and it tells you what each part does and what to click, and reacts when you click it. It's a practice replica rebuilt from scratch and isn't affiliated with LinkedIn.
 
@@ -77,7 +80,7 @@ git clone https://github.com/htank898/Seneca.git
 cp -r Seneca/skills/* ~/.claude/skills/
 ```
 
-**Requirements:** Node 18+ and `ffmpeg` (for GIFs; on macOS run `brew install ffmpeg`). Each skill installs its own copy of Playwright the first time it renders. If a Chromium download is needed, that happens once too.
+**Requirements:** Node 18+ and `ffmpeg` (for GIFs; on macOS run `brew install ffmpeg`). Transcribing footage for chalk callouts also needs [`uv`](https://docs.astral.sh/uv/) (`brew install uv`); it runs faster-whisper locally. Each skill installs its own copy of Playwright the first time it renders. If a Chromium download is needed, that happens once too.
 
 `ai-math` has two optional extras:
 
@@ -107,6 +110,7 @@ KaTeX typesetting needs nothing beyond Node.
 - *"Add the Black-Scholes formula to slide 4 of the deck."*
 - *"Write up the derivation as a two-page LaTeX PDF."*
 - *"Here's a selfie video walking Northwind through their quote. Add my name, the price breakdown, and a book-a-call button."*
+- *"Here's my intro video. Whenever I mention a place, pause it and chalk the name and a doodle of it."*
 
 Claude picks the skill, does a design pass, builds the HTML, renders it, checks its own output, and hands you the files.
 
@@ -118,6 +122,8 @@ node skills/ai-pdf/scripts/render-pdf.mjs letter.html --preview
 node skills/ai-gif/scripts/render-gif.mjs motion.html --mp4
 node skills/ai-graphic/scripts/render-png.mjs graphic.html --scale 2 --guides
 node skills/ai-scale/scripts/scale.mjs preset money-tower --out scene.json && node skills/ai-scale/scripts/build.mjs scene.json
+node skills/ai-gif/scripts/prepare-footage.mjs talk.mp4 --words
+node skills/ai-gif/scripts/render-gif.mjs talk.html --video
 node skills/ai-interactive-guide/scripts/render-steps.mjs guide.html --gif
 node skills/ai-interactive-guide/scripts/capture-ui-map.mjs https://app.example.com --headed --profile ./.guide-profile --wait
 node skills/ai-math/scripts/render-math.mjs scene.py SceneName --size 1080x1080 --gif
@@ -138,6 +144,7 @@ node skills/ai-video-edit/scripts/render-edit.mjs edit.json --preview 3,9.5
 - **GIFs:** the animation is a pure function `renderFrame(t)`. Playwright steps through every frame and screenshots it, then ffmpeg builds an optimized palette and encodes a seamless loop.
 - **Math:** Manim scenes, with Typst for equations, render to MP4 and GIF. With `--clip` they become a transparent frame sequence that any `renderFrame(t)` page can draw, so math animations drop into GIFs, videos, and guides. KaTeX typesets LaTeX into the HTML at build time, so pages carry no math JavaScript, only the fonts they use. Tectonic compiles real LaTeX with no TeX Live install.
 - **Video edits:** faster-whisper transcribes the recording on your machine with a timestamp for every word. Claude reads the transcript like an editor and writes `edit.json`, a list of overlays keyed to phrases ("when I say 'your quote'…"). A `renderFrame(t)` page draws the overlays as transparent frames, and ffmpeg lays them over the footage. It can also freeze the frame for a few seconds when a price needs reading time.
+- **Chalk callouts:** `chalk.js` writes with single-stroke handwriting fonts (EMS Allure and EMS Readability, SIL OFL), so text is drawn the way a hand writes it rather than traced as an outline. Doodles are SVG paths with a hand wobble. A timeline maps output time to scene time, so the scene (or footage, and its audio) freezes while the board draws. Decks and guides use the same kit live: `Chalk.auto()` draws marks when their slide or step appears.
 
 ## License
 

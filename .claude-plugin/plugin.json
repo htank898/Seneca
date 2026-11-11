@@ -28,6 +28,9 @@
     "math",
     "manim",
     "katex",
-    "latex"
+    "latex",
+    "chalkboard",
+    "handwriting",
+    "video"
   ]
 }
