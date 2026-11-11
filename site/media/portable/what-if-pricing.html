@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Pro Pricing What-If</title>
+<style>
+  :root {
+    --paper: #f6f7f5;
+    --surface: #ffffff;
+    --sunk: #eceee9;
+    --ink: #1b2a33;
+    --ink-2: #4a5a63;
+    --ink-3: #6f7d84;
+    --rule: #d8ddd8;
+    --accent: #2f7d6d;
+    --accent-ink: #ffffff;
+    --accent-soft: #e1efeb;
+    --warm: #d9a441;
+    --warm-ink: #7a5714;
+    --warm-soft: #f7ecd5;
+    --neg: #a8432f;
+    --hold: #8a979d;
+
+    --f-display: "Avenir Next", Avenir, "Segoe UI Variable Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --f-text: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --f-num: "SF Mono", ui-monospace, "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #10191e;
+      --surface: #16222a;
+      --sunk: #1d2b33;
+      --ink: #e7ece9;
+      --ink-2: #b4c0c3;
+      --ink-3: #8b999f;
+      --rule: #2b3b44;
+      --accent: #5fb8a3;
+      --accent-ink: #0d1a17;
+      --accent-soft: #1b3530;
+      --warm: #e4b65c;
+      --warm-ink: #f0cd85;
+      --warm-soft: #3a2f19;
+      --neg: #e58a76;
+      --hold: #74848b;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 16px/1.55 var(--f-text);
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+  header.top {
+    border-bottom: 1px solid var(--rule);
+  }
+  header.top .wrap {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding-top: 14px; padding-bottom: 14px; flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font: 600 15px/1 var(--f-display); letter-spacing: .01em; }
+  .mark {
+    width: 22px; height: 22px; border-radius: 5px; background: var(--accent); position: relative; flex: none;
+  }
+  .mark::after {
+    content: ""; position: absolute; right: 4px; top: 4px; width: 6px; height: 6px; border-radius: 50%; background: var(--warm);
+  }
+  .sample {
+    font-size: 12.5px; color: var(--ink-3); border: 1px dashed var(--rule); border-radius: 999px; padding: 4px 10px;
+  }
+
+  .intro { padding: 48px 0 28px; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 48px; align-items: end; }
+  .eyebrow { font: 600 12px/1 var(--f-display); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 14px; }
+  h1 { font: 650 clamp(30px, 4.2vw, 46px)/1.08 var(--f-display); letter-spacing: -.015em; margin: 0 0 18px; max-width: 18ch; }
+  .lede { font-size: 18px; color: var(--ink-2); margin: 0; max-width: 54ch; }
+  .case { margin: 0; padding: 0; list-style: none; border-left: 3px solid var(--warm); }
+  .case li { padding: 6px 0 6px 16px; color: var(--ink-2); font-size: 15px; }
+  .case b { color: var(--ink); font-weight: 600; }
+
+  .calc {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 14px;
+    display: grid; grid-template-columns: 330px minmax(0, 1fr); overflow: hidden; margin-bottom: 28px;
+  }
+  .controls { padding: 26px 26px 22px; background: var(--sunk); border-right: 1px solid var(--rule); }
+  .controls h2, .results h2 { font: 600 13px/1 var(--f-display); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 20px; }
+  .ctl { margin-bottom: 22px; }
+  .ctl label { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-weight: 600; font-size: 14.5px; }
+  .ctl output { font: 600 15px/1 var(--f-num); font-variant-numeric: tabular-nums; color: var(--accent); }
+  .ctl .hint { font-size: 12.5px; color: var(--ink-3); margin: 4px 0 0; }
+  .ctl .ends { display: flex; justify-content: space-between; font: 11.5px/1 var(--f-num); color: var(--ink-3); margin-top: 2px; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; margin: 8px 0 0; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(to right, var(--accent) 0 var(--fill, 50%), var(--rule) var(--fill, 50%) 100%); }
+  input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--rule); }
+  input[type=range]::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; margin-top: -7px;
+    background: var(--surface); border: 2px solid var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+  input[type=range]:focus-visible { outline: none; }
+  input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--accent-soft), 0 0 0 6px var(--accent); }
+  input[type=range]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px var(--accent-soft), 0 0 0 6px var(--accent); }
+  .fixed { font-size: 13px; color: var(--ink-2); border-top: 1px solid var(--rule); padding-top: 16px; margin: 4px 0 18px; }
+  .fixed b { color: var(--ink); }
+  button.reset {
+    font: 600 14px/1 var(--f-text); color: var(--accent); background: transparent; border: 1.5px solid var(--accent);
+    border-radius: 8px; padding: 11px 14px; cursor: pointer; width: 100%;
+  }
+  button.reset:hover { background: var(--accent); color: var(--accent-ink); }
+  button.reset:focus-visible { outline: 3px solid var(--warm); outline-offset: 2px; }
+
+  .results { padding: 26px 28px 24px; min-width: 0; }
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; }
+  .kpi { padding: 14px 16px 16px; border-right: 1px solid var(--rule); min-width: 0; }
+  .kpi:last-child { border-right: 0; }
+  .kpi.lead { background: var(--accent-soft); }
+  .kpi .k { font-size: 12.5px; color: var(--ink-2); font-weight: 600; margin: 0 0 8px; }
+  .kpi .v { font: 600 clamp(20px, 2.3vw, 27px)/1.1 var(--f-num); font-variant-numeric: tabular-nums; letter-spacing: -.02em; margin: 0; white-space: nowrap; }
+  .kpi .s { font-size: 12.5px; color: var(--ink-3); margin: 6px 0 0; }
+  .pos { color: var(--accent); }
+  .neg { color: var(--neg); }
+  .verdict { margin: 14px 0 0; font-size: 15px; color: var(--ink-2); }
+  .verdict b { color: var(--ink); }
+
+  figure.chart { margin: 22px 0 0; }
+  figure.chart figcaption { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 18px; font-size: 13.5px; color: var(--ink-2); margin-bottom: 6px; }
+  figure.chart figcaption strong { font: 600 14.5px/1.3 var(--f-display); color: var(--ink); }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+  .legend i.h { background: repeating-linear-gradient(to right, var(--hold) 0 5px, transparent 5px 8px); }
+  .legend i.s { background: var(--accent); }
+  svg#chart { width: 100%; height: auto; display: block; overflow: visible; }
+  svg#chart text { font: 11px var(--f-num); fill: var(--ink-3); }
+  svg#chart .grid { stroke: var(--rule); stroke-width: 1; }
+  svg#chart .hold { stroke: var(--hold); stroke-width: 2; fill: none; stroke-dasharray: 5 4; }
+  svg#chart .scen { stroke: var(--accent); stroke-width: 2.5; fill: none; }
+  svg#chart .gap { fill: var(--accent); opacity: .1; }
+  svg#chart .gap.under { fill: var(--neg); }
+  svg#chart .dot { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+  svg#chart .endlabel { font-weight: 600; }
+  details.table { margin-top: 8px; font-size: 13.5px; }
+  details.table summary { cursor: pointer; color: var(--accent); font-weight: 600; width: max-content; }
+  details.table summary:focus-visible { outline: 2px solid var(--warm); outline-offset: 2px; }
+  .tbl-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font: 12.5px/1.4 var(--f-num); font-variant-numeric: tabular-nums; }
+  th, td { padding: 5px 8px; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { font: 600 12px var(--f-text); color: var(--ink-2); }
+
+  .method { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 40px; padding: 8px 0 40px; }
+  .method h2 { font: 650 22px/1.2 var(--f-display); margin: 0 0 14px; letter-spacing: -.01em; }
+  ol.formula { margin: 0; padding: 0; list-style: none; counter-reset: f; }
+  ol.formula li { counter-increment: f; position: relative; padding: 0 0 14px 40px; color: var(--ink-2); }
+  ol.formula li::before {
+    content: counter(f); position: absolute; left: 0; top: 1px; width: 26px; height: 26px; border-radius: 50%;
+    border: 1.5px solid var(--accent); color: var(--accent); font: 600 13px/23px var(--f-num); text-align: center;
+  }
+  ol.formula b { color: var(--ink); }
+  code, .num { font: 13.5px var(--f-num); font-variant-numeric: tabular-nums; background: var(--sunk); padding: 1px 5px; border-radius: 4px; color: var(--ink); }
+  .live { font: 13px/1.6 var(--f-num); background: var(--sunk); border-radius: 8px; padding: 12px 14px; color: var(--ink-2); margin-top: 6px; overflow-x: auto; }
+  .live b { color: var(--ink); font-weight: 600; }
+  .note {
+    background: var(--warm-soft); border-left: 3px solid var(--warm); border-radius: 0 8px 8px 0; padding: 14px 16px; font-size: 14.5px; color: var(--ink-2); margin: 0 0 16px;
+  }
+  .note b { color: var(--ink); }
+  .aside h3 { font: 600 15px/1.3 var(--f-display); margin: 0 0 8px; }
+  .aside ul { margin: 0 0 16px; padding-left: 18px; color: var(--ink-2); font-size: 14.5px; }
+  .aside li { margin-bottom: 6px; }
+
+  footer { border-top: 1px solid var(--rule); padding: 18px 0 32px; font-size: 13px; color: var(--ink-3); }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 24px; }
+  footer a { color: var(--accent); }
+
+  @media (max-width: 960px) {
+    .calc { grid-template-columns: minmax(0, 1fr); }
+    .controls { border-right: 0; border-bottom: 1px solid var(--rule); }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kpi:nth-child(2) { border-right: 0; }
+    .kpi:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
+    .intro, .method { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  }
+  @media (max-width: 520px) {
+    .wrap { padding: 0 16px; }
+    .intro { padding-top: 30px; }
+    .lede { font-size: 16.5px; }
+    .controls, .results { padding: 20px 16px; }
+    .kpi { padding: 12px 12px 14px; }
+    .kpi .v { font-size: 19px; }
+    .sample { font-size: 11.5px; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><span class="mark" aria-hidden="true"></span>Lumen Desk &middot; Finance review</div>
+    <div class="sample">Sample scenario: Lumen Desk is fictional</div>
+  </div>
+</header>
+
+<main>
+  <section class="wrap intro" aria-labelledby="title">
+    <div>
+      <p class="eyebrow">Pro plan pricing &middot; decision due Fri, Nov 6, 2026</p>
+      <h1 id="title">Pro now does more. Its price can, too.</h1>
+      <p class="lede">The proposal: Pro moves from <b>$49 to $59 per seat per month</b> on January 1, 2027, with a one-time 10% loyalty discount ($53.10) for existing customers&rsquo; first year. Move the assumptions below and watch what it does to revenue &mdash; every number on this page is computed live from the inputs you set.</p>
+    </div>
+    <ul class="case" aria-label="Why the change">
+      <li><b>More value shipped.</b> AI ticket triage, SLA reporting and 24/7 chat support all landed in Pro during 2026.</li>
+      <li><b>Room in the market.</b> Comparable tools sit at $55&ndash;$79 per seat; Pro is our most-used plan and sits below that range.</li>
+      <li><b>Margin to protect.</b> AI triage model costs took Pro&rsquo;s gross margin from 81% to 74%.</li>
+    </ul>
+  </section>
+
+  <section class="wrap" aria-label="Calculator">
+    <div class="calc">
+      <form class="controls" id="controls" onsubmit="return false">
+        <h2>Your assumptions</h2>
+
+        <div class="ctl">
+          <label for="price">New price per seat <output id="priceOut" for="price">$59</output></label>
+          <input type="range" id="price" min="49" max="69" step="1" value="59" aria-describedby="priceHint">
+          <div class="ends" aria-hidden="true"><span>$49</span><span>$69</span></div>
+          <p class="hint" id="priceHint">List price per seat per month, from Jan 1, 2027.</p>
+        </div>
+
+        <div class="ctl">
+          <label for="churn">Extra churn, first 6 months <output id="churnOut" for="churn">+0.4 pts</output></label>
+          <input type="range" id="churn" min="0" max="2" step="0.1" value="0.4" aria-describedby="churnHint">
+          <div class="ends" aria-hidden="true"><span>0</span><span>+2.0 pts</span></div>
+          <p class="hint" id="churnHint">Added to today&rsquo;s 1.6% monthly churn for Jan&ndash;Jun 2027, then back to 1.6%.</p>
+        </div>
+
+        <div class="ctl">
+          <label for="disc">Loyalty discount, existing customers <output id="discOut" for="disc">10%</output></label>
+          <input type="range" id="disc" min="0" max="20" step="1" value="10" aria-describedby="discHint">
+          <div class="ends" aria-hidden="true"><span>0%</span><span>20%</span></div>
+          <p class="hint" id="discHint">Off the new price for each customer&rsquo;s first year at it.</p>
+        </div>
+
+        <p class="fixed"><b>Held fixed:</b> 18,600 seats across 1,240 accounts, 1.6% monthly churn, and <b>100% of seats repricing on Jan 1</b> (see the method notes below for why).</p>
+
+        <button type="button" class="reset" id="reset">Reset to Finance&rsquo;s assumptions</button>
+      </form>
+
+      <div class="results" aria-live="polite" aria-atomic="false">
+        <h2>What it does in 2027</h2>
+        <div class="kpis">
+          <div class="kpi lead">
+            <p class="k">Year-1 ARR change vs $49</p>
+            <p class="v" id="oDelta">&ndash;</p>
+            <p class="s" id="oDeltaSub">&nbsp;</p>
+          </div>
+          <div class="kpi">
+            <p class="k">New MRR, Jan 2027</p>
+            <p class="v" id="oMrr">&ndash;</p>
+            <p class="s" id="oMrrSub">&nbsp;</p>
+          </div>
+          <div class="kpi">
+            <p class="k">Accounts lost in 2027</p>
+            <p class="v" id="oLost">&ndash;</p>
+            <p class="s" id="oLostSub">&nbsp;</p>
+          </div>
+          <div class="kpi">
+            <p class="k">Break-even extra churn</p>
+            <p class="v" id="oBreak">&ndash;</p>
+            <p class="s" id="oBreakSub">&nbsp;</p>
+          </div>
+        </div>
+        <p class="verdict" id="verdict"></p>
+
+        <figure class="chart">
+          <figcaption>
+            <strong>Monthly Pro MRR, Jan&ndash;Dec 2027</strong>
+            <span class="legend"><span><i class="h"></i>Hold at $49</span><span><i class="s"></i><span id="legendScen">Your scenario</span></span></span>
+          </figcaption>
+          <svg id="chart" viewBox="0 0 720 300" role="img" aria-labelledby="chartDesc"><desc id="chartDesc">Line chart of monthly MRR.</desc></svg>
+          <details class="table">
+            <summary>Show the monthly numbers</summary>
+            <div class="tbl-scroll"><table id="tbl"><thead><tr><th>Month</th><th>Seats (hold)</th><th>MRR (hold)</th><th>Seats (scenario)</th><th>MRR (scenario)</th><th>Difference</th></tr></thead><tbody></tbody></table></div>
+          </details>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap method" aria-labelledby="howTitle">
+    <div>
+      <h2 id="howTitle">How the numbers are made</h2>
+      <ol class="formula">
+        <li><b>Start with today&rsquo;s base.</b> 18,600 Pro seats on Jan 1, 2027 in both paths. Seats leave at the monthly churn rate: <code>seats next month = seats &times; (1 &minus; churn)</code>. Churn is logo churn; at an average of 15 seats per account, seats leave in proportion.</li>
+        <li><b>Hold path.</b> Churn stays at 1.6% every month. <code>MRR = seats &times; $49</code>.</li>
+        <li><b>Scenario path.</b> Churn is 1.6% plus your extra churn in months 1&ndash;6, then 1.6% for months 7&ndash;12. Everyone pays the discounted price all year: <code>MRR = seats &times; new price &times; (1 &minus; discount)</code>.</li>
+        <li><b>Year-1 ARR change</b> is the 12 monthly differences added up: <code>&Sigma; (scenario MRR &minus; hold MRR)</code>, Jan through Dec 2027. That is the extra recurring revenue the change brings in during its first year.</li>
+        <li><b>Break-even extra churn</b> is the first-6-months extra churn at which that sum falls to $0, found by searching between 0 and 50 points. Below it, the increase pays off in year 1.</li>
+      </ol>
+      <div class="live" id="live" aria-label="Formula with current values"></div>
+    </div>
+    <div class="aside">
+      <p class="note" id="financeNote"><b>This is the model behind the brief.</b> The year-1 figure quoted across the pricing materials comes from this calculator at Finance&rsquo;s assumptions: <span id="noteNum" class="num">&ndash;</span>.</p>
+      <h3>Why everyone reprices on Jan 1</h3>
+      <ul>
+        <li>In reality, existing customers move at their next renewal after Jan 1, so the real increase phases in through 2027.</li>
+        <li>Repricing all seats at once keeps the arithmetic short enough to check by hand, and it front-loads the churn risk &mdash; a deliberately cautious read of the downside.</li>
+        <li>Because each customer&rsquo;s first year at the new price is discounted, all of 2027 is billed at the discounted rate here. The full list price arrives in 2028.</li>
+      </ul>
+      <h3>Not in this model</h3>
+      <ul>
+        <li>New customers, who would pay full list price from day one.</li>
+        <li>Seat expansion inside existing accounts, and plan up- or downgrades.</li>
+        <li>Margin: at a higher price, each seat also carries more room for AI triage costs.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Sample scenario: Lumen Desk is fictional. All figures are sample data. Decision owner: Dana Whitfield, VP Revenue.</span>
+    <span>Questions: <a href="mailto:pricing@lumendesk.example">pricing@lumendesk.example</a></span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+  var BASE = { seats: 18600, accounts: 1240, price: 49, churn: 0.016, months: 12 };
+  var FINANCE = { price: 59, extra: 0.4, disc: 10 };
+  var MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  var el = function (id) { return document.getElementById(id); };
+  var price = el("price"), churn = el("churn"), disc = el("disc");
+
+  function usd(n, opts) {
+    opts = opts || {};
+    var sign = n < 0 ? "−" : (opts.plus && n > 0 ? "+" : "");
+    var a = Math.abs(n);
+    if (opts.short) {
+      if (a >= 1e6) return sign + "$" + (a / 1e6).toFixed(2) + "M";
+      if (a >= 1e3) return sign + "$" + Math.round(a / 1e3).toLocaleString("en-US") + "K";
+      return sign + "$" + Math.round(a);
+    }
+    return sign + "$" + Math.round(a).toLocaleString("en-US");
+  }
+  function int(n) { return Math.round(n).toLocaleString("en-US"); }
+
+  // One 12-month run. extraPts is in percentage points (0.4 = +0.4 pts).
+  function model(p, extraPts, discPct) {
+    var eff = p * (1 - discPct / 100);
+    var hs = BASE.seats, ss = BASE.seats, rows = [], sum = 0;
+    for (var m = 1; m <= BASE.months; m++) {
+      var hm = hs * BASE.price, sm = ss * eff;
+      rows.push({ m: m, hs: hs, ss: ss, hm: hm, sm: sm });
+      sum += sm - hm;
+      hs *= 1 - BASE.churn;
+      ss *= 1 - (BASE.churn + (m <= 6 ? extraPts / 100 : 0));
+    }
+    var perSeat = BASE.accounts / BASE.seats;
+    return {
+      eff: eff, rows: rows, delta: sum,
+      lostHold: (BASE.seats - hs) * perSeat,
+      lostScen: (BASE.seats - ss) * perSeat
+    };
+  }
+
+  function breakEven(p, discPct) {
+    if (model(p, 0, discPct).delta <= 0) return null;
+    var lo = 0, hi = 50;
+    if (model(p, hi, discPct).delta > 0) return Infinity;
+    for (var i = 0; i < 60; i++) {
+      var mid = (lo + hi) / 2;
+      if (model(p, mid, discPct).delta > 0) lo = mid; else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  function setFill(input) {
+    var pct = (input.value - input.min) / (input.max - input.min) * 100;
+    input.style.setProperty("--fill", pct + "%");
+  }
+
+  function drawChart(r, p, d) {
+    var svg = el("chart");
+    var narrow = (svg.parentNode.clientWidth || 720) < 560;
+    var W = narrow ? 380 : 720, H = narrow ? 260 : 300, L = narrow ? 50 : 62, R = narrow ? 58 : 74, T = 14, B = 34;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    var vals = [];
+    r.rows.forEach(function (x) { vals.push(x.hm, x.sm); });
+    var max = Math.max.apply(null, vals), min = Math.min.apply(null, vals);
+    var step = 50000;
+    var y0 = Math.floor(min * 0.97 / step) * step, y1 = Math.ceil(max * 1.02 / step) * step;
+    if ((y1 - y0) / step > 7) step = 100000, y0 = Math.floor(min * 0.97 / step) * step, y1 = Math.ceil(max * 1.02 / step) * step;
+    var x = function (i) { return L + i * (W - L - R) / 11; };
+    var y = function (v) { return T + (y1 - v) / (y1 - y0) * (H - T - B); };
+    var out = ['<desc id="chartDesc"></desc>'];
+    for (var g = y0; g <= y1 + 1; g += step) {
+      out.push('<line class="grid" x1="' + L + '" x2="' + (W - R) + '" y1="' + y(g) + '" y2="' + y(g) + '"/>');
+      out.push('<text x="' + (L - 8) + '" y="' + (y(g) + 4) + '" text-anchor="end">' + (g >= 1e6 ? "$" + (g / 1e6).toFixed(2) + "M" : "$" + Math.round(g / 1000) + "K") + '</text>');
+    }
+    MONTHS.forEach(function (mn, i) {
+      if (narrow && i % 2) return;
+      out.push('<text x="' + x(i) + '" y="' + (H - 12) + '" text-anchor="middle">' + mn + '</text>');
+    });
+    var hp = r.rows.map(function (o, i) { return x(i) + "," + y(o.hm); });
+    var sp = r.rows.map(function (o, i) { return x(i) + "," + y(o.sm); });
+    var ahead = r.delta >= 0;
+    out.push('<polygon class="gap' + (ahead ? "" : " under") + '" points="' + sp.join(" ") + " " + hp.slice().reverse().join(" ") + '"/>');
+    out.push('<polyline class="hold" points="' + hp.join(" ") + '"/>');
+    out.push('<polyline class="scen" points="' + sp.join(" ") + '"/>');
+    var last = r.rows[11];
+    out.push('<circle class="dot" cx="' + x(11) + '" cy="' + y(last.sm) + '" r="4"/>');
+    var ly1 = y(last.sm), ly2 = y(last.hm);
+    if (Math.abs(ly1 - ly2) < 14) { if (ly1 <= ly2) { ly1 -= 7; ly2 += 7; } else { ly1 += 7; ly2 -= 7; } }
+    out.push('<text class="endlabel" x="' + (x(11) + 10) + '" y="' + (ly1 + 4) + '" style="fill:var(--accent)">' + usd(last.sm, { short: true }) + '</text>');
+    out.push('<text class="endlabel" x="' + (x(11) + 10) + '" y="' + (ly2 + 4) + '">' + usd(last.hm, { short: true }) + '</text>');
+    svg.innerHTML = out.join("");
+    svg.querySelector("desc").textContent =
+      "Monthly MRR for 2027. Holding at $49 runs from " + usd(r.rows[0].hm) + " in January to " + usd(last.hm) +
+      " in December. The scenario at $" + p + " with a " + d + "% discount runs from " + usd(r.rows[0].sm) + " to " + usd(last.sm) + ".";
+  }
+
+  function drawTable(r) {
+    var tb = el("tbl").querySelector("tbody"), h = [];
+    r.rows.forEach(function (o) {
+      h.push("<tr><td>" + MONTHS[o.m - 1] + " 2027</td><td>" + int(o.hs) + "</td><td>" + usd(o.hm) + "</td><td>" + int(o.ss) +
+        "</td><td>" + usd(o.sm) + "</td><td>" + usd(o.sm - o.hm, { plus: true }) + "</td></tr>");
+    });
+    var th = r.rows.reduce(function (a, o) { return a + o.hm; }, 0), ts = r.rows.reduce(function (a, o) { return a + o.sm; }, 0);
+    h.push('<tr><td><b>2027 total</b></td><td></td><td><b>' + usd(th) + '</b></td><td></td><td><b>' + usd(ts) + '</b></td><td><b>' + usd(r.delta, { plus: true }) + "</b></td></tr>");
+    tb.innerHTML = h.join("");
+  }
+
+  function update() {
+    var p = +price.value, x = +churn.value, d = +disc.value;
+    [price, churn, disc].forEach(setFill);
+    el("priceOut").textContent = "$" + p;
+    el("churnOut").textContent = "+" + x.toFixed(1) + " pts";
+    el("discOut").textContent = d + "%";
+
+    var r = model(p, x, d), be = breakEven(p, d);
+
+    var dv = el("oDelta");
+    dv.textContent = usd(r.delta, { plus: true, short: true });
+    dv.className = "v " + (r.delta >= 0 ? "pos" : "neg");
+    el("oDeltaSub").textContent = usd(r.delta, { plus: true }) + " over 12 months";
+
+    el("oMrr").textContent = usd(r.rows[0].sm);
+    el("oMrrSub").textContent = int(BASE.seats) + " seats × $" + r.eff.toFixed(2);
+
+    el("oLost").textContent = int(r.lostScen);
+    var extraLost = r.lostScen - r.lostHold;
+    el("oLostSub").textContent = (extraLost >= 0.5 ? "+" + int(extraLost) : "same as") + " vs " + int(r.lostHold) + " if we hold";
+
+    var bv = el("oBreak");
+    if (be === null) { bv.textContent = "None"; el("oBreakSub").textContent = "doesn’t beat $49 even with no extra churn"; }
+    else if (be === Infinity) { bv.textContent = ">50 pts"; el("oBreakSub").textContent = "pays off at any plausible churn"; }
+    else { bv.textContent = "+" + be.toFixed(2) + " pts"; el("oBreakSub").textContent = "monthly churn up to " + (1.6 + be).toFixed(2) + "% for 6 months"; }
+
+    var v = el("verdict");
+    if (be === null) {
+      v.innerHTML = "At <b>$" + r.eff.toFixed(2) + "</b> effective, the scenario earns no more per seat than $49 today, so any churn makes year 1 worse.";
+    } else if (x < be) {
+      var cushion = be - x;
+      v.innerHTML = "At these settings the increase <b>pays off in year 1</b>. Extra churn could run <b>" + cushion.toFixed(2) +
+        " pts higher</b> than you&rsquo;ve assumed before it stopped paying off.";
+    } else {
+      v.innerHTML = "At these settings extra churn is <b>past break-even</b>: year-1 revenue lands below holding at $49. Lower the price or the discount, or plan to keep churn under <b>+" + be.toFixed(2) + " pts</b>.";
+    }
+
+    el("legendScen").textContent = "$" + p + (d ? " less " + d + "% loyalty" : "") + ", +" + x.toFixed(1) + " pts churn";
+    drawChart(r, p, d);
+    drawTable(r);
+
+    var j = r.rows[0], dec = r.rows[11];
+    el("live").innerHTML =
+      "Effective price = $" + p + " × (1 − " + d + "%) = <b>$" + r.eff.toFixed(2) + "</b><br>" +
+      "Jan: " + int(j.ss) + " seats × $" + r.eff.toFixed(2) + " = " + usd(j.sm) + " vs " + int(j.hs) + " × $49 = " + usd(j.hm) + "<br>" +
+      "Dec: " + int(dec.ss) + " seats × $" + r.eff.toFixed(2) + " = " + usd(dec.sm) + " vs " + int(dec.hs) + " × $49 = " + usd(dec.hm) + "<br>" +
+      "Σ Jan–Dec difference = <b>" + usd(r.delta, { plus: true }) + "</b>";
+
+  }
+
+  el("noteNum").textContent = usd(model(FINANCE.price, FINANCE.extra, FINANCE.disc).delta, { plus: true });
+
+  [price, churn, disc].forEach(function (i) { i.addEventListener("input", update); i.addEventListener("change", update); });
+  el("reset").addEventListener("click", function () {
+    price.value = FINANCE.price; churn.value = FINANCE.extra; disc.value = FINANCE.disc; update();
+  });
+  update();
+  var lastW = window.innerWidth;
+  window.addEventListener("resize", function () { if (window.innerWidth !== lastW) { lastW = window.innerWidth; update(); } });
+})();
+</script>
+</body>
+</html>
