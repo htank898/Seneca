@@ -1,6 +1,6 @@
 ---
 name: seneca
-description: The front door to Seneca. Takes a communication need in plain words ("I have a meeting with the execs, summarize this for them", "announce the reorg", "get the team up to speed on the new CRM", "pitch this to a partner") and decides which formats fit the audience and moment: a slide deck, a PDF, a graphic, a GIF, a scale animation, a math animation, an interactive guide, a video, or a pitch page. Then it builds them as one consistent package. Use when someone describes a situation, audience, or goal rather than a specific format, or asks "what's the best way to communicate this?". If they name one format ("make a deck"), use that skill directly.
+description: The front door to Seneca. Takes a communication need in plain words ("I have a meeting with the execs, summarize this for them", "announce the reorg", "get the team up to speed on the new CRM", "pitch this to a partner") and decides which formats fit the audience and moment: a slide deck, a PDF, a graphic or banner, a GIF, a math animation, an interactive guide, a narrated or edited video, or a 3D render, character, or animation. Then it builds them as one consistent package. Use when someone describes a situation, audience, or goal rather than a specific format, or asks "what's the best way to communicate this?". If they name one format ("make a deck"), use that skill directly.
 ---
 
 # Seneca: pick the right formats, then build them
@@ -38,14 +38,15 @@ Pick the **smallest set of formats where each one has a distinct job**. That's u
 | Public or social (LinkedIn, launch, hiring) | **Graphic** sized for the platform | **GIF** or **video** for motion, plus a **banner** or link-preview image |
 | Explaining a concept to a broad audience | **Video** (narrated) or **GIF** | **Graphic** thumbnail and a **PDF** handout |
 | Formal or personal occasion | **PDF** on stationery | **Graphic** invitation or announcement card |
-| Outreach to one specific person or role | **Pitch page** | **Graphic** link-preview image (the pitch page makes its own) |
+| Outreach to one specific person or role | **PDF** one-pager tailored to them | **Graphic** link-preview image or card to send with it |
 | Numbers-heavy (results, QBR, metrics) | **Deck** with charts | **Graphic** with the 1–3 numbers that matter |
-| A number too big (or small) to feel: budgets, debt, market size, time spans, growth rates | **Scale animation** (MP4 for social, interactive for teaching) | **Stills** of each stop as slides, or a **graphic** of the payoff stop |
+| A number too big (or small) to feel: budgets, debt, market size, time spans, growth rates | **GIF** that builds the comparison in motion (MP4 for social) | A **graphic** of the payoff comparison, or a slide in the **deck** |
 | Formulas, proofs, or quantitative derivations to explain | **Math animation** (MP4 for video and social, GIF to embed) | **PDF** with the full derivation, or typeset equations on the **deck** or **guide** that carries it |
 | A paper, problem set, or formal derivation | **LaTeX PDF** | **Math animation** of the one step that's hard to see on paper |
+| A talking-head or selfie recording that needs graphics, captions, or callouts | **Edited video** (MP4) | **Graphic** thumbnail, or a **GIF** of the key moment |
 | Real footage restaged as an animated 3D scene ("me as a robot in this clip") | **Adapted 3D shot** (MP4) | **Graphic** still of the hero frame, or a **GIF** loop of the best beat |
 | Animate a character or model: walk, gaits, sports motion ("make my model walk", "a pitcher from the windup") | **Animated 3D clip** (MP4) | **GIF** loop of one cycle, or a **graphic** still |
-| A character (from AI image art or a drawing) that should become a 3D model to animate | **Rigged 3D character** (`.blend` + `.glb`) | A **3D render** turntable via `ai-blender`, or an **adapted shot** driving it with real footage |
+| A character (from AI image art or a drawing) that should become a 3D model to animate | **Rigged 3D character** (`.blend` + `.glb`) | A **3D render** turntable via `blender`, or an **adapted shot** driving it with real footage |
 
 When stakeholder groups differ a lot, tailor rather than add formats. For example, execs get the deck and the working team gets the PDF with the appendix.
 
@@ -56,20 +57,21 @@ Use the matching skill for each format. Load it with the Skill tool (it may have
 
 | Format | Skill |
 |---|---|
-| Slide deck | `ai-slide-deck` |
-| PDF (memo, one-pager, letter, handout, cheat sheet) | `ai-pdf` |
-| Graphic, banner, social image, thumbnail, card | `ai-graphic` |
-| Looping animation | `ai-gif` |
-| Scale of a number (stacks, time back, doubling) | `ai-scale` |
-| Animated math explainer (proof, formula, derivation) | `ai-math` (Manim route) |
-| Equations inside a deck, PDF, or guide | `ai-math` (`typeset.mjs` route) |
-| Paper, problem set, or LaTeX document | `ai-math` (LaTeX → PDF route) |
-| Interactive click-through guide | `ai-interactive-guide` |
-| Narrated video | `ai-video` (if installed) |
-| One-person pitch page | `ai-pitch-page` (if installed) |
-| Footage restaged as a 3D animated scene (pose capture + Blender) | `ai-adapt` |
-| Animate a character or model: walk, gaits, sports motion, mocap/BVH retarget | `ai-animate` |
-| Character image to a rigged 3D model (local image-to-3D + Rigify) | `ai-character` |
+| Slide deck | `slides` |
+| PDF (memo, one-pager, letter, handout, cheat sheet) | `pdf` |
+| Graphic, social image, thumbnail, card | `graphic` |
+| Profile or page banner (LinkedIn, X, YouTube, GitHub) | `banner` |
+| Looping animation, including big-number comparisons | `gif-create` |
+| Animated math explainer (proof, formula, derivation) | `math` (Manim route) |
+| Equations inside a deck, PDF, or guide | `math` (`typeset.mjs` route) |
+| Paper, problem set, or LaTeX document | `math` (LaTeX → PDF route) |
+| Interactive click-through guide | `interactive-guide` |
+| Narrated video | `video-create` |
+| Edit a talking-head recording | `video-edit` |
+| 3D render, product shot, turntable | `blender` |
+| Footage restaged as a 3D animated scene (pose capture + Blender) | `adapt` |
+| Animate a character or model: walk, gaits, sports motion, mocap/BVH retarget | `animate` |
+| Character image to a rigged 3D model (local image-to-3D + Rigify) | `character-3d` |
 
 If a format's skill isn't installed, pick the next-best format from the ones that are and say so.
 
@@ -79,7 +81,7 @@ Package rules:
 - **One folder.** Put everything in `<short-slug>/` in the current project (or where the person asked), with the spine, each source HTML, and each rendered file.
 - **Portable.** Every deliverable must open for someone with no Claude and no special software. That means self-contained HTML, PDF, PNG, GIF, or MP4. Many email systems block `.html` attachments, so when an HTML deliverable is meant to be sent, also render its PDF, GIF, or PNG fallback.
 - **Clean in every frame.** No overlapping or clipped text or icons in any format or frame: crowded things fade out or move aside. Positions stay stable during motion, and anything showing magnitude uses an honest linear scale. Each skill's verify step checks this, so don't skip it.
-- **Math is typeset, never faked.** Any equation in any format goes through `ai-math`: `typeset.mjs` for HTML pieces, Manim for motion. A Manim `--clip` is a transparent layer that can be composited into an `ai-video` or `ai-gif` piece, so a video or GIF can carry a math beat without switching style.
+- **Math is typeset, never faked.** Any equation in any format goes through `math`: `typeset.mjs` for HTML pieces, Manim for motion. A Manim `--clip` is a transparent layer that can be composited into a `video-create` or `gif-create` piece, so a video or GIF can carry a math beat without switching style.
 - **Don't invent facts.** Use only the numbers, names, and dates from the source material. If something important is missing, put a clearly marked placeholder in and list it at the end.
 
 ## 5. Hand off
