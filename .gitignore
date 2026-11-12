@@ -1,16 +1,19 @@
 node_modules/
-.frames/
-.DS_Store
-.guide-profile/
-ui-map.*
-# ai-video: per-skill Python env, and narration audio (reproducible with tts.py; timings.json/.js are kept)
 .venv/
 __pycache__/
-**/voice/*.wav
-.sf/
-.manim-media/
-skills/ai-math/media/
+.DS_Store
+.frames/
 .overlay-frames/
+.guide-profile/
+.manim-media/
+.sf/
+ui-map.*
+**/voice/*.wav
+# ai-adapt: local dev footage (movie clips etc.), never committed
+adapt-dev/
+.env
+# local renders and work-in-progress outputs, never committed
+drafts/
 # raw overlay footage (too large for git; kept locally)
 examples/overlay/take2/take2.mov
 examples/overlay/take2/take2.edited.mp4

@@ -43,6 +43,9 @@ Pick the **smallest set of formats where each one has a distinct job**. That's u
 | A number too big (or small) to feel: budgets, debt, market size, time spans, growth rates | **Scale animation** (MP4 for social, interactive for teaching) | **Stills** of each stop as slides, or a **graphic** of the payoff stop |
 | Formulas, proofs, or quantitative derivations to explain | **Math animation** (MP4 for video and social, GIF to embed) | **PDF** with the full derivation, or typeset equations on the **deck** or **guide** that carries it |
 | A paper, problem set, or formal derivation | **LaTeX PDF** | **Math animation** of the one step that's hard to see on paper |
+| Real footage restaged as an animated 3D scene ("me as a robot in this clip") | **Adapted 3D shot** (MP4) | **Graphic** still of the hero frame, or a **GIF** loop of the best beat |
+| Animate a character or model: walk, gaits, sports motion ("make my model walk", "a pitcher from the windup") | **Animated 3D clip** (MP4) | **GIF** loop of one cycle, or a **graphic** still |
+| A character (from AI image art or a drawing) that should become a 3D model to animate | **Rigged 3D character** (`.blend` + `.glb`) | A **3D render** turntable via `ai-blender`, or an **adapted shot** driving it with real footage |
 
 When stakeholder groups differ a lot, tailor rather than add formats. For example, execs get the deck and the working team gets the PDF with the appendix.
 
@@ -64,6 +67,9 @@ Use the matching skill for each format. Load it with the Skill tool (it may have
 | Interactive click-through guide | `ai-interactive-guide` |
 | Narrated video | `ai-video` (if installed) |
 | One-person pitch page | `ai-pitch-page` (if installed) |
+| Footage restaged as a 3D animated scene (pose capture + Blender) | `ai-adapt` |
+| Animate a character or model: walk, gaits, sports motion, mocap/BVH retarget | `ai-animate` |
+| Character image to a rigged 3D model (local image-to-3D + Rigify) | `ai-character` |
 
 If a format's skill isn't installed, pick the next-best format from the ones that are and say so.
 

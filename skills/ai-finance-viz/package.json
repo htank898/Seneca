@@ -1,8 +1,0 @@
-{
-  "name": "ai-finance-viz-scripts",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "playwright": "1.59.1"
-  }
-}

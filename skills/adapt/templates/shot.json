@@ -1,0 +1,23 @@
+{
+  "title": "shadowing-walk",
+  "source": { "video": "ref.mp4", "shot": 4, "trim": [14.2, 22.0] },
+  "render": { "resolution": [1920, 1080], "transparent": false },
+  "motion": { "file": "motion.json", "locomotion": "footlock", "ground": "lock", "heading": 0, "frames": null },
+  "character": { "scale": 1.0, "concept": "concept/turnaround.png" },
+  "camera": {
+    "lens": 35, "match": { "frame": 1, "tilt": 0 },
+    "loc": [0, -6.5, 1.1], "look_at": [0, 0, 0.95],
+    "follow": true, "follow_axes": "XY",
+    "keys": []
+  },
+  "environment": {
+    "concept": "concept/environment.png",
+    "sky": "#a9b8c4", "sky_strength": 0.7, "ground": "#6f6253", "rock": "#4f4a44", "rocks": 40,
+    "sun": 4.0, "sun_color": "#fff1dc"
+  },
+  "beats": [
+    { "t": 0.0, "frame": 1, "what": "subject enters walking left to right, camera dollies alongside" }
+  ],
+  "palette": { "from": "concept/restaged.png", "hex": ["#b8321f", "#e0a526", "#34363b", "#8d9096", "#5df2ff"] },
+  "seed": 7
+}

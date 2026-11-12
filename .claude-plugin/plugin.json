@@ -1,6 +1,6 @@
 {
   "name": "seneca",
-  "version": "0.4.0",
+  "version": "0.6.0",
   "description": "Build the disc, not the butler. Tell Seneca what you need to communicate and to whom, and it picks the formats and builds them: slide decks, custom-stationery PDFs, graphics and banners, big-number scale animations, looping GIFs, interactive software guides, and math (Manim animations, KaTeX, LaTeX), all made the way AI works best, with HTML, CSS, and JavaScript.",
   "author": {
     "name": "Harrison Tankersley"
@@ -36,8 +36,20 @@
     "header-image",
     "3d",
     "blender",
+    "image-to-3d",
+    "rigging",
     "finance",
     "narration",
-    "pitch"
+    "pitch",
+    "mocap",
+    "pose-capture",
+    "nano-banana",
+    "gemini",
+    "restage",
+    "character",
+    "animation",
+    "gait",
+    "bvh",
+    "retarget"
   ]
 }
