@@ -9,7 +9,7 @@ __pycache__/
 .sf/
 ui-map.*
 **/voice/*.wav
-# ai-adapt: local dev footage (movie clips etc.), never committed
+# adapt: local dev footage (movie clips etc.), never committed
 adapt-dev/
 .env
 # local renders and work-in-progress outputs, never committed

@@ -5,12 +5,12 @@ description: Make bodies move in Blender. Drives a character or model with real 
 
 # Animate: real human motion, on any body, in Blender
 
-Paths are relative to this skill's base directory. It sits on top of `ai-blender` (`../blender/`), which owns bkit, the headless runner, scenes, materials, lights, cameras and rendering. This skill is the motion: rigs, retargeting, bodies, motion data, statistical models and actions. `ai-adapt` uses it to restage real footage.
+Paths are relative to this skill's base directory. It sits on top of `blender` (`../blender/`), which owns bkit, the headless runner, scenes, materials, lights, cameras and rendering. This skill is the motion: rigs, retargeting, bodies, motion data, statistical models and actions. `adapt` uses it to restage real footage.
 
 Run every scene through the Blender runner with this skill's scripts on the path:
 ```bash
 node ../blender/scripts/blender.mjs <scene>.py --pypath ../animate/scripts [--preview] [--out x.mp4]
-# add --pypath ../adapt/scripts when the scene also uses ai-adapt's character parts (parts.py)
+# add --pypath ../adapt/scripts when the scene also uses adapt's character parts (parts.py)
 ```
 Read `reference/motion.md` for the full method, the standards and the measured numbers.
 
@@ -31,7 +31,7 @@ Read `reference/motion.md` for the full method, the standards and the measured n
   - The 3D skeleton is rebuilt from the 2D keypoints, so bone directions match the image (`lift.py`).
   - The subject is tracked by position, using torso color only when several people are in view.
   - **Read `motion.check.png`.**
-  - The first run builds `skills/animate/.venv` with `uv`. It moved from ai-adapt, so it rebuilds once.
+  - The first run builds `skills/animate/.venv` with `uv`. It moved from adapt, so it rebuilds once.
 - **Best-quality video capture (non-commercial only): GVHMR.** `python3 scripts/gvhmr.py clip.mp4` writes `clip.gvhmr.bvh`.
   - It gives the whole body plus its world path over the ground (static or moving camera), with far less foot sliding than MediaPipe. Use it for AI-generated clips of the character itself: the motion then already has the character's proportions.
   - It runs on a RunPod GPU. Each run creates a pod, installs GVHMR from upstream, and terminates the pod even on errors. `--keep-pod` with `--pod ID` reuses one pod across several clips.
@@ -45,7 +45,7 @@ Read `reference/motion.md` for the full method, the standards and the measured n
 - **A statistical model:** the average of many performers, or a new individual. See section 5.
 
 ## 2. Bodies: judge motion before characters
-`bodies.body(arm, build=1.0)` is a smooth skinned human with flat-soled feet. `bodies.mannequin(arm)` is segmented, for debugging. **Judge every motion on one of these first.** If it looks wrong on the body, the motion is the problem. If it only looks wrong on a character, the character design is. Characters (ai-adapt's `parts.py`, or ai-character rigs) attach to the same bones.
+`bodies.body(arm, build=1.0)` is a smooth skinned human with flat-soled feet. `bodies.mannequin(arm)` is segmented, for debugging. **Judge every motion on one of these first.** If it looks wrong on the body, the motion is the problem. If it only looks wrong on a character, the character design is. Characters (adapt's `parts.py`, or character-3d rigs) attach to the same bones.
 
 ## 3. Retarget
 `rig.armature(mo)` builds a T-pose skeleton sized to the performer, with the rest foot angle taken from their own stance. `rig.retarget(arm, mo, locomotion=, ground=, heading=, gains=, foot_ik=True)` keys it:
@@ -148,7 +148,7 @@ For a new action (a jump, a swing, a kick), copy `pitch.py` and redefine the eve
   Styled gaits (Old, Zombie) differ on purpose.
 - **Foot contact:** measure the sole profile on flat-foot frames. It should sit within about ±3 mm of the floor.
 - **Jitter:** knee angular acceleration should stay close to the raw mocap's. If spikes land on cycle boundaries, suspect a seam.
-- **Compare sheets:** use ai-adapt's `compare.mjs` with source frames and renders side by side. Read the sheets; don't just trust the numbers.
+- **Compare sheets:** use adapt's `compare.mjs` with source frames and renders side by side. Read the sheets; don't just trust the numbers.
 - **Look:** read stills from the start, middle and end, plus a low close-up of the feet.
 
 ## 8. Licences

@@ -1,5 +1,5 @@
 ---
-name: ai-adapt
+name: adapt
 description: Restage real footage as a fully animated 3D scene. Take a human-captured video (the user's own clip, or any reference), use Gemini (Nano Banana for stills, Omni Flash for video) only as the art department to imagine the character and world, then build that character and world as code in Blender and drive it with the human performance captured from the video (local MediaPipe pose capture, retargeted onto a rig). Rendered, not generated, so nothing hallucinates. Use for "turn me into a robot/creature/armoured warrior in this clip", "restage this video in another world", "make an animated version of this footage", "mocap this video onto a character", "reshoot this as 3D", "put a 3D character in this scene".
 ---
 
@@ -10,7 +10,7 @@ Generative video is creative but unreliable: limbs melt, the character drifts be
 - **Gemini supplies the imagination.** Nano Banana proposes the character and the world, and Omni Flash can suggest how the shot evolves. Its outputs are **art targets only**.
 - **Blender supplies the pixels.** The character and environment are code (`bkit` + `parts`), the motion is keyed from the capture, and the camera is matched to the source. Every frame is rendered, deterministic, and editable.
 
-Paths below are relative to this skill's base directory. Sibling skills: `../blender/` (`ai-blender`: bkit and the `scripts/blender.mjs` runner) and `../animate/` (`ai-animate`: capture, rig, retarget, bodies, motion). Scenes run with both on the path: `--pypath ../animate/scripts --pypath scripts`. Requires Blender, ffmpeg, Node, and `uv` (for the pose env). Needs `GEMINI_API_KEY` only for the concept stages (create a key at aistudio.google.com/apikey). Everything else runs without keys.
+Paths below are relative to this skill's base directory. Sibling skills: `../blender/` (`blender`: bkit and the `scripts/blender.mjs` runner) and `../animate/` (`animate`: capture, rig, retarget, bodies, motion). Scenes run with both on the path: `--pypath ../animate/scripts --pypath scripts`. Requires Blender, ffmpeg, Node, and `uv` (for the pose env). Needs `GEMINI_API_KEY` only for the concept stages (create a key at aistudio.google.com/apikey). Everything else runs without keys.
 
 Work in a project folder (not inside the skill), one folder per shot:
 ```
@@ -26,8 +26,8 @@ node scripts/ingest.mjs source.mp4 --out <shot> --trim 14.2-22    # cut the work
 - Pick **one continuous shot** with the performer's **full body visible**, ideally separated from other people. Trim to it.
 - One shot means one scene. A multi-shot sequence is several shot folders, edited together at the end.
 
-## 2. Get the performance (ai-animate)
-Motion is **ai-animate**'s job (`../animate/`): capture, retargeting, bodies, the gait library, statistical models and actions. Load that skill and follow its "Pick a motion source" section. For a restage, the normal case is to capture the reference clip:
+## 2. Get the performance (animate)
+Motion is **animate**'s job (`../animate/`): capture, retargeting, bodies, the gait library, statistical models and actions. Load that skill and follow its "Pick a motion source" section. For a restage, the normal case is to capture the reference clip:
 ```bash
 python3 ../animate/scripts/pose.py <shot>/ref.mp4 --out <shot>/motion.json --preview [--pick-frame N] [--subject largest|left|right|center]
 ```
@@ -123,7 +123,7 @@ B <shot>/scene.py --out <shot>/renders/final.mp4                 # EEVEE, full r
 B <shot>/scene.py --engine CYCLES --out <shot>/renders/final.mp4 # slower, best metal/glass
 B <shot>/scene.py --no-render --blend <shot>/renders/shot.blend  # editable file
 ```
-For sound or narration, pass the MP4 to `ai-video-edit` or `ai-video`.
+For sound or narration, pass the MP4 to `video-edit` or `video-create`.
 
 Report:
 - the MP4 path, resolution, fps, duration, and render time (from ffprobe);

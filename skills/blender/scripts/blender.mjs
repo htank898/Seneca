@@ -43,7 +43,7 @@ for (const flag of ["--blend", "--glb"]) {
 }
 
 // Extra module dirs: --pypath dir (repeatable) and $BKIT_PATH (colon-separated), so other
-// skills can ship bpy helpers (e.g. ai-animate's rig.py/bodies.py, ai-adapt's parts.py). The scene's own folder is
+// skills can ship bpy helpers (e.g. animate's rig.py/bodies.py, adapt's parts.py). The scene's own folder is
 // also importable, so scene.py can `import character` from next to it.
 const pyPaths = [here, dirname(resolve(scenePath))];
 for (const p of (process.env.BKIT_PATH || "").split(":").filter(Boolean)) pyPaths.push(resolve(p));

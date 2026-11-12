@@ -1,10 +1,10 @@
-"""One shot of an ai-adapt video: the captured performance, worn by a coded character, in a
+"""One shot of an adapt video: the captured performance, worn by a coded character, in a
 coded environment, framed like the reference. Everything is deterministic and re-runnable.
 
   (from skills/adapt/; scene.py lives in your shot folder)
   node ../blender/scripts/blender.mjs <shot>/scene.py --pypath ../animate/scripts --pypath scripts --preview --frame 40
   node ../blender/scripts/blender.mjs <shot>/scene.py --pypath ../animate/scripts --pypath scripts --out shot.mp4
-rig/gait come from ai-animate; character.py (next to this file) uses ai-adapt's parts.py.
+rig/gait come from animate; character.py (next to this file) uses adapt's parts.py.
 
 Custom flags (read with k.arg): --motion motion.json|take.bvh  --shot shot.json  --rest (T-pose
 turnaround, no animation)  --turn 0|90|180  --bvh-out take.bvh (export the performance)  --stats
@@ -28,7 +28,7 @@ k.render_settings(res=res, transparent=SHOT["render"].get("transparent", False),
 
 # ---- performance
 # Motion comes from one of three sources (shot.json "motion"):
-#   file: motion.json  -> captured from the reference video by ai-animate's pose.py (copied joint by joint)
+#   file: motion.json  -> captured from the reference video by animate's pose.py (copied joint by joint)
 #   file: take.bvh     -> any BVH (ExMR export, CMU, 100STYLE, Mixamo...), copied one-to-one
 #   gait: {...}        -> no reference: a standard walk from the open mocap library (gait.py)
 m = SHOT["motion"]

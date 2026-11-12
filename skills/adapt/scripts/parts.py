@@ -22,8 +22,8 @@ shoulder_pad, pelvis. All return the created object(s); all take name=.
 import math
 
 import bkit as k
-import rig  # ai-animate: the skeleton parts attach to
-from bodies import _L, _put, joint  # ai-animate: shared placement helpers
+import rig  # animate: the skeleton parts attach to
+from bodies import _L, _put, joint  # animate: shared placement helpers
 from mathutils import Euler, Matrix, Vector
 
 

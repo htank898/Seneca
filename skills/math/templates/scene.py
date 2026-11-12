@@ -1,8 +1,8 @@
 """Starter Manim scene in the Seneca style. Copy next to the project, rename, and edit.
 
 Render:
-  node <ai-math>/scripts/render-math.mjs scene.py Explainer --size 1920x1080 --gif
-  node <ai-math>/scripts/render-math.mjs scene.py Explainer --timings voice/timings.json --clip
+  node <math>/scripts/render-math.mjs scene.py Explainer --size 1920x1080 --gif
+  node <math>/scripts/render-math.mjs scene.py Explainer --timings voice/timings.json --clip
 
 Equations are Typst math (not LaTeX): frac(a, b), sqrt(x), sum_(k=0)^n, x^2, alpha, RR, ->.
 Group terms with {{ ... : label }} and pick them with eq.select("label").

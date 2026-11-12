@@ -146,7 +146,7 @@ if (usesKatexHtml) {
     return `@font-face{font-display:block;font-family:${f.family};font-style:${f.style};font-weight:${f.weight};src:url(data:font/woff2;base64,${b64}) format("woff2")}`;
   });
   const rest = css.replace(/@font-face\{[^}]*\}/g, "");
-  const style = `<style data-seneca-katex>/* KaTeX ${katex.version} | Copyright (c) 2013-2020 Khan Academy and other contributors | MIT License: https://github.com/KaTeX/KaTeX/blob/main/LICENSE | inlined by ai-math/typeset.mjs */\n${faceCss.join("\n")}\n${rest}</style>\n`;
+  const style = `<style data-seneca-katex>/* KaTeX ${katex.version} | Copyright (c) 2013-2020 Khan Academy and other contributors | MIT License: https://github.com/KaTeX/KaTeX/blob/main/LICENSE | inlined by math/typeset.mjs */\n${faceCss.join("\n")}\n${rest}</style>\n`;
   html = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, `${style}</head>`) : style + html;
   console.error(`[math] inlined ${faceCss.length}/${faces.length} KaTeX fonts${used === null ? " (all: detection unavailable)" : ""}`);
 }

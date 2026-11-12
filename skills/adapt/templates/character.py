@@ -2,7 +2,7 @@
 
 Start from the preset, then change what the concept turnaround sheet shows: colours from the
 sheet's palette, mask style, bulk, which parts exist and where. Every part is rigidly parented
-to a bone (see parts.py / ai-animate's bodies.py for the bone-local axes), so whatever you add moves
+to a bone (see parts.py / animate's bodies.py for the bone-local axes), so whatever you add moves
 with the capture. Needs both paths: --pypath ../animate/scripts --pypath scripts.
 """
 import bkit as k

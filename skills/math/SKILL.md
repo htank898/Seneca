@@ -55,17 +55,17 @@ Flags:
 - For anything else Manim can do: `python3 scripts/manim.py <manim args>`.
 
 ### Using a Manim clip inside other content
-- **In an ai-video:** render with `--timings path/to/voice/timings.json`, using the same scene ids as `scenes.json`, so each `beat()` ends where its narration does. Then either:
+- **In a video-create piece:** render with `--timings path/to/voice/timings.json`, using the same scene ids as `scenes.json`, so each `beat()` ends where its narration does. Then either:
   - use the MP4 as a whole scene, or
   - composite it into the video's animation as a clip (below).
-- **As a clip in any `renderFrame(t)` page** (ai-gif, ai-video, interactive guides): add `--clip`. It writes a transparent PNG sequence to `name.clip/`, plus `clip.json`, `clip.js`, and `clip-player.js`. In the page:
+- **As a clip in any `renderFrame(t)` page** (gif-create, video-create, interactive guides): add `--clip`. It writes a transparent PNG sequence to `name.clip/`, plus `clip.json`, `clip.js`, and `clip-player.js`. In the page:
   ```html
   <canvas id="proof"></canvas>
   <script src="proof.clip/clip.js"></script>
   <script src="proof.clip/clip-player.js"></script>
   <script>
     const proof = SenecaClip.mount("proof", document.getElementById("proof"));
-    // in renderFrame(t):  proof.draw(seconds)  (ai-gif: t * MOTION.seconds; ai-video: t - s.from)
+    // in renderFrame(t):  proof.draw(seconds)  (gif-create: t * MOTION.seconds; video-create: t - s.from)
   </script>
   ```
   - `draw()` is deterministic and frames are preloaded before the page's load event, so the host's renderer works unchanged.
@@ -90,7 +90,7 @@ node scripts/typeset.mjs page.src.html --out page.html
 - `--macros macros.json` sets shared shortcuts, e.g. `{ "\\R": "\\mathbb{R}" }`.
 - Style it from the page's CSS: `.katex { font-size: 1.1em }`, `.katex-display { margin: … }`. Math inherits `color`.
 
-Then render with the host skill as usual: ai-pdf `render-pdf.mjs`, ai-slide-deck `render-deck-pdf.mjs`, ai-gif `render-gif.mjs`, ai-interactive-guide `render-steps.mjs`.
+Then render with the host skill as usual: pdf `render-pdf.mjs`, slides `render-deck-pdf.mjs`, gif-create `render-gif.mjs`, interactive-guide `render-steps.mjs`.
 
 ## 2C. LaTeX → PDF
 1. Copy `templates/article.tex`: Seneca palette, sans headings, `amsmath`/`mathtools`, theorem/definition/problem environments, `unicode-math`.
@@ -111,7 +111,7 @@ node scripts/latex-pdf.mjs path/to/doc.tex --preview
   - With `--timings`, check that the MP4's duration equals `timings.json`'s `duration`.
 - **Clip:** `clip.json`'s `duration` matches the MP4's, and the frame corners are transparent. Render the host page with `--keep-frames` and look at the frames where the clip appears.
 - **KaTeX:**
-  - Render the host format and look at it (ai-pdf `--preview`, a deck PNG, or GIF frames).
+  - Render the host format and look at it (pdf `--preview`, a deck PNG, or GIF frames).
   - Confirm there are no `src=`/`href=`/`url(` references to external files. `[math] inlined N/20 KaTeX fonts` should be small.
 - **LaTeX:** read the `--preview` PNG. No overfull lines in the margins, no `??` references.
 - Report each output's path, size, duration or page count, and dimensions.

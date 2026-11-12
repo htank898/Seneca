@@ -70,8 +70,8 @@ Fix, re-preview, and only then render the final. For animation, render `--frame`
 Report the output path(s), resolution, engine, and render time. Offer the `.blend` if the person might want to tweak it by hand in Blender.
 
 ## Pairs well with
-- `ai-gif`: a turntable MP4 can become a GIF with ffmpeg, or a render can be layered into a motion graphic.
-- `ai-slide-deck`, `ai-pdf`, `ai-graphic`: render with `transparent=True` and place the PNG.
-- `ai-animate`: makes bodies move (rig, retargeting, gait library, motion capture from video, statistical motion models) on top of bkit.
-- `ai-adapt`: restages real footage with a coded character (kitbash parts), using ai-animate for the motion.
+- `gif-create`: a turntable MP4 can become a GIF with ffmpeg, or a render can be layered into a motion graphic.
+- `slides`, `pdf`, `graphic`: render with `transparent=True` and place the PNG.
+- `animate`: makes bodies move (rig, retargeting, gait library, motion capture from video, statistical motion models) on top of bkit.
+- `adapt`: restages real footage with a coded character (kitbash parts), using animate for the motion.
 - `text-to-cad`: export a part to GLB, `bpy.ops.import_scene.gltf`, then light and render it here.

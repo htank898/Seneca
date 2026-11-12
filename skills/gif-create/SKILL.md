@@ -50,10 +50,10 @@ Flags: `--out`, `--width`, `--height`, `--fps`, `--seconds`, `--scale 0.75`, `--
 If the page has `SOUND` cues, the MP4 gets a soundtrack rendered offline in the headless browser and merged in by ffmpeg (mixed with the footage audio when there is one).
 The first run installs Playwright into this skill folder. Requires `ffmpeg` on PATH.
 
-**Math:** for static equations in the page, typeset it first with `node ../ai-math/scripts/typeset.mjs motion.src.html --out motion.html`. For animated math (terms moving, proofs, graphs), render a Manim clip with ai-math (`render-math.mjs … --clip`) and draw it from `renderFrame(t)` with its `clip-player.js`.
+**Math:** for static equations in the page, typeset it first with `node ../math/scripts/typeset.mjs motion.src.html --out motion.html`. For animated math (terms moving, proofs, graphs), render a Manim clip with math (`render-math.mjs … --clip`) and draw it from `renderFrame(t)` with its `clip-player.js`.
 
 ## 6. Verify before reporting
-- **Check every frame for overlaps**, not just the keyframes: render with `--keep-frames` and step through the transitions, which is where collisions happen. If the page publishes `window.__boxes` (name, box, opacity per element, as ai-scale does), use an automated pass like `ai-scale/scripts/check-overlaps.mjs`.
+- **Check every frame for overlaps**, not just the keyframes: render with `--keep-frames` and step through the transitions, which is where collisions happen. If the page publishes `window.__boxes` (name, box, opacity per element), check every frame's boxes for intersections with a short script instead of by eye.
 - Render with `--keep-frames` and look at a few PNGs in `.frames/<name>/`: the first frame, the last frame (it should flow straight into the first), and the punchline beat. Delete `.frames/` afterwards.
 - Check the file size against the destination budget (the renderer warns). If it's over, try in this order: `--scale 0.75`, `--fps 20`, `--colors 128`, then flatter fills or fewer moving pixels.
 - For callouts, look at a frame mid-write, one with the doodle finished, and the first frame after the board leaves. With footage, confirm the picture is frozen during the pause and the audio picks up where it stopped.

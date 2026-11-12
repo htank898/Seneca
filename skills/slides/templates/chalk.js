@@ -3,7 +3,7 @@
  * Text is written stroke by stroke with single-stroke handwriting fonts, so it looks
  * like someone writing it, not an outline being traced. Doodles are any SVG path data,
  * roughened and drawn in order. Every mark is a pure function of progress, so it works
- * inside renderFrame(t) (ai-gif), and .play() / Chalk.auto() animate it live (decks, guides).
+ * inside renderFrame(t) (gif-create), and .play() / Chalk.auto() animate it live (decks, guides).
  *
  *   const board = Chalk.board(svg, { look: "chalk" });
  *   const city  = board.write("St. Louis, Missouri", { x: 540, y: 420, size: 120, anchor: "middle" });

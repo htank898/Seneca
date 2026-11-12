@@ -1,11 +1,11 @@
 ---
-name: ai-character
+name: character-3d
 description: Turn a character image (AI-generated or drawn, plus optional back/side views) into a detailed, textured, Rigify-rigged 3D character ready to animate in Blender. Runs entirely on this Mac with local models, no external API: TRELLIS.2 (MIT) builds the mesh, BiRefNet (MIT) cuts out the background, and Blender fits and skins the rig. Use for "make this character 3D", "turn my character art into a model", "image to 3D", "rig this character", "I want to animate my character in Blender", or when a GLB from another generator needs cleaning and rigging.
 ---
 
 # AI Character: image → rigged 3D character, all local
 
-A character image becomes a textured mesh, then a Blender character with a full Rigify rig (IK/FK arms and legs, torso, neck, head). It's ready to pose and animate, or to drive with `ai-animate`.
+A character image becomes a textured mesh, then a Blender character with a full Rigify rig (IK/FK arms and legs, torso, neck, head). It's ready to pose and animate, or to drive with `animate`.
 
 ```
 front.png (+ back/left/right) ──prep──▶ cut-outs ──TRELLIS.2──▶ raw.glb ──rig──▶ character.blend
@@ -56,8 +56,8 @@ Open these with the Read tool, every time:
 
 ## 4. Animate
 `character.blend` contains `Character` (the mesh, skinned with an Armature modifier), `rig` (the generated Rigify rig: IK by default, an FK switch on each limb under the rig's Item tab), and a hidden `FrontRef` plane with the source image. Open it in Blender (`--open`) and animate the controls, or script it:
-- **Render it:** `ai-blender`'s `bkit` lights, cameras, and turntables work on this file. Use `bpy.ops.wm.open_mainfile`, then add the shot.
-- **Motion from video:** `ai-animate` captures a performance. `landmarks.json` records this character's joints in the same frame as `animate`'s `rig.py` (facing -Y, left = +X, metres).
+- **Render it:** `blender`'s `bkit` lights, cameras, and turntables work on this file. Use `bpy.ops.wm.open_mainfile`, then add the shot.
+- **Motion from video:** `animate` captures a performance. `landmarks.json` records this character's joints in the same frame as `animate`'s `rig.py` (facing -Y, left = +X, metres).
 - **Game engines / web:** `character_rigged.glb` carries the deform skeleton and skin weights.
 
 ## Limits (say so when they bite)

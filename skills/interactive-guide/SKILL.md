@@ -41,7 +41,7 @@ This opens a visible browser. **The user signs in themselves** and navigates to 
 4. Model **states** (menus, modals, tabs) as CSS keyed on `#stage.s-<state>`, and turn them on per step with `states: [...]`.
 5. Write `GUIDE_STEPS`, following the step rules in the reference. Use `action: "click"` when the learner should physically click the target. That step only advances when they do.
    - Wording must match what the replica can actually do. For anything the replica doesn't respond to, write "This is where you'd…" or "In the real app…", never "Type here" or "Click this".
-6. **Math:** if steps or the replica show formulas, write them as LaTeX (`$…$`, `$$…$$`) and typeset the finished guide with `node ../ai-math/scripts/typeset.mjs guide.src.html --out guide.html` before rendering.
+6. **Math:** if steps or the replica show formulas, write them as LaTeX (`$…$`, `$$…$$`) and typeset the finished guide with `node ../math/scripts/typeset.mjs guide.src.html --out guide.html` before rendering.
 7. **Hand-drawn annotations (optional):** for a "here's how to think about it" moment, `templates/chalk.js` can circle, underline, or arrow at a replica element, or write a short note in handwriting, drawn live when it appears. Put an absolutely positioned `<svg viewBox>` over the stage, mark `<text>`/`<path>` elements with `data-chalk`, show the svg only in the right step's state (`#stage.s-<state> .note { display: block }`), and inline `chalk.js` followed by `Chalk.auto({ look: "marker" })`. Use `marker` or `pen` over a light UI. Keep it to a few steps; the spotlight is still the main pointer.
 
 ## 5. Verify before reporting

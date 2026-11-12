@@ -8,8 +8,8 @@
 | `source.video`, `source.shot`, `source.trim` | Where the performance came from: the file, the shot index from `shots.json`, and the trim in seconds. Provenance only. |
 | `render.resolution` | `[w, h]`. Match the source aspect (4:3 film → `[1440, 1080]`), or the destination (16:9, 9:16). |
 | `render.transparent` | `true` for composite mode (an alpha background). |
-| `motion.file` | `motion.json` from ai-animate's `pose.py`, or any `.bvh` (copied one-to-one; `motion.height` rescales the performer, default 1.75 m). |
-| `motion.gait` | Use this when there's no reference: `{source, seconds, cadence, stride, arm_swing, fps}` from the open mocap library. See ai-animate's `../animate/reference/motion.md`. |
+| `motion.file` | `motion.json` from animate's `pose.py`, or any `.bvh` (copied one-to-one; `motion.height` rescales the performer, default 1.75 m). |
+| `motion.gait` | Use this when there's no reference: `{source, seconds, cadence, stride, arm_swing, fps}` from the open mocap library. See animate's `../animate/reference/motion.md`. |
 | `motion.gains` | Optional per-bone swing scaling, such as `{"upper_arm": 0.6}`, on any source. |
 | `motion.locomotion` | `footlock`: the body travels past the planted foot (the default for video and gait). `root`: copy the recorded path (the default for BVH). `none`: in place. |
 | `motion.ground` | `lock`: the lowest foot point sits on z=0 every frame. `free`: keeps the vertical motion, for jumps. |

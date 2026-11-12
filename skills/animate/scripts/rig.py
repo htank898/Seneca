@@ -6,7 +6,7 @@
     rig.retarget(arm, mo)                     # keys every frame; sets the scene's frame range + fps
     rig.follow_camera(cam, arm)               # optional: camera tracks the hips like a dolly
 
-The skeleton (names are what bodies.py and ai-adapt's parts.py attach to):
+The skeleton (names are what bodies.py and adapt's parts.py attach to):
     hips > spine > chest > neck > head
     chest > shoulder.L/R > upper_arm.L/R > forearm.L/R > hand.L/R
     hips  > hip.L/R > thigh.L/R > shin.L/R > foot.L/R
@@ -273,7 +273,7 @@ def armature(mo, scale=1.0, name="Rig", show=False):
 def armature_from_joints(J, name="Rig", show=False):
     """The same skeleton, fitted to a MESH instead of a performer: its rest pose is the mesh's own
     pose (an A-pose is fine), its bone lengths the mesh's own, so retarget() drives a skinned
-    character without stretching it. J is ai-character's landmarks.json "joints" (metres, facing
+    character without stretching it. J is character-3d's landmarks.json "joints" (metres, facing
     -Y, left = +X, feet on z=0): shoulder/elbow/wrist/hand_tip.L|R, hip/knee/ankle/toe.L|R,
     neck, head_top. retarget() keys rotations relative to each bone's own rest matrix, so the rest
     pose need not be a T-pose."""

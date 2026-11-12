@@ -7,8 +7,8 @@
 //     [--clip] [--no-mp4] [--timings voice/timings.json] [--keep-media]
 //
 // --clip writes a transparent PNG sequence to <name>.clip/ with clip.json + clip.js,
-// for templates/clip-player.js inside any renderFrame(t) page (ai-gif, ai-video, guides).
-// --timings exposes an ai-video timings.json to the scene, so SenecaScene.beat("id")
+// for templates/clip-player.js inside any renderFrame(t) page (gif-create, video-create, guides).
+// --timings exposes a video-create timings.json to the scene, so SenecaScene.beat("id")
 // holds each beat until that narration scene leaves the screen.
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync, copyFileSync } from "node:fs";
@@ -88,7 +88,7 @@ if (wantMp4 || wantGif) {
   console.log(`mp4: ${mp4} (${w}x${h}, ${+(rn / rd).toFixed(2)} fps, ${dur}s, ${mb(mp4)} MB)`);
 }
 
-// ---- GIF (same palette pipeline as ai-gif)
+// ---- GIF (same palette pipeline as gif-create)
 if (wantGif) {
   const gif = `${stem}.gif`;
   const [w] = probe(mp4, "stream=width").split(",");

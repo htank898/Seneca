@@ -30,7 +30,7 @@ Every preset is in `PRESETS` in the template. Use `data-preset="<name>"`, or `da
 
 Platform crops and overlays change, and third-party guides disagree on exact numbers. The guides are deliberately conservative. They're there to keep important content clear, not to give pixel-exact measurements. When it matters, check the real upload on a phone and on desktop.
 
-Anything else (posters, print-style pieces, diagrams, odd aspect ratios) uses `data-w`/`data-h`. For something that will be printed, set the pixel size from inches × 300 (for example 18×24 in becomes 5400×7200). For a document that's mostly text, use `ai-pdf` instead.
+Anything else (posters, print-style pieces, diagrams, odd aspect ratios) uses `data-w`/`data-h`. For something that will be printed, set the pixel size from inches × 300 (for example 18×24 in becomes 5400×7200). For a document that's mostly text, use `pdf` instead.
 
 ## Resolution and format
 - **`--scale 2`** for anything shown on high-density screens: banners, headers, thumbnails, and anything with small text. Platforms re-compress uploads, and starting at 2× keeps edges crisp. LinkedIn caps banner uploads at around 8 MB, so a 2× banner (3168×792) is usually fine as PNG.

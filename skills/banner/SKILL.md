@@ -1,6 +1,6 @@
 ---
 name: banner
-description: Design static profile and page banners as HTML/CSS and export them as sharp PNGs, such as LinkedIn profile backgrounds, LinkedIn company covers, X/Twitter headers, YouTube channel art, GitHub social previews, and Open Graph link cards. Use whenever someone wants a banner, header image, cover image, or profile background, or wants to update the text or colors on one. Output is a still image, not a GIF; use ai-gif only if they explicitly want motion.
+description: Design static profile and page banners as HTML/CSS and export them as sharp PNGs, such as LinkedIn profile backgrounds, LinkedIn company covers, X/Twitter headers, YouTube channel art, GitHub social previews, and Open Graph link cards. Use whenever someone wants a banner, header image, cover image, or profile background, or wants to update the text or colors on one. Output is a still image, not a GIF; use gif-create only if they explicitly want motion.
 ---
 
 # AI Banner: profile banners as code

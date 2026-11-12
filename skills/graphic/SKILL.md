@@ -1,6 +1,6 @@
 ---
 name: graphic
-description: Design static graphics in HTML/CSS/SVG and export them as pixel-exact PNG (or JPG) at any size, such as LinkedIn/X/YouTube banners, social posts, link-preview (OG) images, thumbnails, avatars, headers, wallpapers, app icons, emoji, stickers, and one-off graphics in any aspect ratio. Can export several sizes of one design at once and supports transparent backgrounds. Use whenever someone wants a "banner", "header", "cover image", "graphic", "image for a post", "thumbnail", "PNG of X", or "make me a graphic", instead of reaching for Canva or Photoshop. Use ai-gif if it should move, and ai-pdf if it's a printable document.
+description: Design static graphics in HTML/CSS/SVG and export them as pixel-exact PNG (or JPG) at any size, such as LinkedIn/X/YouTube banners, social posts, link-preview (OG) images, thumbnails, avatars, headers, wallpapers, app icons, emoji, stickers, and one-off graphics in any aspect ratio. Can export several sizes of one design at once and supports transparent backgrounds. Use whenever someone wants a "banner", "header", "cover image", "graphic", "image for a post", "thumbnail", "PNG of X", or "make me a graphic", instead of reaching for Canva or Photoshop. Use gif-create if it should move, and pdf if it's a printable document.
 ---
 
 # AI graphic: static images as code

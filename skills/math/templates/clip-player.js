@@ -1,5 +1,5 @@
 // Seneca clip player: draw a Manim clip (transparent PNG sequence from render-math.mjs --clip)
-// inside any renderFrame(t) page: ai-gif, ai-video, interactive guides.
+// inside any renderFrame(t) page: gif-create, video-create, interactive guides.
 //
 //   <canvas id="eq"></canvas>
 //   <script src="proof.clip/clip.js"></script>          <!-- manifest: window.CLIPS["proof"] -->
@@ -7,8 +7,8 @@
 //   <script>
 //     const proof = SenecaClip.mount("proof", document.getElementById("eq"), { base: "proof.clip/" });
 //     window.renderFrame = (t) => {
-//       proof.draw(t * MOTION.seconds);        // ai-gif: t is 0..1, so convert to seconds
-//       // ai-video: proof.draw(t - s.from)    // t is already seconds; offset to the scene start
+//       proof.draw(t * MOTION.seconds);        // gif-create: t is 0..1, so convert to seconds
+//       // video-create: proof.draw(t - s.from)    // t is already seconds; offset to the scene start
 //     };
 //   </script>
 //

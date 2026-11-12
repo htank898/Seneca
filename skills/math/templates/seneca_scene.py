@@ -15,7 +15,7 @@ What it gives you:
   SenecaScene       background + defaults, plus eq(), text(), beat(), wait_until(), cue()
   eq(expr)          Typst math (MathTypst). {{ ... : label }} groups are selectable with .select("label")
   text(s)           Pango text in the house face
-  beat(id)          wait until scene `id` of an ai-video timings.json ends (falls back to `hold` seconds)
+  beat(id)          wait until scene `id` of a video-create timings.json ends (falls back to `hold` seconds)
   cue(id, key)      a time from timings.json: "start"/"end" (spoken line) or "from"/"to" (on screen)
 
 Equations use Typst math syntax, not LaTeX. See reference/math-parameters.md for a cheatsheet.
@@ -107,7 +107,7 @@ class SenecaScene(Scene):
             self.wait(dt)
 
     def cue(self, scene_id, key="start", default=None):
-        """A time from the ai-video timings.json passed with --timings, or `default` without one."""
+        """A time from the video-create timings.json passed with --timings, or `default` without one."""
         if not self._timings:
             return default
         if scene_id not in self._timings:

@@ -35,7 +35,7 @@ Infer from the request and use `reference/deck-parameters.md` defaults. Ask only
    <svg viewBox="0 0 1920 1080"><text data-chalk x="960" y="300" font-size="220" text-anchor="middle">St. Louis</text>
      <path data-chalk d="M 760 900 C 800 600, 900 480, 960 480 C 1020 480, 1120 600, 1160 900"/></svg>
    ```
-   Then add `<script>/* contents of chalk.js */</script><script>Chalk.auto();</script>` before `</body>`. Inline it so the deck stays one file, and keep `chalk-fonts-OFL.txt` with the deck if you ship it as a folder. `data-chalk="print"` uses the print hand; put `data-build` on the `<svg>` to draw it on a click. Marks reset when you leave the slide and replay when you return, and the PDF shows them finished. Use it for the one thing the presenter would walk to a whiteboard for: a place, a number, a quick diagram. Not every slide. See `../ai-gif/reference/chalk-callouts.md` for the full API, if that skill is installed.
+   Then add `<script>/* contents of chalk.js */</script><script>Chalk.auto();</script>` before `</body>`. Inline it so the deck stays one file, and keep `chalk-fonts-OFL.txt` with the deck if you ship it as a folder. `data-chalk="print"` uses the print hand; put `data-build` on the `<svg>` to draw it on a click. Marks reset when you leave the slide and replay when you return, and the PDF shows them finished. Use it for the one thing the presenter would walk to a whiteboard for: a place, a number, a quick diagram. Not every slide. See `../gif-create/reference/chalk-callouts.md` for the full API, if that skill is installed.
 
 Engine keys: ←/→ or space to navigate, `F` fullscreen, `N` speaker notes, `O` overview, `Home`/`End`. Links like `deck.html#/5` open slide 5.
 
@@ -45,7 +45,7 @@ node scripts/render-deck-pdf.mjs path/to/deck.html --png
 ```
 This writes `deck.pdf` (one slide per page, at the deck's exact size, with all builds shown) and, with `--png`, `deck.slide-N.png` for QA. The first run installs Playwright into this skill folder.
 
-**Math:** if the content has equations, write them as LaTeX (`$…$` inline, `$$…$$` display) and typeset first with `node ../ai-math/scripts/typeset.mjs deck.src.html --out deck.html`. This bakes KaTeX into the HTML: no scripts, only the fonts it uses. For an animated derivation on a slide, render an ai-math Manim clip and embed the MP4 or GIF.
+**Math:** if the content has equations, write them as LaTeX (`$…$` inline, `$$…$$` display) and typeset first with `node ../math/scripts/typeset.mjs deck.src.html --out deck.html`. This bakes KaTeX into the HTML: no scripts, only the fonts it uses. For an animated derivation on a slide, render a math Manim clip and embed the MP4 or GIF.
 
 ## 5. Verify before reporting
 - **Nothing overlaps.** No text sits on other text or on an icon, and no element clips another or the frame edge. When things crowd, fade the less important one out or move it to the side. Never let them collide. Check every slide PNG, with all builds shown, for this before reporting.

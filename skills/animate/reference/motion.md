@@ -14,7 +14,7 @@
 | Body proportions | **Drillis & Contini** segment ratios of standing height, as tabulated in Winter's *Biomechanics and Motor Control of Human Movement*. | `lift.ANTHRO` |
 
 ## Capture from video (`pose.py` → `motion.json`)
-`pose.py` bootstraps its own Python environment (mediapipe, opencv, numpy) with `uv` in `skills/animate/.venv/` on first run, and downloads the pose model (~30 MB) to `~/.cache/seneca-adapt/`. It moved here from ai-adapt, so the first run after the move rebuilds the environment, which takes a minute. Delete `.venv/` to force a clean rebuild.
+`pose.py` bootstraps its own Python environment (mediapipe, opencv, numpy) with `uv` in `skills/animate/.venv/` on first run, and downloads the pose model (~30 MB) to `~/.cache/seneca-adapt/`. It moved here from adapt, so the first run after the move rebuilds the environment, which takes a minute. Delete `.venv/` to force a clean rebuild.
 
 1. **Detect** with MediaPipe Pose (Apache-2.0, local). It runs in two modes, merged: a temporal tracker plus per-frame re-detection.
 2. **Track one subject.** Lock on `--pick-frame`, then match each frame by nose, shoulder and hip position (predicted forward from velocity), checked against a torso-color signature. Use crop re-detection when two people overlap, and re-identify by appearance after dropouts.

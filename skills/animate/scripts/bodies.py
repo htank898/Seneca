@@ -1,12 +1,12 @@
 """bodies: human bodies generated from rig.py's skeleton, for judging and showing motion.
-Runs inside Blender. Part of ai-animate.
+Runs inside Blender. Part of animate.
 
     import rig, bodies
     arm = rig.armature(mo)
     bodies.body(arm, build=1.0)     # smooth skinned human: flat-soled feet, soft knees/elbows/hips
     bodies.mannequin(arm)           # segmented capsules + ball joints, for debugging motion
 
-Also the placement helpers other modules build on (ai-adapt's parts.py imports them):
+Also the placement helpers other modules build on (adapt's parts.py imports them):
   _L(arm, bone)        rest length of a bone
   _put(obj, arm, bone) place an object in a bone's frame and rigidly parent it
   joint(arm, bone)     a ball joint at a bone's head (at=0) or tail (at=1)

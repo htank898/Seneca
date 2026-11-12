@@ -12,7 +12,7 @@
 | LinkedIn / X feed (1:1) | 1080x1080 | 30 | `--gif --scale 0.6` if a GIF is needed |
 | Story / Shorts (9:16) | 1080x1920 | 30 | keep equations in the middle 60% |
 | Slack / docs GIF | 800x450 | 24 | `--gif --gif-fps 20` |
-| Clip in an ai-gif / ai-video page | the clip's on-screen size | the host's fps | `--clip --no-mp4` |
+| Clip in a gif-create / video-create page | the clip's on-screen size | the host's fps | `--clip --no-mp4` |
 | Fast draft | any | — | `--quality l` (480p15) |
 
 `--quality`: `l` 854×480 @15, `m` 1280×720 @30, `h` 1920×1080 @60 (the default), `k` 3840×2160 @60. `--size` and `--fps` override it. The short side of the frame is always 8 Manim units.
