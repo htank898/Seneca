@@ -1,6 +1,6 @@
 ---
 name: animate
-description: Make bodies move in Blender. Drives a character or model with real human motion — walks, runs, gaits and walk cycles from open mocap libraries (CMU, 100STYLE), BVH or mocap copied one-to-one onto a model, motion captured from ordinary video (local MediaPipe, no keys), and statistical motion models that average many performances and generate new ones that copy no one. Includes one-shot sports actions such as baseball pitching from the windup with a held, released ball. Use for "make my character/model walk", "run cycle", "give it a proud/old/zombie walk", "retarget this mocap/BVH onto my model", "average all these walks", "generate a unique gait", "animate a pitcher", "sports motion", "mocap this video", "motion capture from video".
+description: Make bodies move in Blender. Drives a character or model with real human motion — ready-made action clips chained into a performance (walk in, talk, wave, dance, punch, sit, jump, roll, sword, zombie… from the free CC0 Quaternius library or your own Mixamo downloads), walks, runs, gaits and walk cycles from open mocap libraries (CMU, 100STYLE), BVH or mocap copied one-to-one onto a model, motion captured from ordinary video (local MediaPipe, no keys), and statistical motion models that average many performances and generate new ones that copy no one. Includes one-shot sports actions such as baseball pitching from the windup with a held, released ball. Use for "make my character walk in and wave", "chain these animations", "use a Mixamo animation", "make it dance/punch/sit down", "make my character/model walk", "run cycle", "give it a proud/old/zombie walk", "retarget this mocap/BVH onto my model", "average all these walks", "generate a unique gait", "animate a pitcher", "sports motion", "mocap this video", "motion capture from video".
 ---
 
 # Animate: real human motion, on any body, in Blender
@@ -16,7 +16,8 @@ Read `reference/motion.md` for the full method, the standards and the measured n
 
 | Script | What it does |
 |---|---|
-| `rig.py` | Standard armature, retarget (contacts, foot IK, pelvis adjustment), BVH in and out, `match_camera` |
+| `clips.py`, `clips-fetch.mjs` | Ready-made clip library (Quaternius CC0, your Mixamo FBX): catalog, one clip → mo, a chained `sequence`, or `native` on the pack's own mannequin |
+| `rig.py` | Standard armature, retarget (contacts, foot IK, pelvis adjustment), BVH in and out, `sample_armature` (any animated rig → mo), `match_camera` |
 | `bodies.py` | `body()` (smooth skinned human) and `mannequin()`; placement helpers for attached parts |
 | `pose.py`, `lift.py` | Video → `motion.json` |
 | `gait.py`, `gait-fetch.mjs` | CMU and 100STYLE gait library |
@@ -27,6 +28,16 @@ Read `reference/motion.md` for the full method, the standards and the measured n
 | `checks.py` | Penetration, floor and jitter measurements |
 
 ## 1. Pick a motion source
+**Check the clip library first.** For everyday actions (walk in, stop, talk, nod, wave, sit, dance, punch, jump, roll, carry, push, sword, pistol, swim, zombie, farm chores) a ready-made clip is faster and better than building the motion. Capture, gait models and hand-built actions are for what no clip covers.
+- **Ready-made clips (`clips.py`):**
+  - One-time setup: `node scripts/clips-fetch.mjs quaternius` (Universal Animation Library 1 + 2, Standard tier, 84 usable clips, ~25 MB, CC0).
+  - Your own Mixamo clips: download FBX from mixamo.com yourself (it needs your Adobe login and has no API; never automate it), put them in a folder, and list it in `$SENECA_CLIPS` (colon-separated) or pass `extra=[folder]`. Any glTF/FBX with a humanoid armature and actions works the same way.
+  - Find clips: `clips.find("walk")`, `clips.find("sit")`, or `sorted(clips.catalog())`.
+  - Chain them: `mo = clips.sequence(["Walk_Loop:2.6", "Idle_Talking_Loop", "Yes", "Punch_Jab", "Idle_Loop"], blend=0.3)`. An item is `"Name"` (play once), `"Name:seconds"`, `"Name*loops"`, or a dict with `clip`, `seconds`/`loops`, `speed`, `travel`. Seams go through `sequence.chain` (heading matched, bone-space crossfade).
+  - Then the usual route: `arm = rig.armature(mo)`, `bodies.body(arm)` or a character, `rig.retarget(arm, mo, locomotion="root", quality=True)`. Clips can come from both packs in one shot.
+  - **Travel:** in-place locomotion (`Walk_Loop`, Mixamo "In Place") is carried forward at the speed its planted feet imply, so they don't slide. `[seq]` prints each clip's travel speed, and warns when the feet still slide over 0.3 m/s: runs played in place don't encode their flight distance, so set `travel=` (m/s) by eye or use a `_RM` (root motion) clip. `*_RM` clips keep their own path.
+  - **No retarget at all:** `arm, mesh = clips.native([...])` plays the clips on the pack's own mannequin with NLA crossfades, exactly as authored. All clips must come from one pack.
+  - Start from `templates/clips_chain.py`.
 - **Video capture:** `python3 scripts/pose.py clip.mp4 --preview [--pick-frame N] [--subject left|right|largest]` writes `motion.json`.
   - The 3D skeleton is rebuilt from the 2D keypoints, so bone directions match the image (`lift.py`).
   - The subject is tracked by position, using torso color only when several people are in view.
@@ -96,6 +107,7 @@ Also:
 ## 4. Templates
 | Template | Use |
 |---|---|
+| `templates/clips_chain.py` | Chain ready-made clips on the body or the pack's mannequin, framed on a backdrop (`--shot "Walk_Loop:2.6,Idle_Talking_Loop,…"`, `--mode body|native`, `--blend`, `--fps`, `--color`) |
 | `templates/walk.py` | Any library gait on the body, plus metrics (`--src`, `--stride`, `--cadence`, `--arms`, `--build`, `--body mannequin`) |
 | `templates/model_build.py` | Fit a gait model from a CMU trial list (`--set`, `--out`) |
 | `templates/model_walk.py` | Walk from a model (`--model`, `--person N`, `--wobble`, `--seed`, `--sec`, `--fps`) |
@@ -152,6 +164,8 @@ For a new action (a jump, a swing, a kick), copy `pitch.py` and redefine the eve
 - **Look:** read stills from the start, middle and end, plus a low close-up of the feet.
 
 ## 8. Licences
+- **Quaternius Universal Animation Library 1 and 2** (`clips-fetch.mjs`): CC0 1.0, public domain. No credit required; "Animations by Quaternius" is a kind courtesy.
+- **Mixamo** (Adobe): never bundled or downloaded by Seneca. Clips the user downloads may be used in their videos, commercial included, but not redistributed as standalone files or used to train AI models. Check Adobe's current terms for anything unusual.
 - **CMU mocap:** free for any use.
 - **100STYLE:** CC BY 4.0. **Credit "The 100STYLE Dataset - Ian Mason"** in any video that uses it, and say so in the hand-off.
 - **MediaPipe:** Apache-2.0.

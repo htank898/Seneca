@@ -21,6 +21,7 @@ This repository's own code is MIT licensed (see `LICENSE`). The skills install a
 | OpenCV (`opencv-python-headless`), NumPy | animate (`pose.py`) | Apache-2.0; BSD-3-Clause | https://github.com/opencv/opencv-python |
 | CMU Graphics Lab Motion Capture Database (BVH conversion by B. Hahne, mirrored by una-dinosauria/cmu-mocap) | animate (`gait.py`, fetched on demand) | Free for any use; CMU asks for the acknowledgement "The data used in this project was obtained from mocap.cs.cmu.edu. The database was created with funding from NSF EIA-0196217." | http://mocap.cs.cmu.edu |
 | 100STYLE locomotion dataset (Ian Mason) | animate (`gait.py`, downloaded on request) | CC BY 4.0: credit "The 100STYLE Dataset - Ian Mason" in any work that uses it | https://www.ianxmason.com/100style/ |
+| Quaternius Universal Animation Library 1 and 2 (Standard tier) | animate (`clips-fetch.mjs`, downloaded on request) | CC0 1.0 (public domain) | https://quaternius.com/packs/universalanimationlibrary.html |
 
 **character-3d** installs these into `~/.cache/seneca/char3d/`, outside the repository:
 

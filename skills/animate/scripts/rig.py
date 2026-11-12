@@ -1279,19 +1279,39 @@ def load_bvh(path, fps=None, start=None, end=None, height=1.75, speed=1.0):
     height: the performer is rescaled to this standing height (metres). speed: playback rate
     (cadence): 1.2 plays the clip 20% faster.
     """
-    import numpy as np
-    sc = bpy.context.scene
     before = set(bpy.data.objects)
     bpy.ops.import_anim.bvh(filepath=str(path), global_scale=1.0, frame_start=1, use_fps_scale=False,
                             update_scene_fps=False, update_scene_duration=False, rotate_mode="NATIVE",
                             axis_forward="-Z", axis_up="Y")
     src = next(o for o in bpy.data.objects if o not in before and o.type == "ARMATURE")
     act = src.animation_data.action
-    f0, f1 = act.frame_range
     # BVH "Frame Time" is not kept by the importer; read it from the file
     with open(path, errors="ignore") as fh:
         m = _re.search(r"Frame Time:\s*([\d.eE+-]+)", fh.read())
     dt = float(m.group(1)) if m else 1 / 30
+    mo = sample_armature(src, src_fps=1 / dt, fps=fps, start=start, end=end, height=height, speed=speed)
+    mo["source"] = str(path)
+    mo.pop("neck_base", None)
+    # remove the imported armature + its action
+    bpy.data.objects.remove(src, do_unlink=True)
+    bpy.data.actions.remove(act)
+    return mo
+
+
+def sample_armature(src, src_fps, fps=None, start=None, end=None, height=1.75, speed=1.0, scale="first"):
+    """Sample any animated humanoid armature (BVH, glTF, FBX: Mixamo, Quaternius, VRM...) into
+    motion.json's layout, from its active action. Joints are found by structure
+    (resolve_skeleton), so any naming works. Returns the mo dict; the armature is left in place.
+
+    src_fps: the action's frames per second. start/end: source seconds. height: the performer
+    is rescaled to this standing height. scale="first" measures the height on the first frame
+    (BVH clips start standing); "rest" measures it on the rest pose (clips that start crouched,
+    seated or lying down).
+    """
+    sc = bpy.context.scene
+    act = src.animation_data.action
+    f0, f1 = act.frame_range
+    dt = 1.0 / src_fps
     fps = fps or (sc.render.fps / sc.render.fps_base)
     roles = resolve_skeleton(src)
     pb = src.pose.bones
@@ -1301,13 +1321,7 @@ def load_bvh(path, fps=None, start=None, end=None, height=1.75, speed=1.0):
         b = pb[name]
         return W @ (b.tail if tail else b.head)
 
-    t0 = start or 0.0
-    t1 = end if end is not None else (f1 - f0) * dt
-    n = int((t1 - t0) * fps / speed) + 1
-    frames, roots = [], []
-    for k in range(n):
-        sf = f0 + (t0 + k * speed / fps) / dt
-        sc.frame_set(int(sf), subframe=sf - int(sf))
+    def joints():
         P = [Vector((0, 0, 0))] * 33
         for s, (hip, knee, ank, toe, heel, sh, el, wr, hand) in {
                 "L": (23, 25, 27, 31, 29, 11, 13, 15, (17, 19, 21)),
@@ -1328,19 +1342,43 @@ def load_bvh(path, fps=None, start=None, end=None, height=1.75, speed=1.0):
         P[7] = hc + side.normalized() * side.length * 0.2
         P[8] = hc - side.normalized() * side.length * 0.2
         P[0] = hc
+        return P
+
+    head_parent = pb[roles["head"]].parent  # the neck bone, when the rig has one
+
+    def ear_height(P):
+        hip_c = (P[23] + P[24]) / 2
+        rel = [p - hip_c for p in P]
+        low = min(rel[j].z for j in (27, 28, 29, 30, 31, 32))
+        return (rel[7].z + rel[8].z) / 2 - low
+
+    t0 = start or 0.0
+    t1 = end if end is not None else (f1 - f0) * dt
+    n = int((t1 - t0) * fps / speed) + 1
+    frames, roots, necks = [], [], []
+    for k in range(n):
+        sf = f0 + (t0 + k * speed / fps) / dt
+        sc.frame_set(int(sf), subframe=sf - int(sf))
+        P = joints()
         hip_c = (P[23] + P[24]) / 2
         frames.append([p - hip_c for p in P])
         roots.append(hip_c.copy())
-    # remove the imported armature + its action
-    bpy.data.objects.remove(src, do_unlink=True)
-    bpy.data.actions.remove(act)
+        necks.append((W @ head_parent.head - hip_c) if head_parent else None)
     # rescale to metres at the requested height (head-top ~ 1.08 x ear height above the feet)
-    first = frames[0]
-    low = min(first[j].z for j in (27, 28, 29, 30, 31, 32))
-    tall = (first[7].z + first[8].z) / 2 - low
+    if scale == "rest":
+        src.data.pose_position = "REST"
+        bpy.context.view_layer.update()
+        tall = ear_height(joints())
+        src.data.pose_position = "POSE"
+        bpy.context.view_layer.update()
+    else:
+        first = frames[0]
+        low = min(first[j].z for j in (27, 28, 29, 30, 31, 32))
+        tall = (first[7].z + first[8].z) / 2 - low
     k_s = height / (tall * 1.08) if tall > 1e-6 else 1.0
     world = [[p * k_s for p in fr] for fr in frames]
     roots = [r * k_s for r in roots]
+    necks = [q * k_s if q is not None else None for q in necks]
 
     def med(vals):
         v = sorted(vals)
@@ -1354,8 +1392,10 @@ def load_bvh(path, fps=None, start=None, end=None, height=1.75, speed=1.0):
                "neck": seg((11, 12), (7, 8)), "upper_arm": seg(11, 13), "forearm": seg(13, 15),
                "hand": seg(15, 17) / 1.8, "thigh": seg(23, 25), "shin": seg(25, 27), "foot": seg(27, 31),
                "heel": seg(27, 29)}
-    return {"source": str(path), "fps": fps, "frames": n, "world": world, "root": roots,
-            "valid": [True] * n, "lengths": lengths, "bvh_roles": roles}
+    # "neck_base": hip-relative base of the neck bone per frame (None if the rig has none). Not used
+    # by retarget; clips.py uses it to aim the head on rigs whose shoulders sit off the neck line.
+    return {"source": src.name, "fps": fps, "frames": n, "world": world, "root": roots,
+            "valid": [True] * n, "lengths": lengths, "bvh_roles": roles, "neck_base": necks}
 
 
 def export_bvh(arm, path, start=None, end=None, names="vrm"):

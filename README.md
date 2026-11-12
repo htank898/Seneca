@@ -18,7 +18,7 @@
 | **video-edit** | Talking-head edits with overlays timed to what's said (local Whisper transcription) | `.mp4` + `edit.json` |
 | **blender** | 3D scenes from headless Blender scripts: product shots, logo renders, turntables | `.png` / `.mp4` / `.blend` / `.glb` |
 | **character-3d** | A character image (plus optional back and side views) turned into a textured, Rigify-rigged 3D model, all local | `.blend` + `.glb` |
-| **animate** | Bodies that move: mocap/BVH retargeting, a gait library (CMU, 100STYLE), motion capture from video, statistical motion models, sports actions | `.mp4` + `.bvh` |
+| **animate** | Bodies that move: ready-made clips chained into a performance (Quaternius CC0, your Mixamo downloads), mocap/BVH retargeting, a gait library (CMU, 100STYLE), motion capture from video, statistical motion models, sports actions | `.mp4` + `.bvh` |
 | **adapt** | Real footage restaged in 3D: the captured performance drives a character and world built in Blender, with Gemini concept art as the target | `.mp4` + `.blend` |
 
 Each skill gives Claude a reference sheet of the parameters a professional would think about (form factors, safe areas, type scales, paper sizes, loop timing, file-size budgets) and a render script that turns the source into the final file.

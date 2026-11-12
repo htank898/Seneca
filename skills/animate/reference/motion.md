@@ -77,6 +77,32 @@ Before the loop and pelvis fixes, the CMU walk's peak was 33.5. Planted soles si
 ## Copy a BVH one-to-one
 Set `"motion": {"file": "take.bvh"}` in `shot.json`. Root travel defaults to `root`, so the recorded path is reproduced. Sources include an ExMR export, a CMU or 100STYLE clip, a Mixamo download, or a previous shot's `--bvh-out`.
 
+## Ready-made clips (`clips.py`)
+Game-animation libraries ship hundreds of clean, hand-polished actions on one standard skeleton. Use them before capturing or building motion.
+
+- **Sources:** Quaternius Universal Animation Library 1 + 2, Standard tier (CC0): 89 clips, 84 after dropping T-poses and single-frame aim poses, on a 1.83 m mannequin, imported in 0.8 s per pack. UAL1 uses Rigify `DEF-` names, UAL2 Unreal names (`upperarm_l`). Mixamo FBX the user downloads (`mixamorig:` names). `rig.resolve_skeleton` finds joints by structure, so all three sample the same way.
+- **Clip → mo:** `rig.sample_armature` (shared with `load_bvh`, whose output is byte-identical to before) samples the joints at the scene fps. Clips scale from the **rest** pose, not frame 1, so a clip that starts crouched or seated still gets the right height.
+- **Two rig fixes for game skeletons**, applied by `clips.clip` only (BVH sources are unchanged):
+  - **Feet.** Game toe bones run past the toe tip and below the sole (Quaternius: an 0.34 m foot at 1.75 m). The toe keeps its direction at 0.12 × height, the CMU ratio. Median planted sole on the body went from 15.4 mm to 7.8 mm.
+  - **Head.** `rig.targets` aims neck and head from the shoulder midpoint to the ears. Quaternius puts the shoulder joints 6.5 cm behind the neck, which pitched the head ~30° forward. The ears are re-anchored to the real neck base.
+- **Travel for in-place loops.** The root is carried at the velocity the planted feet imply: the ankles' frame-to-frame velocity, weighted by exp(−height above their lowest point / 1 cm). Only clips whose names say locomotion (walk, jog, run, sprint, crawl, crouch-forward, carry, push…) get it automatically; a swimmer or dancer has no planted feet to read. Residual planted-ankle slide after travel (24 fps):
+
+  | Clip | Travel | Slide before → after |
+  |---|---|---|
+  | Walk_Loop | 1.00 m/s | 1.07 → 0.08 m/s |
+  | Walk_Formal_Loop | 0.97 m/s | 1.07 → 0.10 m/s |
+  | Walk_Carry_Loop | 0.61 m/s | 0.67 → 0.06 m/s |
+  | Push_Loop | 0.27 m/s | 0.27 → 0.03 m/s |
+  | Crouch_Fwd_Loop | 0.57 m/s | 0.73 → 0.18 m/s |
+  | Zombie_Walk_Fwd_Loop | 0.81 m/s | 1.00 → 0.19 m/s |
+  | Jog_Fwd_Loop | 5.3 m/s | 5.42 → 0.08 m/s |
+  | Sprint_Loop | 2.5 m/s | 1.46 → 1.05 m/s (unreliable) |
+
+  Runs in place don't encode the distance covered in flight, and the sprint touches down for about one frame at 24 fps; sampling 4× finer made both worse. `sequence` warns above 0.3 m/s; set `travel=` by eye or use a `_RM` clip.
+- **Chaining** reuses `sequence.chain` (heading match, bone-space crossfade, root velocity blend).
+- **Native mode** (`clips.native`) plays the clips on the pack's own mannequin with NLA strips, a crossfade per seam and a linear root track for travel. Walk_Loop into Idle_Loop: planted feet slide 5.5 cm/s (left) and 13.4 cm/s (right) against a 1.0 m/s walk.
+- **Verified** on the body with `quality=True` (walk, talk, nod, jab, idle): no penetration, no frame more than 1 cm below the floor, planted soles 7.8 mm median, rig jitter at or below the source's.
+
 ## Standard walks with no reference (`gait.py`)
 ```json
 "motion": { "gait": { "source": "walk", "seconds": 8, "cadence": 1.0, "stride": 1.0, "arm_swing": 1.0 }, "heading": -90 }

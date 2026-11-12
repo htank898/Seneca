@@ -70,7 +70,7 @@ Socket colors are **linear** RGBA. Convert hex from sRGB first (`bkit.rgb`).
 
 ## Render settings
 
-- **EEVEE:** `scene.eevee.taa_render_samples` (16 for a preview, 64 to 128 for a final), `use_raytracing` (reflections and refraction; needed for convincing chrome and glass), `use_shadows`, `use_fast_gi`.
+- **EEVEE:** `scene.eevee.taa_render_samples` (16 for a preview or an animation, 64 to 128 for a final still; bkit uses 16 for any `.mp4`/`--anim`/`--frames` render), `use_raytracing` (reflections and refraction; needed for convincing chrome and glass), `use_shadows`, `use_fast_gi`.
 - **Cycles:** `scene.cycles.samples`, `use_adaptive_sampling`, `use_denoising`, `device = 'GPU'`. On Apple Silicon, set `preferences.addons['cycles'].preferences.compute_device_type = 'METAL'`, call `refresh_devices()`, and set `d.use` for each device. **The first Cycles render compiles Metal shaders (about a minute, once). After that, a 540p preview at 32 samples takes about 2 s on an M4.**
 - **Transparent background:** `render.film_transparent = True` and `image_settings.color_mode = 'RGBA'` with PNG.
 - **Formats:** `PNG`, `JPEG`, `WEBP`, `OPEN_EXR`, `FFMPEG` (container `MPEG4`, codec `H264`, `constant_rate_factor = 'HIGH'`).

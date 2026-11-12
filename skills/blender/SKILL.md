@@ -53,7 +53,7 @@ node scripts/blender.mjs scene.py --preview                 # half-res, low samp
 node scripts/blender.mjs scene.py --out hero.png            # full EEVEE, ~3–5 s
 node scripts/blender.mjs scene.py --engine CYCLES --out hero.png   # path traced; best glass/metal/GI
 ```
-Flags: `--out file.png|.jpg|.webp|.exr|.mp4|dir/`, `--preview`, `--engine EEVEE|CYCLES|WORKBENCH`, `--samples N`, `--res 1920x1080`, `--anim`, `--frames 1-120`, `--frame N` (one still from an animation), `--blend scene.blend` (save an editable file), `--glb model.glb`, `--no-render`, `--open`. `--pypath dir` (repeatable, or `$BKIT_PATH`) puts extra helper modules on the import path; the scene's own folder is always importable. Any other `--flag value` passes through to `k.arg()`.
+Flags: `--out file.png|.jpg|.webp|.exr|.mp4|dir/`, `--preview`, `--engine EEVEE|CYCLES|WORKBENCH`, `--samples N` (EEVEE defaults: 64 for stills, 16 for animations; use 64 for an animation with glossy or glass materials), `--res 1920x1080`, `--anim`, `--frames 1-120`, `--frame N` (one still from an animation), `--blend scene.blend` (save an editable file), `--glb model.glb`, `--no-render`, `--open`. `--pypath dir` (repeatable, or `$BKIT_PATH`) puts extra helper modules on the import path; the scene's own folder is always importable. Any other `--flag value` passes through to `k.arg()`.
 
 The output path defaults to the scene name with `.png`. An `.mp4` output renders the frame range as H.264. The first Cycles run on a Mac compiles GPU shaders once (about a minute); after that it's fast.
 
