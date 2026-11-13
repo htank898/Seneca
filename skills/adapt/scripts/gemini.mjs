@@ -45,15 +45,20 @@ if (!["image", "video"].includes(kind) || !flags.prompt || !flags.out) {
 function apiKey() {
   const k = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   if (k) return k;
-  // nearest .env walking up from the current folder (a project root .env covers every shot folder)
-  for (let d = resolve("."); ; d = dirname(d)) {
-    const f = join(d, ".env");
-    if (existsSync(f)) {
-      const m = readFileSync(f, "utf8").match(/^\s*(?:export\s+)?(?:GEMINI_API_KEY|GOOGLE_API_KEY)\s*=\s*["']?([^"'\n]+)["']?/m);
-      if (m) return m[1].replace(/\s+#.*$/, "").trim();  // drop an inline "# comment"
+  // nearest .env walking up from the current folder (a project root .env covers every shot folder),
+  // then from this script's own folder (the Seneca repo's root .env), so other skills can call it from anywhere
+  const scriptDir = dirname(new URL(import.meta.url).pathname);
+  for (const start of [resolve("."), scriptDir]) {
+    for (let d = start; ; d = dirname(d)) {
+      const f = join(d, ".env");
+      if (existsSync(f)) {
+        const m = readFileSync(f, "utf8").match(/^\s*(?:export\s+)?(?:GEMINI_API_KEY|GOOGLE_API_KEY)\s*=\s*["']?([^"'\n]+)["']?/m);
+        if (m) return m[1].replace(/\s+#.*$/, "").trim();  // drop an inline "# comment"
+      }
+      if (dirname(d) === d) break;
     }
-    if (dirname(d) === d) return null;
   }
+  return null;
 }
 
 function mediaItem(path, type) {

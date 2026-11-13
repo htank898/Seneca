@@ -1,6 +1,6 @@
 ---
 name: seneca
-description: The front door to Seneca. Takes a communication need in plain words ("I have a meeting with the execs, summarize this for them", "announce the reorg", "get the team up to speed on the new CRM", "pitch this to a partner") and decides which formats fit the audience and moment: a slide deck, a PDF, a graphic or banner, a GIF, a math animation, an interactive guide, a narrated or edited video, or a 3D render, character, or animation. Then it builds them as one consistent package. Use when someone describes a situation, audience, or goal rather than a specific format, or asks "what's the best way to communicate this?". If they name one format ("make a deck"), use that skill directly.
+description: The front door to Seneca. Takes a communication need in plain words ("I have a meeting with the execs, summarize this for them", "announce the reorg", "get the team up to speed on the new CRM", "pitch this to a partner") and decides which formats fit the audience and moment: a slide deck, a PDF, a graphic or banner, a GIF, a math animation, an interactive guide, a narrated or edited video, or a 3D render, character, or animation, or artwork to sell through print-on-demand. Then it builds them as one consistent package. Use when someone describes a situation, audience, or goal rather than a specific format, or asks "what's the best way to communicate this?". If they name one format ("make a deck"), use that skill directly.
 ---
 
 # Seneca: pick the right formats, then build them
@@ -47,6 +47,7 @@ Pick the **smallest set of formats where each one has a distinct job**. That's u
 | Real footage restaged as an animated 3D scene ("me as a robot in this clip") | **Adapted 3D shot** (MP4) | **Graphic** still of the hero frame, or a **GIF** loop of the best beat |
 | Animate a character or model: walk, gaits, sports motion ("make my model walk", "a pitcher from the windup") | **Animated 3D clip** (MP4) | **GIF** loop of one cycle, or a **graphic** still |
 | A character (from AI image art or a drawing) that should become a 3D model to animate | **Rigged 3D character** (`.blend` + `.glb`) | A **3D render** turntable via `blender`, or an **adapted shot** driving it with real footage |
+| Artwork to sell: Etsy, print-on-demand posters, tees, mugs, stickers, digital downloads | **ellipse-paint** artwork and its 300 DPI print set per product | A **timelapse** MP4 for the listing video, plus **graphic** mockups for the listing photos |
 
 When stakeholder groups differ a lot, tailor rather than add formats. For example, execs get the deck and the working team gets the PDF with the appendix.
 
@@ -72,6 +73,7 @@ Use the matching skill for each format. Load it with the Skill tool (it may have
 | Footage restaged as a 3D animated scene (pose capture + Blender) | `adapt` |
 | Animate a character or model: walk, gaits, sports motion, mocap/BVH retarget | `animate` |
 | Character image to a rigged 3D model (local image-to-3D + Rigify) | `character-3d` |
+| Stylised artwork painted from ellipses (from a Gemini concept, photo or nothing), including print-on-demand files | `ellipse-paint` |
 
 If a format's skill isn't installed, pick the next-best format from the ones that are and say so.
 

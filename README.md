@@ -11,6 +11,7 @@
 | **pdf** | Letters, invitations, itineraries, one-pagers, and reports on custom stationery | `.pdf` |
 | **graphic** | Static graphics at any size: social posts, OG images, thumbnails, avatars, stickers | `.png` / `.jpg` |
 | **banner** | Profile and page banners (LinkedIn, X, YouTube, GitHub) checked against avatar and crop zones | `.png` at 2× |
+| **ellipse-paint** | Images painted from layered translucent ellipses: any source (a Gemini concept, photo, or sketch) rebuilt as vector art, or generated from scratch, with a build-up timelapse and 300 DPI print-on-demand exports (posters, tees, mugs, stickers) | `.svg` / `.png` / `.jpg` + `.mp4` |
 | **gif-create** | Looping motion graphics, with optional sound effects and chalkboard callouts over scenes or real footage | `.gif` + `.mp4` |
 | **interactive-guide** | Click-through software walkthroughs on a rebuilt replica of the app | `.html` + `.gif` |
 | **math** | Manim animations, KaTeX equations inside any other format, and LaTeX documents | `.mp4` / `.gif` / `.html` / `.pdf` |
@@ -40,7 +41,7 @@ Plugin skills are namespaced (`/seneca:seneca`, `/seneca:slides`, …). For a ba
 - **Python tools:** [`uv`](https://docs.astral.sh/uv/) for Manim (`math`), Whisper (`video-edit`), Kokoro (`video-create`), and MediaPipe pose capture (`animate`, `adapt`). Each builds a private Python env on first use.
 - **LaTeX PDFs:** `tectonic` (`math`).
 - **3D:** Blender for `blender`, `character-3d`, `animate`, and `adapt`.
-- **`adapt`:** `GEMINI_API_KEY`, used only for the concept-art stages.
+- **`adapt`, `ellipse-paint`:** `GEMINI_API_KEY`, used only for the Gemini concept-art stages. `ellipse-paint` also uses `uv` for its numpy/resvg env.
 - **`character-3d`:** an Apple Silicon Mac, ~17 GB of disk for the one-time engine install (`skills/character-3d/scripts/setup.sh`), and a free Hugging Face login for the gated DINOv3 weights. 24 GB+ of memory is recommended.
 
 ## Usage

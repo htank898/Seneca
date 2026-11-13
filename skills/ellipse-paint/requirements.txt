@@ -1,0 +1,5 @@
+# ellipse-paint environment (installed into ./.venv by scripts/_env.py on first run).
+numpy>=2.0
+pillow>=11.0
+# resvg (Rust) renders the vector art at print size; fast enough for 7200x10800 with thousands of shapes.
+resvg-py>=0.2
