@@ -73,7 +73,7 @@ Use the matching skill for each format. Load it with the Skill tool (it may have
 | Footage restaged as a 3D animated scene (pose capture + Blender) | `adapt` |
 | Animate a character or model: walk, gaits, sports motion, mocap/BVH retarget | `animate` |
 | Character image to a rigged 3D model (local image-to-3D + Rigify) | `character-3d` |
-| Stylised artwork painted from ellipses (from a Gemini concept, photo or nothing), including print-on-demand files | `ellipse-paint` |
+| Stylised artwork: soft ellipse painting, sharp flat-colour traces, or geometric generative prints (from a Gemini concept, photo or nothing), including print-on-demand files | `ellipse-paint` |
 
 If a format's skill isn't installed, pick the next-best format from the ones that are and say so.
 

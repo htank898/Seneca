@@ -26,8 +26,14 @@ def _find_uv():
     return None
 
 
+def _req_hash():
+    import hashlib
+    return hashlib.sha1(REQUIREMENTS.read_bytes()).hexdigest()[:12]
+
+
 def bootstrap():
-    if MARKER.exists() and VENV_PY.exists():
+    # the marker holds a hash of requirements.txt, so adding a dependency reinstalls on the next run
+    if VENV_PY.exists() and MARKER.exists() and MARKER.read_text().strip() == _req_hash():
         return
     uv = _find_uv()
     if not uv:
@@ -36,12 +42,12 @@ def bootstrap():
     if not VENV_PY.exists():
         print(f"[setup] creating Python 3.12 venv at {VENV}", file=sys.stderr)
         subprocess.run([uv, "venv", "-q", "--python", "3.12", str(VENV)], check=True)
-    print("[setup] installing numpy, pillow, resvg (one time)", file=sys.stderr)
+    print("[setup] installing requirements.txt (numpy, pillow, resvg, vtracer, contourpy)", file=sys.stderr)
     subprocess.run([uv, "pip", "install", "-q", "--python", str(VENV_PY), "-r", str(REQUIREMENTS)], check=True)
-    probe = subprocess.run([str(VENV_PY), "-c", "import numpy, PIL, resvg_py"], capture_output=True, text=True)
+    probe = subprocess.run([str(VENV_PY), "-c", "import numpy, PIL, resvg_py, vtracer, contourpy"], capture_output=True, text=True)
     if probe.returncode != 0:
         sys.exit(f"[setup] install finished but imports failed:\n{probe.stderr[-1500:]}")
-    MARKER.write_text("ok\n")
+    MARKER.write_text(_req_hash() + "\n")
     print("[setup] ellipse-paint environment ready", file=sys.stderr)
 
 

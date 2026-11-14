@@ -5,9 +5,13 @@
   "background": "#f3e9dc" | null,                                 # base colour under the shapes; null = none
   "mask": "data:image/png;base64,..." | null,                     # optional subject cut-out (white = keep)
   "backdrop": "#c0c0bf",                                          # masked art only: field outside the subject
-  "shapes": [ {"cx":..,"cy":..,"rx":..,"ry":..,"angle":deg,
+  "shapes": [ {"cx":..,"cy":..,"rx":..,"ry":..,"angle":deg,         # ellipse (no "type" = ellipse)
                "fill":"#rrggbb"|null, "opacity":0.5,
-               "stroke":"#rrggbb"|null, "strokeWidth":1.5} ],
+               "stroke":"#rrggbb"|null, "strokeWidth":1.5},
+              {"type":"circle", "cx":..,"cy":..,"r":.., ...paint},
+              {"type":"rect", "x":..,"y":..,"w":..,"h":.., "angle":deg, ...paint},
+              {"type":"path", "d":"M..Z", "transform":"translate(..)"?, "evenodd":bool?, ...paint} ],
+              # paint = fill / opacity / stroke / strokeWidth (+ "cap":"round" for open strokes)
   "meta": {...}                                                   # how it was made (source, seed, params)
 }
 """
@@ -28,17 +32,39 @@ def _f(x):
     return f"{x:.2f}".rstrip("0").rstrip(".")
 
 
-def shape_el(s):
-    a = [f'cx="{_f(s["cx"])}" cy="{_f(s["cy"])}" rx="{_f(max(s["rx"], 0.05))}" ry="{_f(max(s["ry"], 0.05))}"']
-    if s.get("angle"):
-        a.append(f'transform="rotate({_f(s["angle"])} {_f(s["cx"])} {_f(s["cy"])})"')
-    a.append(f'fill="{s["fill"]}"' if s.get("fill") else 'fill="none"')
+def _paint(s):
+    a = [f'fill="{s["fill"]}"' if s.get("fill") else 'fill="none"']
     op = s.get("opacity", 1)
     if op < 1:
         a.append(f'opacity="{_f(op)}"')
     if s.get("stroke"):
         a.append(f'stroke="{s["stroke"]}" stroke-width="{_f(s.get("strokeWidth", 1))}"')
-    return f'<ellipse {" ".join(a)}/>'
+        if s.get("cap"):
+            a.append(f'stroke-linecap="{s["cap"]}" stroke-linejoin="round"')
+    return a
+
+
+def shape_el(s):
+    t = s.get("type", "ellipse")
+    if t == "path":
+        a = [f'd="{s["d"]}"']
+        if s.get("transform"):
+            a.append(f'transform="{s["transform"]}"')
+        if s.get("evenodd"):
+            a.append('fill-rule="evenodd"')
+        return f'<path {" ".join(a + _paint(s))}/>'
+    if t == "circle":
+        a = [f'cx="{_f(s["cx"])}" cy="{_f(s["cy"])}" r="{_f(max(s["r"], 0.05))}"']
+        return f'<circle {" ".join(a + _paint(s))}/>'
+    if t == "rect":
+        a = [f'x="{_f(s["x"])}" y="{_f(s["y"])}" width="{_f(s["w"])}" height="{_f(s["h"])}"']
+        if s.get("angle"):
+            a.append(f'transform="rotate({_f(s["angle"])} {_f(s["x"] + s["w"] / 2)} {_f(s["y"] + s["h"] / 2)})"')
+        return f'<rect {" ".join(a + _paint(s))}/>'
+    a = [f'cx="{_f(s["cx"])}" cy="{_f(s["cy"])}" rx="{_f(max(s["rx"], 0.05))}" ry="{_f(max(s["ry"], 0.05))}"']
+    if s.get("angle"):
+        a.append(f'transform="rotate({_f(s["angle"])} {_f(s["cx"])} {_f(s["cy"])})"')
+    return f'<ellipse {" ".join(a + _paint(s))}/>'
 
 
 def to_svg(doc, view=None, width=None, height=None, transparent=False, limit=None, background=None):
@@ -64,7 +90,9 @@ def to_svg(doc, view=None, width=None, height=None, transparent=False, limit=Non
         if doc.get("background"):
             out.append(f'<rect x="0" y="0" width="{W}" height="{H}" fill="{doc["background"]}"/>')
     else:
-        bg = None if transparent else (background or doc.get("background"))
+        # a vector cut-out (trace/generate with a knockout) has no background, but posters still want its backdrop
+        fallback = doc.get("backdrop") if doc.get("cutout") else None
+        bg = None if transparent else (background or doc.get("background") or fallback)
         if bg:
             out.append(f'<rect {full} fill="{bg}"/>')
         out.append('<g>')

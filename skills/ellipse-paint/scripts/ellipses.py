@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
-"""ellipses.py: build images out of ellipses. The output is vector, so it prints at any size.
+"""ellipses.py: paint images from shapes. The output is vector, so it prints at any size.
 
-  fit        approximate a target image (Gemini output, photo, sketch) with N translucent ellipses
-  generate   seeded procedural ellipse art, no source image (bloom | field | orbits | pebbles)
+  fit        approximate a target image (Gemini output, photo, sketch) with N translucent ellipses (soft, painterly)
+  trace      posterize a target image to a few flat colours and trace them to vector paths (hard-edged screen print)
+  generate   seeded procedural art. Soft ellipse styles: bloom | field | orbits | pebbles.
+             Hard-edged styles: bauhaus | truchet | packing | contours | topo (packing/contours/topo take --source)
   render     art.json -> PNG at any size (quick look; use pod_export.py for print files)
   timelapse  art.json -> MP4 of the artwork building up, shape by shape (Etsy listing video)
 
 usage:
   python3 scripts/ellipses.py fit TARGET.png --out work/ [--shapes 2000] [--work 200] [--alpha 0.5]
           [--knockout none|auto|#ffffff] [--tol 0.12] [--seed 1]
+  python3 scripts/ellipses.py trace TARGET.png --out work/ [--colors 6] [--palette riso|"#hex,..."] [--work 1600]
+          [--smooth 5] [--speckle 8] [--knockout none|auto|#hex] [--tol 0.12]
   python3 scripts/ellipses.py generate --style bloom --out work/ [--aspect 2:3] [--palette terracotta|"#hex,#hex,..."]
-          [--seed 7] [--count N] [--transparent]
+          [--seed 7] [--count N] [--transparent] [--source IMG --knockout auto]
   python3 scripts/ellipses.py render work/art.json --out look.png [--long 2000] [--transparent]
   python3 scripts/ellipses.py timelapse work/art.json --out listing.mp4 [--seconds 10] [--fps 30] [--long 1080]
   python3 scripts/ellipses.py palettes            # list named palettes
 
-fit/generate write into --out: art.json (the artwork), art.svg, preview.png.
+fit/trace/generate write into --out: art.json (the artwork), art.svg, preview.png.
 """
 import sys
 from pathlib import Path
@@ -35,6 +39,8 @@ from concurrent.futures import ThreadPoolExecutor  # noqa: E402
 import numpy as np  # noqa: E402
 from PIL import Image, ImageDraw, ImageFilter, ImageOps  # noqa: E402
 
+import geometric as G  # noqa: E402
+import posterize  # noqa: E402
 import shapes as S  # noqa: E402
 
 # First colour is the background.
@@ -362,23 +368,92 @@ def style_pebbles(rng, w, h, pal, count):
     return out
 
 
-STYLES = {"bloom": style_bloom, "field": style_field, "orbits": style_orbits, "pebbles": style_pebbles}
+SOFT_STYLES = {"bloom": style_bloom, "field": style_field, "orbits": style_orbits, "pebbles": style_pebbles}
+STYLES = {**SOFT_STYLES, **G.STYLES}
+PAPER = "#f5f1e8"  # default background when a --source sets the colours
+
+
+def _load_source(path, knockout, tol, long_side=1000):
+    """-> (w, h in art units, Source at 1 px per art unit, backdrop hex for cut-outs or None)."""
+    src = ImageOps.exif_transpose(Image.open(path))
+    has_alpha = src.mode in ("RGBA", "LA", "PA") or "transparency" in src.info
+    src = src.convert("RGBA")
+    W0, H0 = src.size
+    k = long_side / max(W0, H0)
+    w, h = max(8, round(W0 * k)), max(8, round(H0 * k))
+    rgb = np.asarray(src.convert("RGB").resize((w, h), Image.LANCZOS), np.float32)
+    mask_img = _subject_mask(src, knockout, tol, has_alpha)
+    keep, backdrop = None, None
+    if mask_img is not None:
+        keep = np.asarray(mask_img.resize((w, h), Image.BILINEAR)) > 127
+        if keep.mean() < 0.02:
+            sys.exit("[source] the subject mask is almost empty; try --knockout none or a smaller --tol")
+        backdrop = "#ffffff" if has_alpha or not (~keep).any() else S.rgb_to_hex(rgb[~keep].mean(0))
+    return w, h, G.Source(rgb, keep), backdrop
 
 
 def cmd_generate(a):
     rng = np.random.default_rng(a.seed)
-    pal = _palette(a.palette)
-    rw, rh = (float(x) for x in a.aspect.split(":"))
-    w, h = (1000.0, 1000.0 * rh / rw) if rw <= rh else (1000.0 * rw / rh, 1000.0)
-    shapes = STYLES[a.style](rng, w, h, pal, a.count)
+    src, backdrop = None, None
+    if a.source:
+        if a.style not in G.SOURCE_STYLES:
+            sys.exit(f"[generate] --source works with {', '.join(sorted(G.SOURCE_STYLES))}")
+        if a.style == "topo" and a.knockout != "none":
+            sys.exit("[generate] topo bands get stair-stepped edges on a cut-out; for a flat-colour cut-out use\n"
+                     "           `trace TARGET --knockout auto --colors 5 --palette ...` (topo --source works full-frame)")
+        w, h, src, backdrop = _load_source(a.source, a.knockout, a.tol)
+        pal = _palette(a.palette) if a.palette else [PAPER, "#1b1b1b", "#c8553d", "#2d3047"]
+    else:
+        pal = _palette(a.palette or "terracotta")
+        rw, rh = (float(x) for x in a.aspect.split(":"))
+        w, h = (1000.0, 1000.0 * rh / rw) if rw <= rh else (1000.0 * rw / rh, 1000.0)
+    fn = STYLES[a.style]
+    if a.style == "packing":
+        shapes = fn(rng, w, h, pal, a.count, src, snap=bool(a.palette))
+    elif a.style in G.STYLES:
+        shapes = fn(rng, w, h, pal, a.count, src)
+    else:
+        shapes = fn(rng, w, h, pal, a.count)
+    cut = src is not None and src.keep is not None
     if a.transparent:
         # garments and stickers: no see-through shapes (DTG dithers partial alpha); drop faint glazes entirely
         shapes = [dict(s, opacity=1.0) for s in shapes if s.get("opacity", 1) >= 0.3]
     doc = {"version": 1, "mode": "generate", "w": round(w, 2), "h": round(h, 2),
-           "background": None if a.transparent else pal[0], "mask": None, "shapes": shapes,
-           "meta": {"style": a.style, "seed": a.seed, "palette": pal, "aspect": a.aspect, "count": a.count}}
+           "background": None if (a.transparent or cut) else pal[0], "mask": None, "shapes": shapes,
+           "meta": {"style": a.style, "seed": a.seed, "palette": pal, "aspect": a.aspect, "count": a.count,
+                    "source": str(Path(a.source).resolve()) if a.source else None}}
+    if cut:
+        doc.update(cutout=True, backdrop=backdrop if a.style != "contours" else PAPER)
     p = write_outputs(doc, a.out)
-    print(f"[generate] {a.style}, seed {a.seed}, {len(shapes)} ellipses -> {p}")
+    print(f"[generate] {a.style}, seed {a.seed}, {len(shapes)} shapes -> {p}")
+
+
+def cmd_trace(a):
+    t0 = time.time()
+    src = ImageOps.exif_transpose(Image.open(a.target))
+    has_alpha = src.mode in ("RGBA", "LA", "PA") or "transparency" in src.info
+    src = src.convert("RGBA")
+    W0, H0 = src.size
+    k = a.work / max(W0, H0)  # small sources are upscaled first: smoother traced edges
+    w, h = max(8, round(W0 * k)), max(8, round(H0 * k))
+    rgb_img = src.convert("RGB").resize((w, h), Image.LANCZOS)
+    mask_img = _subject_mask(src, a.knockout, a.tol, has_alpha)
+    keep = np.asarray(mask_img.resize((w, h), Image.BILINEAR)) > 127 if mask_img is not None else None
+    pal = _palette(a.palette) if a.palette else None
+    colors = a.colors or (len(pal) if pal else 6)
+    shapes, hexes, counts = posterize.trace(rgb_img, keep, colors, pal, smooth=a.smooth, speckle=a.speckle,
+                                            corner=a.corner, seed=a.seed)
+    cut = keep is not None
+    doc = {"version": 1, "mode": "trace", "w": w, "h": h,
+           "background": None if cut else hexes[int(np.argmax(counts))], "mask": None, "shapes": shapes,
+           "meta": {"source": str(Path(a.target).resolve()), "colors": hexes, "work": a.work, "smooth": a.smooth,
+                    "speckle": a.speckle, "palette": pal, "knockout": a.knockout if cut else None}}
+    if cut:
+        rgb = np.asarray(rgb_img, np.float32)
+        doc.update(cutout=True, backdrop="#ffffff" if has_alpha or not (~keep).any() else S.rgb_to_hex(rgb[~keep].mean(0)))
+    p = write_outputs(doc, a.out)
+    share = ", ".join(f"{c} {n / max(1, counts.sum()):.0%}" for c, n in sorted(zip(hexes, counts), key=lambda t: -t[1]))
+    print(f"[trace] {w}x{h}, {colors} colours ({share}), {len(shapes)} paths, {time.time() - t0:.1f}s -> {p}")
 
 
 # ------------------------------------------------------------------ render / timelapse
@@ -448,10 +523,26 @@ def main():
     g.add_argument("--style", choices=sorted(STYLES), required=True)
     g.add_argument("--out", required=True)
     g.add_argument("--aspect", default="2:3")
-    g.add_argument("--palette", default="terracotta")
+    g.add_argument("--palette", help="name or #hex list; default terracotta, or paper+ink with --source")
     g.add_argument("--seed", type=int, default=7)
     g.add_argument("--count", type=int, default=0)
     g.add_argument("--transparent", action="store_true")
+    g.add_argument("--source", help="image to build from (packing, contours, topo)")
+    g.add_argument("--knockout", default="none", help="with --source: none | auto | #hex")
+    g.add_argument("--tol", type=float, default=0.12)
+
+    tr = sub.add_parser("trace")
+    tr.add_argument("target")
+    tr.add_argument("--out", required=True)
+    tr.add_argument("--colors", type=int, default=0, help="flat colours (default 6, or the palette size)")
+    tr.add_argument("--palette", help="recolour by tone: darkest region gets the darkest palette colour")
+    tr.add_argument("--work", type=int, default=1600, help="tracing resolution, long side px")
+    tr.add_argument("--smooth", type=int, default=5, help="majority-filter size: higher = simpler, rounder regions")
+    tr.add_argument("--speckle", type=int, default=8, help="drop regions smaller than this many px")
+    tr.add_argument("--corner", type=int, default=60, help="corner threshold in degrees (lower = more corners)")
+    tr.add_argument("--knockout", default="none", help="none | auto | #hex: cut out a plain background")
+    tr.add_argument("--tol", type=float, default=0.12)
+    tr.add_argument("--seed", type=int, default=1)
 
     r = sub.add_parser("render")
     r.add_argument("doc")
@@ -475,7 +566,7 @@ def main():
         for k, v in PALETTES.items():
             print(f"{k:11s} bg {v[0]}  {' '.join(v[1:])}")
         return
-    {"fit": cmd_fit, "generate": cmd_generate, "render": cmd_render, "timelapse": cmd_timelapse}[a.cmd](a)
+    {"fit": cmd_fit, "trace": cmd_trace, "generate": cmd_generate, "render": cmd_render, "timelapse": cmd_timelapse}[a.cmd](a)
 
 
 if __name__ == "__main__":

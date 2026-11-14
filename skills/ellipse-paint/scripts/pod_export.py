@@ -74,7 +74,8 @@ def render(doc, W, H, fit, focus, margin, transparent, backdrop=None):
     if fit == "mug":
         # the art twice, centred in each half, so it shows whichever hand holds the mug
         half = render(doc, W // 2, H, "contain", focus, margin, transparent, backdrop)
-        field = backdrop or (doc.get("backdrop") if doc.get("mask") else doc.get("background")) or "#ffffff"
+        cut = doc.get("mask") or doc.get("cutout")
+        field = backdrop or (doc.get("backdrop") if cut else doc.get("background")) or "#ffffff"
         out = Image.new("RGBA", (W, H), (0, 0, 0, 0) if transparent else S.hex_to_rgb(field) + (255,))
         out.alpha_composite(half, (0, 0))
         out.alpha_composite(half, (W - half.width, 0))
@@ -178,10 +179,11 @@ def main():
     manifest = {"source": str(Path(a.doc).resolve()), "dpi": DPI, "files": []}
     for preset, W, H, fit, kind, note in jobs:
         margin = a.margin
-        if kind == "wall" and doc.get("mask") and a.wall_fit == "auto" or a.wall_fit == "contain" and kind == "wall":
+        cut = bool(doc.get("mask") or doc.get("cutout"))
+        if kind == "wall" and (cut and a.wall_fit == "auto" or a.wall_fit == "contain"):
             fit, margin = "contain", max(a.margin, 0.08)  # never crop a cut-out subject; float it on the backdrop
         transparent = kind in ("apparel", "sticker") and not a.keep_background
-        if doc.get("background") is None:
+        if doc.get("background") is None and not cut:
             transparent = True
         img = render(doc, W, H, fit, focus, margin if kind != "sticker" else max(margin, 0.06), transparent,
                      a.backdrop)
