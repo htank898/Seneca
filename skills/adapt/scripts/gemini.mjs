@@ -91,7 +91,8 @@ input.push({ type: "text", text: String(flags.prompt) });
 
 const body = { model, input: input.map(({ _path, ...x }) => x) };
 if (kind === "image") {
-  body.response_format = { type: "image", mime_type: "image/png" };
+  // The Interactions API only returns JPEG (2026-11); a .png --out is converted locally with ffmpeg.
+  body.response_format = { type: "image", mime_type: "image/jpeg" };
   if (flags.aspect) body.response_format.aspect_ratio = String(flags.aspect);
   if (flags.size) body.response_format.image_size = String(flags.size).toUpperCase();
 } else {
@@ -175,8 +176,14 @@ for (let i = 0; i < n; i++) {
   const m = uniq[uniq.length - 1];
   const ext = extname(out) || (kind === "image" ? ".png" : ".mp4");
   const dest = n === 1 ? out : out.replace(new RegExp(`${ext.replace(".", "\\.")}$`), `-${i + 1}${ext}`);
-  if (m.data) writeFileSync(dest, Buffer.from(m.data, "base64"));
-  else download(m.uri, dest);
+  const wantPng = kind === "image" && ext.toLowerCase() === ".png";
+  const raw = wantPng ? join(tmp, `raw-${i}.jpg`) : dest;
+  if (m.data) writeFileSync(raw, Buffer.from(m.data, "base64"));
+  else download(m.uri, raw);
+  if (wantPng) {
+    const c = spawnSync("ffmpeg", ["-v", "error", "-y", "-i", raw, dest]);
+    if (c.status !== 0) { console.error(`[gemini] ffmpeg PNG conversion failed:\n${c.stderr}`); process.exit(1); }
+  }
   written.push(dest);
   if (texts.length) console.log(`[gemini] note from model: ${texts.join(" ").slice(0, 400)}`);
 }

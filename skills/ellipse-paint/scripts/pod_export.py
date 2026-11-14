@@ -5,11 +5,16 @@ usage:
   python3 scripts/pod_export.py work/art.json --out print/ --preset wall-art [--preset tee ...]
           [--name moth-bloom] [--focus 0.5,0.4] [--margin 0.04] [--keep-background] [--flatten-alpha]
   python3 scripts/pod_export.py work/art.json --out print/ --size 3000x3000 --fit cover
+  python3 scripts/pod_export.py concept.png --out print/ --preset all      # an image (e.g. Gemini) directly:
+          [--knockout auto|none|#hex] [--upscale auto|off] [--upscale-model anime|general]
+  python3 scripts/pod_export.py --install-upscaler                          # one-time Real-ESRGAN download
   python3 scripts/pod_export.py --list
 
 Presets are single products (poster-2x3, tee, mug-11oz, sticker-4in, ...) or sets (wall-art, apparel,
 mug, stickers, all). Writes <name>-<preset>.(png|jpg) with 300 DPI metadata, and export.json listing
 every file, its pixel size, MB, and any warnings (dark-fabric visibility, semi-transparency, file size).
+Image input (.png/.jpg/.webp) cuts out a plain background, upscales with Real-ESRGAN only as far as the largest
+product needs, and reports each file's detail DPI (real pixels per printed inch).
 """
 import sys
 from pathlib import Path
@@ -27,6 +32,9 @@ import numpy as np  # noqa: E402
 from PIL import Image, ImageFilter  # noqa: E402
 
 import shapes as S  # noqa: E402
+import raster_export as R  # noqa: E402
+
+IMAGE_EXT = {".png", ".jpg", ".jpeg", ".webp"}
 
 Image.MAX_IMAGE_PIXELS = None  # print files are legitimately huge
 
@@ -57,7 +65,7 @@ SETS["all"] = SETS["wall-art"] + SETS["apparel"] + SETS["mug"] + SETS["stickers"
 
 
 def view_for(doc, W, H, fit, focus, margin):
-    aw, ah = doc["w"], doc["h"]
+    aw, ah = (doc["w"], doc["h"]) if isinstance(doc, dict) else (doc.w, doc.h)
     if fit == "cover":
         s = max(W / aw, H / ah)
         vw, vh = W / s, H / s
@@ -132,6 +140,82 @@ def save(img, path, fmt):
     return Path(path).stat().st_size / 1e6
 
 
+def build_jobs(a):
+    jobs = []
+    for p in a.preset or ([] if a.size else ["wall-art"]):
+        for q in SETS.get(p, [p]):
+            if q not in PRESETS:
+                sys.exit(f"unknown preset {q!r}; see --list")
+            jobs.append((q, *PRESETS[q]))
+    if a.size:
+        w, h = (int(x) for x in a.size.lower().split("x"))
+        jobs.append((f"{w}x{h}", w, h, a.fit, "custom", "custom size"))
+    return jobs
+
+
+def export_image(a):
+    """Image file -> print files. Same presets, checks and manifest as the vector path."""
+    art = R.RasterArt(a.doc, a.knockout, a.tol, trim=not a.no_trim)
+    focus = tuple(float(x) for x in a.focus.split(","))
+    name = a.name or Path(a.doc).stem
+    out = Path(a.out)
+    out.mkdir(parents=True, exist_ok=True)
+    plan = []
+    for preset, W, H, fit, kind, note in build_jobs(a):
+        margin = a.margin if kind != "sticker" else max(a.margin, 0.06)
+        if kind == "wall":
+            # a cut-out floats whole on its own backdrop colour (seamless); a full scene fills the frame
+            wf = a.wall_fit if a.wall_fit != "auto" else ("contain" if art.cut else "cover")
+            fit, margin = wf, (max(a.margin, 0.08) if wf == "contain" else margin)
+        transparent = kind in ("apparel", "sticker") and art.cut and not a.keep_background
+        if fit == "mug":
+            v = view_for(art, W // 2, H, "contain", focus, margin)
+            plan.append((preset, W, H, kind, note, v, W // 2, transparent, True))
+        else:
+            plan.append((preset, W, H, kind, note, view_for(art, W, H, fit, focus, margin), W, transparent, False))
+    need = max(pw / v[2] for *_, v, pw, _t, _m in plan)
+    print(f"[export] {art.w}x{art.h} source, {'cut-out on ' + art.backdrop if art.cut else 'no cut-out'}, "
+          f"largest product needs {need:.2f}x", flush=True)
+    art.prepare(need, a.upscale, a.upscale_model, out / ".work")
+    manifest = {"source": str(Path(a.doc).resolve()), "dpi": DPI, "upscale": round(art.factor, 3),
+                "upscaler": f"Real-ESRGAN {R.MODELS[a.upscale_model]}" if art.factor > 1 else None, "files": []}
+    for preset, W, H, kind, note, v, pw, transparent, mug in plan:
+        if mug:
+            half = art.render(pw, H, v, True)
+            img = Image.new("RGBA", (W, H), (0, 0, 0, 0) if transparent else
+                            S.hex_to_rgb(a.backdrop or art.backdrop) + (255,))
+            img.alpha_composite(half, (0, 0))
+            img.alpha_composite(half, (W - half.width, 0))
+        else:
+            img = art.render(W, H, v, transparent, a.backdrop)
+        if a.flatten_alpha:
+            img.putalpha(img.getchannel("A").point(lambda x: 255 if x > 127 else 0))
+        warn = checks(img, kind)
+        if kind in ("apparel", "sticker") and not art.cut:
+            warn.append("no plain background was found, so this prints as a full rectangle; "
+                        "regenerate on a flat background or pass --knockout #hex")
+        ddpi = R.detail_dpi(art, v, pw)
+        if ddpi < 270:
+            fix = ("install the upscaler (--install-upscaler)" if not R.esrgan_bin() else
+                   "fine at the smaller sizes this ratio scales to; for full detail use a larger source "
+                   "(Gemini --size 4K)")
+            warn.append(f"detail DPI {ddpi} at full size: {fix}")
+        if kind == "sticker":
+            img = sticker_outline(img, px=round(W * 0.03))
+        fmt = a.format if a.format != "auto" else ("jpg" if kind == "wall" else "png")
+        path = out / f"{name}-{preset}.{fmt}"
+        mb = save(img, path, fmt)
+        if kind == "wall" and mb > ETSY_DIGITAL_MAX_MB:
+            warn.append(f"{mb:.1f} MB is over Etsy's {ETSY_DIGITAL_MAX_MB} MB digital-file limit")
+        manifest["files"].append({"preset": preset, "file": str(path), "px": [W, H],
+                                  "inches": [round(W / DPI, 2), round(H / DPI, 2)], "mb": round(mb, 2),
+                                  "detail_dpi": ddpi, "note": note, "warnings": warn})
+        print(f"[export] {path.name}  {W}x{H}  {mb:.1f} MB  detail {ddpi} DPI"
+              + "".join(f"\n         ! {w}" for w in warn), flush=True)
+    (out / "export.json").write_text(json.dumps(manifest, indent=2))
+    print(f"[export] {len(plan)} files -> {out}/  (manifest: export.json)")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("doc", nargs="?")
@@ -151,7 +235,19 @@ def main():
     ap.add_argument("--format", choices=["auto", "png", "jpg"], default="auto",
                     help="auto: JPG for wall art (fits Etsy's 20 MB), PNG for everything else")
     ap.add_argument("--list", action="store_true")
+    ap.add_argument("--knockout", default="auto", help="image input: auto | none | #hex background to cut out")
+    ap.add_argument("--tol", type=float, default=0.12, help="image input: knockout colour tolerance")
+    ap.add_argument("--upscale", choices=["auto", "off"], default="auto",
+                    help="image input: Real-ESRGAN when a product needs more pixels than the source has")
+    ap.add_argument("--upscale-model", choices=sorted(R.MODELS), default="anime",
+                    help="anime = flat illustration/cartoon (default); general = photo or painterly")
+    ap.add_argument("--no-trim", action="store_true", help="image input: keep the source framing around a cut-out")
+    ap.add_argument("--install-upscaler", action="store_true", help="download Real-ESRGAN (~50 MB, BSD-3) once")
     a = ap.parse_args()
+
+    if a.install_upscaler:
+        R.install_esrgan()
+        return
 
     if a.list or not a.doc:
         for k, (w, h, fit, kind, note) in PRESETS.items():
@@ -160,21 +256,15 @@ def main():
             print(f"set {k:10s} {', '.join(v)}")
         return
 
+    if Path(a.doc).suffix.lower() in IMAGE_EXT:
+        return export_image(a)
     doc = S.load(a.doc)
     focus = tuple(float(x) for x in a.focus.split(","))
     name = a.name or Path(a.doc).resolve().parent.name
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    jobs = []
-    for p in a.preset or ([] if a.size else ["wall-art"]):
-        for q in SETS.get(p, [p]):
-            if q not in PRESETS:
-                sys.exit(f"unknown preset {q!r}; see --list")
-            jobs.append((q, *PRESETS[q]))
-    if a.size:
-        w, h = (int(x) for x in a.size.lower().split("x"))
-        jobs.append((f"{w}x{h}", w, h, a.fit, "custom", "custom size"))
+    jobs = build_jobs(a)
 
     manifest = {"source": str(Path(a.doc).resolve()), "dpi": DPI, "files": []}
     for preset, W, H, fit, kind, note in jobs:

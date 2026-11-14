@@ -25,7 +25,7 @@ Ask only what you can't infer: **what it's for** (posters, tees, mugs, stickers,
 | **Image → ellipses / trace** | They have a photo, sketch, or their own art | `fit` or `trace` → export |
 | **Pure generative** | Abstract or pattern art, wall-art sets, quick collections | `generate` (geometric styles for sharp, ellipse styles for soft) → export |
 | **Image-driven generative** | A subject rendered as packed circles or contour lines | `generate --style packing|contours --source img --knockout auto` |
-| **Gemini direct** | Rarely: when the look must stay photographic | Gemini at 4K → `fit --shapes 6000 --work 400` keeps detail and still gives you vector |
+| **Gemini direct** (no restyle) | The Gemini image is the product as-is | Gemini at `--size 4K` → `pod_export.py concept.png` (cut-out, Real-ESRGAN upscale, print set). See section 4 |
 
 ## 2. Concept art with Gemini (concept routes)
 ```bash
@@ -81,7 +81,8 @@ Each build writes `art.json` (the artwork itself), `art.svg`, and `preview.png`.
 
 ## 4. Export print files
 ```bash
-$X work/art/art.json --out print/ --preset all --name fox-bloom
+$X work/art/art.json --out print/ --preset all --name fox-bloom    # vector art from fit/trace/generate
+$X work/concept.png --out print/ --preset all --name fox           # or an image straight from Gemini
 $X --list                                       # every preset and set
 ```
 - **Sets:**
@@ -94,6 +95,12 @@ $X --list                                       # every preset and set
 - Apparel and stickers are transparent. Pass `--keep-background` to print the art as a rectangle instead.
 - Every file gets 300 DPI metadata, and `export.json` lists sizes, MB and warnings.
 - Specs and provider caveats are in `reference/pod-specs.md`. Check mug, hoodie and tote templates against the chosen provider before uploading.
+
+**Image input (Gemini direct).** Give `pod_export.py` a PNG/JPG/WebP instead of `art.json`:
+- **Cut-out:** `--knockout auto` (the default) removes a plain background, but only when most of the border is one flat colour. A full scene is exported whole, and tees and stickers then warn that they print as a rectangle. The cut-out is trimmed to the subject (`--no-trim` keeps the source framing), its edge is re-sharpened at print size, and background colour is cleaned out of the edge pixels.
+- **Upscale:** when a product needs more pixels than the source has, Real-ESRGAN upscales it once, only as far as the largest product needs. The default `--upscale-model anime` suits flat illustration and cartoons; use `general` for photographic or painterly images. `--upscale off` skips it. Upscales are cached in `print/.work/`.
+- **One-time setup:** `$X --install-upscaler` downloads Real-ESRGAN's pinned ncnn-vulkan build (about 50 MB, BSD-3) into `~/.cache/seneca/realesrgan`. Without it, exports fall back to plain resampling and warn.
+- **Detail DPI:** every file reports its detail DPI (real or AI-upscaled pixels per printed inch) in the output and in `export.json`. Under 270 means it's soft at full size. Real-ESRGAN stops at 4×, so a 2K Gemini image gives about 250 on the 24x36 poster. Generate concepts at `--size 4K` for full detail on every product.
 
 ## 5. Listing assets
 - **Timelapse video** (Etsy listing videos are 5–15 s, with no sound):
@@ -115,6 +122,6 @@ $X --list                                       # every preset and set
 - Report each file's path, pixel size, inch size and MB, and which provider templates still need checking. Delete `work/` scratch only if asked.
 
 ## What not to do
-- Don't sell a plain Gemini output upscaled to poster size. It's soft at 300 DPI, and it isn't distinctive. Fit or trace it first.
+- Don't stretch a Gemini image to poster size by plain resizing. It's soft at 300 DPI. Export it through `pod_export.py` (Real-ESRGAN) and act on any detail-DPI warning, or fit or trace it for a style of your own.
 - Don't put text in Gemini prompts. AI lettering is unreliable. If the design needs words, set real type over the art with the `graphic` skill.
 - Don't use trademarked names, franchise characters, sports teams, celebrities, or "in the style of <living artist>". These are the main reason print-on-demand shops get taken down.

@@ -11,7 +11,7 @@
 | **pdf** | Letters, invitations, itineraries, one-pagers, and reports on custom stationery | `.pdf` |
 | **graphic** | Static graphics at any size: social posts, OG images, thumbnails, avatars, stickers | `.png` / `.jpg` |
 | **banner** | Profile and page banners (LinkedIn, X, YouTube, GitHub) checked against avatar and crop zones | `.png` at 2× |
-| **ellipse-paint** | Images painted from vector shapes: any source (a Gemini concept, photo, or sketch) rebuilt as soft layered ellipses or traced into sharp flat-colour screen-print art, plus generative styles (ellipse blooms, Bauhaus grids, Truchet curves, circle packing, contours), with a build-up timelapse and 300 DPI print-on-demand exports (posters, tees, mugs, stickers) | `.svg` / `.png` / `.jpg` + `.mp4` |
+| **ellipse-paint** | Images painted from vector shapes: any source (a Gemini concept, photo, or sketch) rebuilt as soft layered ellipses or traced into sharp flat-colour screen-print art, plus generative styles (ellipse blooms, Bauhaus grids, Truchet curves, circle packing, contours), with a build-up timelapse and 300 DPI print-on-demand exports (posters, tees, mugs, stickers), including straight from a Gemini image with background cut-out and Real-ESRGAN upscaling | `.svg` / `.png` / `.jpg` + `.mp4` |
 | **gif-create** | Looping motion graphics, with optional sound effects and chalkboard callouts over scenes or real footage | `.gif` + `.mp4` |
 | **interactive-guide** | Click-through software walkthroughs on a rebuilt replica of the app | `.html` + `.gif` |
 | **math** | Manim animations, KaTeX equations inside any other format, and LaTeX documents | `.mp4` / `.gif` / `.html` / `.pdf` |
