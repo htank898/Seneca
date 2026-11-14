@@ -45,7 +45,7 @@ Pick the **smallest set of formats where each one has a distinct job**. That's u
 | A paper, problem set, or formal derivation | **LaTeX PDF** | **Math animation** of the one step that's hard to see on paper |
 | A talking-head or selfie recording that needs graphics, captions, or callouts | **Edited video** (MP4) | **Graphic** thumbnail, or a **GIF** of the key moment |
 | Real footage restaged as an animated 3D scene ("me as a robot in this clip") | **Adapted 3D shot** (MP4) | **Graphic** still of the hero frame, or a **GIF** loop of the best beat |
-| Animate a character or model: walk, gaits, sports motion ("make my model walk", "a pitcher from the windup") | **Animated 3D clip** (MP4) | **GIF** loop of one cycle, or a **graphic** still |
+| Animate a character or model: walk, gaits, everyday actions from ready-made clips (talk, wave, sit, dance, punch), sports motion ("make my model walk in and wave", "a pitcher from the windup") | **Animated 3D clip** (MP4) | **GIF** loop of one cycle, or a **graphic** still |
 | A character (from AI image art or a drawing) that should become a 3D model to animate | **Rigged 3D character** (`.blend` + `.glb`) | A **3D render** turntable via `blender`, or an **adapted shot** driving it with real footage |
 | Artwork to sell: Etsy, print-on-demand posters, tees, mugs, stickers, digital downloads | **ellipse-paint** artwork and its 300 DPI print set per product | A **timelapse** MP4 for the listing video, plus **graphic** mockups for the listing photos |
 
@@ -71,7 +71,7 @@ Use the matching skill for each format. Load it with the Skill tool (it may have
 | Edit a talking-head recording | `video-edit` |
 | 3D render, product shot, turntable | `blender` |
 | Footage restaged as a 3D animated scene (pose capture + Blender) | `adapt` |
-| Animate a character or model: walk, gaits, sports motion, mocap/BVH retarget | `animate` |
+| Animate a character or model: walk, gaits, ready-made clips (Quaternius, Mixamo), sports motion, mocap/BVH retarget | `animate` |
 | Character image to a rigged 3D model (local image-to-3D + Rigify) | `character-3d` |
 | Stylised artwork: soft ellipse painting, sharp flat-colour traces, or geometric generative prints (from a Gemini concept, photo or nothing), including print-on-demand files | `ellipse-paint` |
 

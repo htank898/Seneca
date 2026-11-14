@@ -23,6 +23,7 @@ This repository's own code is MIT licensed (see `LICENSE`). The skills install a
 | 100STYLE locomotion dataset (Ian Mason) | animate (`gait.py`, downloaded on request) | CC BY 4.0: credit "The 100STYLE Dataset - Ian Mason" in any work that uses it | https://www.ianxmason.com/100style/ |
 | resvg (via the `resvg-py` binding), NumPy, Pillow | ellipse-paint (SVG rendering and raster export) | resvg: Apache-2.0 OR MIT; resvg-py: MIT; NumPy: BSD-3-Clause; Pillow: MIT-CMU | https://github.com/linebender/resvg |
 | VTracer (visioncortex), contourpy | ellipse-paint (image tracing to vector paths; contour lines) | VTracer: MIT; contourpy: BSD-3-Clause | https://github.com/visioncortex/vtracer |
+| Quaternius Universal Animation Library 1 and 2 (Standard tier) | animate (`clips-fetch.mjs`, downloaded on request) | CC0 1.0 (public domain) | https://quaternius.com/packs/universalanimationlibrary.html |
 
 **character-3d** installs these into `~/.cache/seneca/char3d/`, outside the repository:
 
